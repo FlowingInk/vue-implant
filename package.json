@@ -1,0 +1,32 @@
+{
+  "name": "vue-injector",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "lint:fix-unsafe": "biome check --write --unsafe .",
+    "format": "biome format --write .",
+    "format:check": "biome format ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.4",
+    "@types/node": "^25.3.0",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "pinia": "^3.0.4",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.0-beta.13",
+    "vue": "^3.5.29",
+    "vue-tsc": "^3.1.5"
+  },
+  "peerDependencies": {
+    "pinia": "^3.0.4",
+    "vue": "^3.5.29"
+  },
+  "overrides": {
+    "vite": "^8.0.0-beta.13"
+  }
+}
