@@ -31,7 +31,7 @@ export class DOMWatcher {
 			// In once mode, disconnect immediately after finding the element
 			if (options?.once) {
 				disconnect();
-				console.log('[DOMWatcher] Element found, observer disconnected (once mode).');
+				console.log(`[vue-injector] Element "${selector}" found, observer disconnected`);
 			}
 		};
 
@@ -49,7 +49,9 @@ export class DOMWatcher {
 		if (options?.timeout) {
 			setTimeout(() => {
 				disconnect();
-				console.warn(`[DOMWatcher Warning] "${selector}" not found within ${options.timeout}ms.`)
+				console.warn(
+					`[vue-injector] Element "${selector}" not found within ${options.timeout}ms, observer disconnected`
+				);
 			}, options.timeout);
 		}
 	}
@@ -65,34 +67,27 @@ export class DOMWatcher {
 		onRestore: InjectCallback, // callback when the target element is re-added
 		root: Document | HTMLElement = document
 	): () => void {
-		let stopped = false;
-
-		const cycle = (currentTarget: HTMLElement) => {
-			if (stopped) return;
-
-			this.setupRemovalObserver(
-				currentTarget,
-				() => {
-					if (stopped) return;
-					onRemove();
-
-					this.onDomReady(
-						selector,
-						(newTarget) => {
-							if (stopped) return;
-							onRestore(newTarget);
-							cycle(newTarget);
-						},
-						document,
-						{ once: true }
-					);
-				},
-				root
-			);
-		};
-		cycle(target);
+		let isObserver: boolean = true;
+		this.setupRemovalObserver(
+			target,
+			() => {
+				onRemove();
+				if (!isObserver) return;
+				this.onDomReady(
+					selector,
+					(newTarget) => {
+						if (!isObserver) return;
+						onRestore(newTarget);
+					},
+					document,
+					{ once: true }
+				);
+			},
+			root
+		);
 		return () => {
-			stopped = true;
+			isObserver = false;
+			console.log(`[vue-injector] Alive observer for "${selector}" stopped`);
 		};
 	}
 
@@ -151,14 +146,14 @@ export class DOMWatcher {
 		const isDocument: boolean = baseTarget instanceof HTMLBodyElement;
 		if (baseTarget === null) {
 			console.error(
-				`[DOMWatcher Error] Failed to set up removal observer: unable to find a valid observation target in the provided root.`
+				`[vue-injector] Failed to set up removal observer: no valid observation target found`
 			);
 			return null;
 		}
 
 		if (!isDocument && !baseTarget.isConnected) {
 			console.error(
-				'[DOMWatcher Error] Failed to set up removal observer: the observation target is not connected to the DOM.'
+				'[vue-injector] Failed to set up removal observer: observation target is detached from DOM'
 			);
 			return null;
 		}
@@ -166,7 +161,6 @@ export class DOMWatcher {
 		const observerNode: HTMLElement | null = !isDocument
 			? baseTarget.parentElement || baseTarget
 			: baseTarget;
-
 
 		if (!observerNode) {
 			callback();
@@ -190,7 +184,7 @@ export class DOMWatcher {
 		});
 
 		console.log(
-			`[DOMWatcher] Starting to observe target element for removal, at `,
+			`[vue-injector] Removal observer started`,
 			observerNode
 		);
 		return observer;
@@ -214,7 +208,9 @@ export class DOMWatcher {
 	/**
 	 * Get the observation target element
 	 */
-	private getObserveTarget(currentRoot: Document | HTMLElement): HTMLElement | HTMLBodyElement | null {
+	private getObserveTarget(
+		currentRoot: Document | HTMLElement
+	): HTMLElement | HTMLBodyElement | null {
 		return (currentRoot instanceof Document ? currentRoot.body : currentRoot) || document.body;
 	}
 }
