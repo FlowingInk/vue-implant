@@ -10,12 +10,30 @@ export class DOMWatcher {
 		root: Document | HTMLElement = document,
 		options: ObserverOptions
 	): void {
+		this.observeDomReady(selector, callback, root, options);
+	}
+
+	/**
+	 * Internal helper used by onDomReady/onDomAlive.
+	 * Returns a stop handler so callers can cancel pending observers.
+	 */
+	private observeDomReady(
+		selector: string,
+		callback: InjectCallback,
+		root: Document | HTMLElement = document,
+		options: ObserverOptions
+	): () => void {
 		const observers: MutationObserver[] = [];
 		let isDisconnected = false;
+		let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 		const disconnect = () => {
 			if (isDisconnected) return;
 			isDisconnected = true;
+			if (timeoutId) {
+				clearTimeout(timeoutId);
+				timeoutId = undefined;
+			}
 
 			for (const obs of observers) {
 				obs.disconnect();
@@ -45,13 +63,16 @@ export class DOMWatcher {
 
 		// Set timeout for auto-disconnect
 		if (options?.timeout && !isDisconnected) {
-			setTimeout(() => {
+			timeoutId = setTimeout(() => {
+				if (isDisconnected) return;
 				disconnect();
 				console.warn(
 					`[vue-injector] Element "${selector}" not found within ${options.timeout}ms, observer disconnected`
 				);
 			}, options.timeout);
 		}
+
+		return disconnect;
 	}
 	/**
 	 *  public api for observing dom is alive, which mean the target element may accident be removed,
@@ -64,28 +85,33 @@ export class DOMWatcher {
 		onRemove: () => void, // this callback is clear the injected component instance and subapp
 		onRestore: InjectCallback, // callback when the target element is re-added
 		root: Document | HTMLElement = document,
-		Options: ObserverOptions
+		options: ObserverOptions
 	): () => void {
 		let isObserver: boolean = true;
-		this.setupRemovalObserver(
+		let stopReadyObserver: (() => void) | undefined;
+		const removalObserver = this.setupRemovalObserver(
 			target,
 			() => {
 				onRemove();
 				if (!isObserver) return;
-				this.onDomReady(
+				stopReadyObserver = this.observeDomReady(
 					selector,
 					(newTarget) => {
 						if (!isObserver) return;
 						onRestore(newTarget);
 					},
-					document,
-					Options
+					root,
+					options
 				);
 			},
 			root
 		);
 		return () => {
+			if (!isObserver) return;
 			isObserver = false;
+			removalObserver?.disconnect();
+			stopReadyObserver?.();
+			stopReadyObserver = undefined;
 			console.log(`[vue-injector] Alive observer for "${selector}" stopped`);
 		};
 	}
@@ -98,9 +124,7 @@ export class DOMWatcher {
 		selector: string,
 		callback: (el: HTMLElement, observer?: MutationObserver) => void
 	): void {
-		const searchRoot =
-			currentRoot instanceof Document ? currentRoot : currentRoot.ownerDocument;
-		const existing = searchRoot.querySelector(selector);
+		const existing = currentRoot.querySelector(selector);
 
 		if (existing) {
 			callback(existing as HTMLElement, undefined);
