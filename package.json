@@ -10,15 +10,19 @@
     "lint:fix": "biome check --write .",
     "lint:fix-unsafe": "biome check --write --unsafe .",
     "format": "biome format --write .",
-    "format:check": "biome format ."
+    "format:check": "biome format .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
     "@types/node": "^25.3.0",
     "@vitejs/plugin-vue": "^6.0.2",
+    "jsdom": "^28.1.0",
     "pinia": "^3.0.4",
     "typescript": "~5.9.3",
     "vite": "^8.0.0-beta.13",
+    "vitest": "^4.0.18",
     "vue": "^3.5.29",
     "vue-tsc": "^3.1.5"
   },
