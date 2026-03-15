@@ -1,43 +1,114 @@
-import type { Plugin } from 'vue';
-import type { InjectionContext, InjectionErrorMessage, InjectionRecord } from '../type';
+﻿import type { Plugin } from 'vue';
+import type { Task, TaskErrorMessage, TaskRecord } from '../type';
 
+/**
+ * Central runtime registry for all injection tasks.
+ *
+ * This context stores task instances, task records, and transient runtime state
+ * (watchers, listeners, component roots, and Pinia instance). It also provides
+ * unified teardown utilities for single-task and full-context cleanup to avoid
+ * memory leaks from unreleased DOM nodes, listeners, and reactive watchers.
+ */
 export class TaskContext {
-	public injectionErrorMessages: Array<InjectionErrorMessage> = []; // TODO: retry mechanism
-	public injectPoints: InjectionRecord[] = [];
+	/**
+	 * Stores failed task injection messages.
+	 *
+	 * Reserved for diagnostics and potential retry mechanisms.
+	 */
+	public taskErrorMessages: Array<TaskErrorMessage> = []; // TODO: retry mechanism
+	/**
+	 * Stores lightweight task metadata such as task id and injection location.
+	 */
+	public taskRecords: TaskRecord[] = [];
 
-	private readonly contextMap: Map<string, InjectionContext> = new Map();
+	/**
+	 * Maps task id to its full runtime context.
+	 */
+	private readonly contextMap: Map<string, Task> = new Map();
 
+	/**
+	 * Shared Pinia plugin instance used by injected apps.
+	 */
 	private pinia: Plugin | null = null;
+
+	/**
+	 * Indicates whether the injector runtime is currently active.
+	 */
 	private isRunning: boolean = false;
 
-	public set(key: string, context: InjectionContext): void {
+	/**
+	 * Registers or replaces a task context by id.
+	 *
+	 * @param key Unique task id.
+	 * @param context Runtime task context object.
+	 */
+	public set(key: string, context: Task): void {
 		this.contextMap.set(key, context);
 	}
 
-	public get(key: string): InjectionContext | undefined {
+	/**
+	 * Gets a task context by id.
+	 *
+	 * @param key Unique task id.
+	 * @returns The task context if found, otherwise `undefined`.
+	 */
+	public get(key: string): Task | undefined {
 		return this.contextMap.get(key);
 	}
 
+	/**
+	 * Checks whether a task context exists.
+	 *
+	 * @param key Unique task id.
+	 * @returns `true` when the task exists.
+	 */
 	public has(key: string): boolean {
 		return this.contextMap.has(key);
 	}
 
+	/**
+	 * Returns an iterator over all task ids.
+	 *
+	 * @returns Iterator of registered task ids.
+	 */
 	public keys(): IterableIterator<string> {
 		return this.contextMap.keys();
 	}
 
+	/**
+	 * Reads the runtime running flag.
+	 *
+	 * @returns Current running state.
+	 */
 	public getRunningFlag(): boolean {
 		return this.isRunning;
 	}
 
+	/**
+	 * Updates the runtime running flag.
+	 *
+	 * @param flag New running state.
+	 */
 	public setRunningFlag(flag: boolean): void {
 		this.isRunning = flag;
 	}
 
+	/**
+	 * Gets the stored Pinia instance.
+	 *
+	 * @returns Pinia plugin instance or `null` when unset.
+	 */
 	public getPinia(): Plugin | null {
 		return this.pinia;
 	}
 
+	/**
+	 * Sets the Pinia instance used by injected apps.
+	 *
+	 * If an instance already exists, it will be overwritten.
+	 *
+	 * @param piniaInstance Pinia plugin instance.
+	 */
 	public setPinia<T extends Plugin>(piniaInstance: T): void {
 		if (this.pinia) {
 			console.warn('[vue-injector] Pinia instance already set, overwriting');
@@ -45,22 +116,24 @@ export class TaskContext {
 		this.pinia = piniaInstance;
 	}
 	/**
-	 * Destroy all resources of a single task (watcher → listener → component → dom → context)
+	 * Destroys all resources of a single task.
+	 *
+	 * Cleanup order is: watcher -> listener -> component -> dom -> context.
+	 *
+	 * @param id Unique task id.
 	 */
 	public destroy(id: string): void {
-		const context: InjectionContext | undefined = this.contextMap.get(id);
+		const context: Task | undefined = this.contextMap.get(id);
 		if (!context) {
 			console.warn(`[vue-injector] Task "${id}" not found, may already be destroyed`);
 			return;
 		}
 
 		// Remove the corresponding task record from the injection point list
-		this.injectPoints = this.injectPoints.filter((record) => record.taskId !== id);
+		this.taskRecords = this.taskRecords.filter((record) => record.taskId !== id);
 
 		// Remove the corresponding task record from the error list
-		this.injectionErrorMessages = this.injectionErrorMessages.filter(
-			(error) => error.taskId !== id
-		);
+		this.taskErrorMessages = this.taskErrorMessages.filter((error) => error.taskId !== id);
 
 		// Stop watcher
 		this.releaseWatcher(id);
@@ -73,10 +146,13 @@ export class TaskContext {
 			this.releaseComponentInstance(id);
 			this.releaseDomElement(id);
 		}
-		// Finally delete the injection context
+		// Finally delete the task context
 		this.contextMap.delete(id);
 	}
 
+	/**
+	 * Destroys all registered tasks and resets shared runtime state.
+	 */
 	public destroyedAll(): void {
 		const ids: string[] = Array.from(this.contextMap.keys());
 
@@ -97,16 +173,21 @@ export class TaskContext {
 
 		// Clear all data
 		this.contextMap.clear();
-		this.injectPoints = [];
-		this.injectionErrorMessages = [];
+		this.taskRecords = [];
+		this.taskErrorMessages = [];
 		this.isRunning = false;
 		this.pinia = null;
 
 		console.log('[vue-injector] All tasks destroyed');
 	}
 
+	/**
+	 * Unmounts and clears the Vue app instance of a task.
+	 *
+	 * @param id Unique task id.
+	 */
 	public releaseComponentInstance(id: string): void {
-		const context: InjectionContext | undefined = this.contextMap.get(id);
+		const context: Task | undefined = this.contextMap.get(id);
 		if (context?.app) {
 			try {
 				context.app.unmount();
@@ -123,8 +204,13 @@ export class TaskContext {
 		}
 	}
 
+	/**
+	 * Removes and clears the task root DOM element.
+	 *
+	 * @param id Unique task id.
+	 */
 	public releaseDomElement(id: string): void {
-		const context: InjectionContext | undefined = this.contextMap.get(id);
+		const context: Task | undefined = this.contextMap.get(id);
 		if (!context) {
 			console.warn(
 				`[vue-injector] Task "${id}" context not found, unable to remove root element`
@@ -145,6 +231,11 @@ export class TaskContext {
 		}
 	}
 
+	/**
+	 * Aborts and clears listener-related runtime fields of a task.
+	 *
+	 * @param id Unique task id.
+	 */
 	public releaseListener(id: string): void {
 		const context = this.contextMap.get(id);
 		if (!context) return;
@@ -166,6 +257,11 @@ export class TaskContext {
 		context.activitySignal = undefined;
 	}
 
+	/**
+	 * Stops and clears watcher-related runtime fields of a task.
+	 *
+	 * @param id Unique task id.
+	 */
 	public releaseWatcher(id: string): void {
 		const context = this.contextMap.get(id);
 		if (context?.watcher) {
@@ -179,6 +275,11 @@ export class TaskContext {
 		}
 	}
 
+	/**
+	 * Resets one task to an initial reusable state while keeping its map entry.
+	 *
+	 * @param id Unique task id.
+	 */
 	public resetState(id: string): void {
 		const context = this.contextMap.get(id);
 		if (!context) return;

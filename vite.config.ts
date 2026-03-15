@@ -9,8 +9,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: "VueInjector",
-      fileName: 'vue-injector'
+      name: "VueImplant",
+      fileName: 'vue-implant'
     },
     rolldownOptions: {
       external: ['vue'],
@@ -29,12 +29,12 @@ export default defineConfig({
     tsconfigPath: resolve(__dirname, 'tsconfig.app.json'),
     outDir: 'dist/types',
 
-    exclude: ['src/__test__/**/*', 'src/**/*.test.ts'],
+    exclude: ['./__test__/**/*.test.ts'],
     include: ['src/**/*.ts']
   })],
   test: {
     silent: true,
     environment: 'jsdom',
-    include: ['src/**/__test__/**/*.test.ts'],
+    include: ['./__test__/**/*.test.ts'],
   },
 })

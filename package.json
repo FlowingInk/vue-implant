@@ -1,18 +1,38 @@
 {
   "name": "vue-implant",
   "version": "0.0.1",
+  "description": "A Vue 3 component injection framework for userscripts and browser extension environments.",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FlowingInk/vue-implant.git"
+  },
+  "homepage": "https://github.com/FlowingInk/vue-implant#readme",
+  "bugs": {
+    "url": "https://github.com/FlowingInk/vue-implant/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "injector",
+    "component-injection",
+    "userscript",
+    "tampermonkey",
+    "browser-extension",
+    "dom"
+  ],
   "files": [
     "dist"
   ],
-  "main": "./dist/vue-injector.umd.cjs",
+  "main": "./dist/vue-implant.umd.cjs",
   "types": "./dist/types/index.d.ts",
-  "module": "./dist/vue-injector.js",
+  "module": "./dist/vue-implant.js",
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/vue-injector.js",
-      "require": "./dist/vue-injector.umd.cjs"
+      "import": "./dist/vue-implant.js",
+      "require": "./dist/vue-implant.umd.cjs"
     }
   },
   "scripts": {
