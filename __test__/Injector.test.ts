@@ -1,10 +1,10 @@
 ﻿/// <reference types="vitest/config" />
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, WatchHandle } from 'vue';
-import { DOMWatcher } from '../core/DomWatcher';
-import { Injector } from '../core/Injector';
-import type { TaskContext } from '../core/TaskContext';
-import { Action, type RegisterResult } from '../type';
+import { DOMWatcher } from '../src/core/DomWatcher';
+import { Injector } from '../src/core/Injector';
+import type { TaskContext } from '../src/core/TaskContext';
+import { Action, type RegisterResult } from '../src/type';
 
 describe('Injector', () => {
 	let injector: Injector;
@@ -70,25 +70,25 @@ describe('Injector', () => {
 				name: 'MyComp'
 			});
 
-			expect(result.id).toBe('MyComp@#app');
+			expect(result.taskId).toBe('MyComp@#app');
 			expect(typeof result.keepAlive).toBe('function');
 			expect(typeof result.stopAlive).toBe('function');
 		});
 
 		it('should use __name when name is not present (SFC-style component)', () => {
 			const result = injector.register('#app', { __name: 'SfcComp' });
-			expect(result.id).toBe('SfcComp@#app');
+			expect(result.taskId).toBe('SfcComp@#app');
 		});
 
 		it('should generate a unique id for anonymous plain-object component', () => {
 			const result = injector.register('#app', {});
-			expect(result.id).toMatch(/^component-[0-9a-f]+@#app$/);
+			expect(result.taskId).toMatch(/^component-[0-9a-f]+@#app$/);
 		});
 
 		it('should generate a unique id for anonymous function component', () => {
 			const comp = [() => { }][0];
 			const result = injector.register('#app', comp);
-			expect(result.id).toMatch(/^component-[0-9a-f]+@#app$/);
+			expect(result.taskId).toMatch(/^component-[0-9a-f]+@#app$/);
 		});
 
 		it('should reuse the same generated name for the same anonymous component ref', () => {
@@ -96,8 +96,8 @@ describe('Injector', () => {
 			const r1 = injector.register('#a', comp);
 			const r2 = injector.register('#b', comp);
 
-			const name1 = r1.id.split('@')[0];
-			const name2 = r2.id.split('@')[0];
+			const name1 = r1.taskId.split('@')[0];
+			const name2 = r2.taskId.split('@')[0];
 			expect(name1).toBe(name2);
 		});
 
@@ -105,7 +105,7 @@ describe('Injector', () => {
 			const r1 = injector.register('#a', {});
 			const r2 = injector.register('#b', {});
 
-			expect(r1.id.split('@')[0]).not.toBe(r2.id.split('@')[0]);
+			expect(r1.taskId.split('@')[0]).not.toBe(r2.taskId.split('@')[0]);
 		});
 
 		it('should warn and return same id on duplicate registration', () => {
@@ -115,7 +115,7 @@ describe('Injector', () => {
 			const first = injector.register('#app', comp);
 			const second = injector.register('#app', comp);
 
-			expect(second.id).toBe(first.id);
+			expect(second.taskId).toBe(first.taskId);
 			expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already registered'));
 		});
 
@@ -126,7 +126,7 @@ describe('Injector', () => {
 			expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('"Comp@#app" registered'));
 		});
 
-		it('should allow run() to succeed after registration (proves injectPoints populated)', () => {
+		it('should allow run() to succeed after registration (proves taskRecords populated)', () => {
 			injector.register('#app', { name: 'X' });
 			expect(() => injector.run()).not.toThrow();
 		});
@@ -156,8 +156,24 @@ describe('Injector', () => {
 			const r1 = injector.register('#a', { name: 'A' });
 			const r2 = injector.register('#b', { name: 'B' });
 
-			expect(r1.id).toBe('A@#a');
-			expect(r2.id).toBe('B@#b');
+			expect(r1.taskId).toBe('A@#a');
+			expect(r2.taskId).toBe('B@#b');
+		});
+
+		it('should warn and skip register() after run() has started', () => {
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			injector.register('#boot', { name: 'BootComp' });
+			injector.run();
+			const beforeCount = taskContext.taskRecords.length;
+
+			const result = injector.register('#late', { name: 'LateComp' });
+
+			expect(warnSpy).toHaveBeenCalledWith(
+				expect.stringContaining('register() for "LateComp@#late" is ignored')
+			);
+			expect(result.taskId).toBe('LateComp@#late');
+			expect(taskContext.get(result.taskId)).toBeUndefined();
+			expect(taskContext.taskRecords.length).toBe(beforeCount);
 		});
 
 		it('should allow same component at different selectors', () => {
@@ -165,12 +181,12 @@ describe('Injector', () => {
 			const r1 = injector.register('#a', comp);
 			const r2 = injector.register('#b', comp);
 
-			expect(r1.id).toBe('Shared@#a');
-			expect(r2.id).toBe('Shared@#b');
+			expect(r1.taskId).toBe('Shared@#a');
+			expect(r2.taskId).toBe('Shared@#b');
 		});
 
 		it('destroyed() should not warn about missing task (proves context exists)', () => {
-			const { id } = injector.register('#app', { name: 'Del' });
+			const { taskId: id } = injector.register('#app', { name: 'Del' });
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 			injector.destroyed(id);
 
@@ -200,7 +216,7 @@ describe('Injector', () => {
 			document.body.appendChild(btn);
 
 			const cb = vi.fn();
-			const { id } = injector.register(
+			const { taskId: id } = injector.register(
 				'#app',
 				{ name: 'Evt' },
 				{
@@ -208,7 +224,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.listenerActivity(id, { type: Action.OPEN });
+			injector.listenerActivity(id, Action.OPEN);
 
 			btn.click();
 			expect(cb).toHaveBeenCalledOnce();
@@ -216,9 +232,9 @@ describe('Injector', () => {
 
 		it('should not have event binding when no on option is provided', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-			const { id } = injector.register('#app', { name: 'NoEvt' });
+			const { taskId: id } = injector.register('#app', { name: 'NoEvt' });
 
-			injector.listenerActivity(id, { type: Action.OPEN });
+			injector.listenerActivity(id, Action.OPEN);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('no event binding configured')
@@ -231,7 +247,8 @@ describe('Injector', () => {
 			btn.id = 'btn';
 			document.body.appendChild(btn);
 			const cb = vi.fn();
-			injector.registerListener('#btn', 'click', cb);
+			const result = injector.registerListener('#btn', 'click', cb);
+			expect(result).toEqual({ taskId: 'listener-#btn-click', isSuccess: true });
 			injector.run();
 			btn.click();
 			expect(cb).toHaveBeenCalledOnce();
@@ -256,11 +273,15 @@ describe('Injector', () => {
 			expect(task?.event).toBe('click');
 			expect(task?.callback).toBeInstanceOf(Function);
 		});
-		it('should throw error if registering a the same listener', () => {
-			injector.registerListener('#btn', 'click', () => { });
+		it('should warn and return same id on duplicate listener registration', () => {
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const first = injector.registerListener('#btn', 'click', () => { });
+			const second = injector.registerListener('#btn', 'click', () => { });
 
-			expect(() => injector.registerListener('#btn', 'click', () => { })).toThrow(
-				'is already registered'
+			expect(second.taskId).toBe(first.taskId);
+			expect(second.isSuccess).toBe(true);
+			expect(warnSpy).toHaveBeenCalledWith(
+				expect.stringContaining('already registered')
 			);
 		});
 		it('should set up activitySignal for the listener correctly', async () => {
@@ -282,6 +303,25 @@ describe('Injector', () => {
 			await nextTick();
 			btn.click();
 			expect(cb).toHaveBeenCalledOnce();
+		});
+
+		it('should warn and skip registerListener() after run() has started', () => {
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			injector.register('#boot2', { name: 'BootComp2' });
+			injector.run();
+			const beforeCount = taskContext.taskRecords.length;
+
+			const result = injector.registerListener('#late-btn', 'click', vi.fn());
+
+			expect(warnSpy).toHaveBeenCalledWith(
+				expect.stringContaining(
+					'registerListener() for "listener-#late-btn-click" is ignored'
+				)
+			);
+			expect(result.taskId).toBe('listener-#late-btn-click');
+			expect(result.isSuccess).toBe(false);
+			expect(taskContext.get(result.taskId)).toBeUndefined();
+			expect(taskContext.taskRecords.length).toBe(beforeCount);
 		});
 	});
 	describe('run', () => {
@@ -424,7 +464,7 @@ describe('Injector', () => {
 			host.id = 'inject-host';
 			document.body.appendChild(host);
 
-			const { id } = injector.register('#inject-host', { name: 'ReadyMount' });
+			const { taskId: id } = injector.register('#inject-host', { name: 'ReadyMount' });
 			injector.run();
 
 			const context = taskContext.get(id);
@@ -480,7 +520,7 @@ describe('Injector', () => {
 
 			const listenerSpy = vi.spyOn(injector, 'listenerActivity');
 
-			const { id } = injector.register(
+			const { taskId: id } = injector.register(
 				'#ready-open',
 				{ name: 'ReadyOpen' },
 				{
@@ -494,7 +534,7 @@ describe('Injector', () => {
 
 			injector.run();
 
-			expect(listenerSpy).toHaveBeenCalledWith(id, { type: Action.OPEN });
+			expect(listenerSpy).toHaveBeenCalledWith(id, Action.OPEN);
 		});
 
 		it('registerListener task should bind event without mounting component', () => {
@@ -504,7 +544,7 @@ describe('Injector', () => {
 
 			const addSpy = vi.spyOn(btn, 'addEventListener');
 			const cb = vi.fn();
-			const id = injector.registerListener('#listener-only', 'click', cb);
+			const { taskId: id } = injector.registerListener('#listener-only', 'click', cb);
 			injector.run();
 
 			const context = taskContext.get(id);
@@ -525,11 +565,11 @@ describe('Injector', () => {
 			document.body.appendChild(btn);
 
 			const addSpy = vi.spyOn(btn, 'addEventListener');
-			const { id } = injector.register('#app', { name: 'OpenBind' }, {
+			const { taskId: id } = injector.register('#app', { name: 'OpenBind' }, {
 				on: { listenAt: '#open-bind', type: 'click', callback: vi.fn() }
 			});
 
-			injector.listenerActivity(id, { type: Action.OPEN });
+			injector.listenerActivity(id, Action.OPEN);
 
 			expect(addSpy).toHaveBeenCalledOnce();
 			expect(taskContext.get(id)?.controller).toBeInstanceOf(AbortController);
@@ -541,18 +581,18 @@ describe('Injector', () => {
 			document.body.appendChild(btn);
 
 			const addSpy = vi.spyOn(btn, 'addEventListener');
-			const { id } = injector.register('#app', { name: 'OpenRepeat' }, {
+			const { taskId: id } = injector.register('#app', { name: 'OpenRepeat' }, {
 				on: { listenAt: '#open-repeat', type: 'click', callback: vi.fn() }
 			});
 
-			injector.listenerActivity(id, { type: Action.OPEN });
-			injector.listenerActivity(id, { type: Action.OPEN });
+			injector.listenerActivity(id, Action.OPEN);
+			injector.listenerActivity(id, Action.OPEN);
 
 			expect(addSpy).toHaveBeenCalledOnce();
 		});
 
 		it('Action.CLOSE should call controller.abort and clear controller', () => {
-			const { id } = injector.register('#app', { name: 'CloseAction' }, {
+			const { taskId: id } = injector.register('#app', { name: 'CloseAction' }, {
 				on: { listenAt: '#close-target', type: 'click', callback: vi.fn() }
 			});
 			const controller = new AbortController();
@@ -561,7 +601,7 @@ describe('Injector', () => {
 			if (!context) throw new Error('Task context not found');
 			context.controller = controller;
 
-			injector.listenerActivity(id, { type: Action.CLOSE });
+			injector.listenerActivity(id, Action.CLOSE);
 
 			expect(abortSpy).toHaveBeenCalledOnce();
 			expect(context.controller).toBeUndefined();
@@ -569,9 +609,9 @@ describe('Injector', () => {
 
 		it('should warn for task without event configuration', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-			const { id } = injector.register('#app', { name: 'NoEventConfig' });
+			const { taskId: id } = injector.register('#app', { name: 'NoEventConfig' });
 
-			injector.listenerActivity(id, { type: Action.OPEN });
+			injector.listenerActivity(id, Action.OPEN);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('has no event binding configured')
@@ -580,11 +620,11 @@ describe('Injector', () => {
 
 		it('should warn for unknown action type', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-			const { id } = injector.register('#app', { name: 'UnknownAction' }, {
+			const { taskId: id } = injector.register('#app', { name: 'UnknownAction' }, {
 				on: { listenAt: '#ua', type: 'click', callback: vi.fn() }
 			});
 
-			injector.listenerActivity(id, { type: 'UNKNOWN' as Action });
+			injector.listenerActivity(id, 'UNKNOWN' as Action);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Unknown action type "UNKNOWN"')
@@ -596,7 +636,7 @@ describe('Injector', () => {
 		it('should trigger OPEN when signal becomes true and CLOSE when false', async () => {
 			const signal = ref(false);
 			const spy = vi.spyOn(injector, 'listenerActivity');
-			const { id } = injector.register('#app', { name: 'SignalFlow' }, {
+			const { taskId: id } = injector.register('#app', { name: 'SignalFlow' }, {
 				on: { listenAt: '#sig', type: 'click', callback: vi.fn() }
 			});
 
@@ -607,14 +647,14 @@ describe('Injector', () => {
 			signal.value = false;
 			await nextTick();
 
-			expect(spy).toHaveBeenCalledWith(id, { type: Action.CLOSE });
-			expect(spy).toHaveBeenCalledWith(id, { type: Action.OPEN });
+			expect(spy).toHaveBeenCalledWith(id, Action.CLOSE);
+			expect(spy).toHaveBeenCalledWith(id, Action.OPEN);
 			expect(spy).toHaveBeenCalledTimes(3);
 		});
 
 		it('should stop old watcher before creating new watcher', () => {
 			const signal = ref(false);
-			const { id } = injector.register('#app', { name: 'RebindSignal' }, {
+			const { taskId: id } = injector.register('#app', { name: 'RebindSignal' }, {
 				on: { listenAt: '#sig2', type: 'click', callback: vi.fn() }
 			});
 
@@ -632,13 +672,13 @@ describe('Injector', () => {
 		it('should run immediately once when binding (immediate: true)', () => {
 			const signal = ref(true);
 			const spy = vi.spyOn(injector, 'listenerActivity');
-			const { id } = injector.register('#app', { name: 'ImmediateSignal' }, {
+			const { taskId: id } = injector.register('#app', { name: 'ImmediateSignal' }, {
 				on: { listenAt: '#sig3', type: 'click', callback: vi.fn() }
 			});
 
 			injector.bindActivitySignal(id, signal);
 
-			expect(spy).toHaveBeenCalledWith(id, { type: Action.OPEN });
+			expect(spy).toHaveBeenCalledWith(id, Action.OPEN);
 		});
 	});
 
@@ -648,7 +688,7 @@ describe('Injector', () => {
 			host.id = 'mount-host';
 			document.body.appendChild(host);
 
-			const { id } = injector.register('#mount-host', { name: 'MountTarget' });
+			const { taskId: id } = injector.register('#mount-host', { name: 'MountTarget' });
 			injector.run();
 
 			const context = taskContext.get(id);
@@ -667,7 +707,7 @@ describe('Injector', () => {
 				return () => { };
 			});
 
-			const { id } = injector.register('#detached-host', { name: 'DetachedComp' });
+			const { taskId: id } = injector.register('#detached-host', { name: 'DetachedComp' });
 			injector.run();
 
 			expect(taskContext.get(id)?.app).toBeUndefined();
@@ -726,7 +766,7 @@ describe('Injector', () => {
 
 			const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
-			const { id } = injector.register('#mount-error', {
+			const { taskId: id } = injector.register('#mount-error', {
 				name: 'MountErrorComp',
 				setup() {
 					throw new Error('mount failed');
@@ -745,7 +785,7 @@ describe('Injector', () => {
 
 	describe('destroyed / destroyedAll', () => {
 		it('destroyed should stop alive task first, then call taskContext.destroy', () => {
-			const { id } = injector.register('#app', { name: 'DestroyOne' }, { alive: true });
+			const { taskId: id } = injector.register('#app', { name: 'DestroyOne' }, { alive: true });
 			const context = taskContext.get(id);
 			if (!context) throw new Error('Task context not found');
 			context.alive = true;
@@ -764,9 +804,9 @@ describe('Injector', () => {
 		});
 
 		it('destroyedAll should stop alive tasks then clear all contexts', () => {
-			const aliveA = injector.register('#a', { name: 'AliveA' }, { alive: true }).id;
-			const aliveB = injector.register('#b', { name: 'AliveB' }, { alive: true }).id;
-			const normal = injector.register('#c', { name: 'NormalC' }).id;
+			const aliveA = injector.register('#a', { name: 'AliveA' }, { alive: true }).taskId;
+			const aliveB = injector.register('#b', { name: 'AliveB' }, { alive: true }).taskId;
+			const normal = injector.register('#c', { name: 'NormalC' }).taskId;
 
 			const a = taskContext.get(aliveA);
 			const b = taskContext.get(aliveB);
@@ -809,7 +849,7 @@ describe('Injector', () => {
 		describe('keepAlive', () => {
 			it('should warn and return early when called on a pure listener task (no component)', () => {
 				const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-				const id = injector.registerListener('#app', 'click', () => { });
+				const { taskId: id } = injector.registerListener('#app', 'click', () => { });
 				injector.keepAlive(id);
 				expect(warnSpy).toHaveBeenCalledWith(
 					expect.stringContaining('keepAlive is not applicable to non-component task')
@@ -817,7 +857,7 @@ describe('Injector', () => {
 			});
 			it('should warn and skip when an alive observer is already active (alive=true && isObserver=true)', () => {
 				const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-				const { id } = injector.register('#app', { name: 'NoDupRun' });
+				const { taskId: id } = injector.register('#app', { name: 'NoDupRun' });
 				injector.keepAlive(id);
 				injector.keepAlive(id);
 				expect(warnSpy).toHaveBeenCalledWith(
@@ -825,7 +865,7 @@ describe('Injector', () => {
 				);
 			});
 			it('should increment aliveEpoch each time keepAlive is called', () => {
-				const { id } = injector.register('#app', { name: 'NoDupRun' });
+				const { taskId: id } = injector.register('#app', { name: 'NoDupRun' });
 				const epoch = taskContext.get(id)?.aliveEpoch;
 				expect(epoch).toBe(0);
 				injector.keepAlive(id);
@@ -945,7 +985,7 @@ describe('Injector', () => {
 						.spyOn(DOMWatcher.prototype, 'onDomAlive')
 						.mockReturnValue(vi.fn());
 
-					const { id } = injector.register('#abort-test', {
+					const { taskId: id } = injector.register('#abort-test', {
 						name: 'AbortTest'
 					});
 					injector.run();
@@ -967,7 +1007,7 @@ describe('Injector', () => {
 					div.id = 'epoch-guard';
 					document.body.appendChild(div);
 
-					const { id } = injector.register(
+					const { taskId: id } = injector.register(
 						'#epoch-guard',
 						{
 							name: 'EpochGuard'
@@ -999,13 +1039,13 @@ describe('Injector', () => {
 			describe('Case 2 — component not yet mounted (app is undefined)', () => {
 				it('should call domWatcher.onDomReady to wait for the target element when app is undefined', () => {
 					const onDomReadySpy = vi.spyOn(DOMWatcher.prototype, 'onDomReady');
-					const { id } = injector.register('#app', { name: 'App' });
+					const { taskId: id } = injector.register('#app', { name: 'App' });
 					injector.keepAlive(id);
 
 					expect(onDomReadySpy).toHaveBeenCalledOnce();
 				});
 				it('should set isObserver=true and assign a cancellable stopAlive handler', () => {
-					const { id } = injector.register('#app', { name: 'App' });
+					const { taskId: id } = injector.register('#app', { name: 'App' });
 					injector.keepAlive(id);
 
 					expect(taskContext.get(id)?.isObserver).toBe(true);
@@ -1023,7 +1063,7 @@ describe('Injector', () => {
 						'handleInjectionReady'
 					);
 
-					const { id, stopAlive } = injector.register('#app', { name: 'App' });
+					const { taskId: id, stopAlive } = injector.register('#app', { name: 'App' });
 					injector.keepAlive(id);
 					stopAlive();
 
@@ -1056,7 +1096,7 @@ describe('Injector', () => {
 						'handleInjectionReady'
 					);
 
-					const { id } = injector.register('#app', { name: 'App' });
+					const { taskId: id } = injector.register('#app', { name: 'App' });
 					injector.keepAlive(id);
 
 					expect(consoleSpy).toHaveBeenCalledWith(
@@ -1128,7 +1168,7 @@ describe('Injector', () => {
 				document.body.appendChild(div);
 
 				const fakeStopHandler = vi.fn();
-				const { id } = injector.register('#app', { name: 'App' }, { alive: true });
+				const { taskId: id } = injector.register('#app', { name: 'App' }, { alive: true });
 
 				const taskContext = injector.getTaskContext();
 				const ctx = taskContext?.get(id);

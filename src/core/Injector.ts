@@ -1,4 +1,4 @@
-import {
+﻿import {
 	type App,
 	type Component,
 	type ComponentPublicInstance,
@@ -16,15 +16,16 @@ import {
 	type ActionEvent,
 	type ComponentOptions,
 	type InjectionConfig,
-	type InjectionContext,
-	type RegisterResult
+	type ListenerRegisterResult,
+	type RegisterResult,
+	type Task
 } from '../type';
 import { UUID } from '../util/uuid';
 import { DOMWatcher } from './DomWatcher';
 import { TaskContext } from './TaskContext';
 
 export class Injector {
-	// Unified injection context containing all component-related data
+	// Unified task context containing all component-related data
 	private readonly taskContext: TaskContext = new TaskContext();
 	private readonly domWatcher: DOMWatcher = new DOMWatcher();
 	private readonly anonymousComponentNames: WeakMap<object, string> = new WeakMap();
@@ -45,13 +46,13 @@ export class Injector {
 			);
 			return;
 		}
-		if (this.taskContext.injectPoints.length === 0) {
+		if (this.taskContext.taskRecords.length === 0) {
 			throw new Error(
 				'[vue-injector] No registered tasks found, call register() before run()'
 			);
 		}
 		this.taskContext.setRunningFlag(true);
-		this.taskContext.injectPoints.forEach(({ taskId: id, injectAt }) => {
+		this.taskContext.taskRecords.forEach(({ taskId: id, injectAt }) => {
 			this.domWatcher.onDomReady(
 				injectAt,
 				(el): void => this.handleInjectionReady(el, id),
@@ -66,15 +67,28 @@ export class Injector {
 		event: string,
 		callback: EventListener,
 		activitySignal?: () => Ref<boolean>
-	): string {
+	): ListenerRegisterResult {
 		// Standalone method for registering event listeners without component injection
 		const id: string = `listener-${listenAt}-${event}`;
-
-		if (this.taskContext.has(id)) {
-			throw new Error(`[vue-injector] Listener "${id}" is already registered`);
+		if (this.taskContext.getRunningFlag()) {
+			console.warn(
+				`[vue-injector] Injector is already running, registerListener() for "${id}" is ignored`
+			);
+			return {
+				taskId: id,
+				isSuccess: false
+			};
 		}
 
-		const context: InjectionContext = {
+		if (this.taskContext.has(id)) {
+			console.warn(`[vue-injector] Listener "${id}" is already registered, skipping`);
+			return {
+				taskId: id,
+				isSuccess: true
+			};
+		}
+
+		const context: Task = {
 			taskId: id,
 			listenerName: id,
 			withEvent: true,
@@ -87,9 +101,12 @@ export class Injector {
 			context.activitySignal = activitySignal;
 		}
 		this.taskContext.set(id, context);
-		this.taskContext.injectPoints.push({ taskId: id, injectAt: listenAt });
+		this.taskContext.taskRecords.push({ taskId: id, injectAt: listenAt });
 		console.log(`[vue-injector] Listener "${id}" registered`);
-		return id;
+		return {
+			taskId: id,
+			isSuccess: true
+		};
 	}
 
 	public register(
@@ -98,17 +115,30 @@ export class Injector {
 		option?: ComponentOptions
 	): RegisterResult {
 		const taskId: string = this.getTaskId(component, injectAt);
+		if (this.taskContext.getRunningFlag()) {
+			console.warn(
+				`[vue-injector] Injector is already running, register() for "${taskId}" is ignored`
+			);
+			return {
+				taskId: taskId,
+				isSuccess: false,
+				keepAlive: () => { },
+				stopAlive: () => { }
+			};
+		}
+
 		if (this.taskContext.has(taskId)) {
 			// Component already registered, return directly
 			console.warn(`[vue-injector] Task "${taskId}" is already registered, skipping`);
 			return {
-				id: taskId,
+				taskId: taskId,
+				isSuccess: true,
 				keepAlive: () => this.keepAlive(taskId),
 				stopAlive: () => this.stopAlive(taskId)
 			};
 		}
-		// Use unified InjectionContext to store all information
-		const context: InjectionContext = {
+		// Use unified Task to store all information
+		const context: Task = {
 			taskId,
 			componentName: this.getComponentName(component),
 			componentInjectAt: injectAt,
@@ -136,36 +166,37 @@ export class Injector {
 		}
 
 		this.taskContext.set(taskId, context);
-		this.taskContext.injectPoints.push({
+		this.taskContext.taskRecords.push({
 			taskId: taskId,
 			injectAt: injectAt
 		});
 		console.log(`[vue-injector] Task "${taskId}" registered`);
 		return {
-			id: taskId,
+			taskId: taskId,
+			isSuccess: true,
 			keepAlive: () => this.keepAlive(taskId),
 			stopAlive: () => this.stopAlive(taskId)
 		};
 	}
 
-	public keepAlive(id: string): void {
-		const context = this.taskContext.get(id);
+	public keepAlive(taskId: string): void {
+		const context = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(`[vue-injector] Task "${id}" not found`);
+			console.error(`[vue-injector] Task "${taskId}" not found`);
 			return;
 		}
 
 		// keepAlive only applies to component tasks
 		if (!context.component || !context.componentInjectAt) {
 			console.warn(
-				`[vue-injector] keepAlive is not applicable to non-component task "${id}"`
+				`[vue-injector] keepAlive is not applicable to non-component task "${taskId}"`
 			);
 			return;
 		}
 
 		// Already alive with an active observer, skip
 		if (context.alive && context.isObserver) {
-			console.warn(`[vue-injector] Task "${id}" already has an active alive observer`);
+			console.warn(`[vue-injector] Task "${taskId}" already has an active alive observer`);
 			return;
 		}
 
@@ -174,14 +205,14 @@ export class Injector {
 		context.alive = true;
 		context.isObserver = false;
 		// placeholder stop handler for pending async setup
-		context.stopAlive = () => {};
+		context.stopAlive = () => { };
 
-		// Case 1: Component is already mounted and connected — set up the alive observer directly
+		// Case 1: Component is already mounted and connected - set up the alive observer directly
 		if (context.app && context.appRoot?.isConnected) {
 			const matchedElement = context.appRoot.parentElement;
 			if (!matchedElement) {
 				console.warn(
-					`[vue-injector] Task "${id}": host element not found, unable to activate alive observer`
+					`[vue-injector] Task "${taskId}": host element not found, unable to activate alive observer`
 				);
 				return;
 			}
@@ -196,9 +227,9 @@ export class Injector {
 					matchedElement,
 					injectAt,
 					() => {
-						this.taskContext.resetState(id);
+						this.taskContext.resetState(taskId);
 					},
-					(el): void => this.handleInjectionReady(el, id),
+					(el): void => this.handleInjectionReady(el, taskId),
 					context.scope === 'global' ? currentDocument : matchedElement,
 					{
 						once: true,
@@ -212,7 +243,7 @@ export class Injector {
 				}
 				context.stopAlive = stopHandler;
 				context.isObserver = true;
-				console.log(`[vue-injector] Task "${id}" alive observer activated`);
+				console.log(`[vue-injector] Task "${taskId}" alive observer activated`);
 			});
 			return;
 		}
@@ -226,11 +257,11 @@ export class Injector {
 				(el): void => {
 					if (cancelled || !context.alive || context.aliveEpoch !== aliveEpoch) {
 						console.warn(
-							`[vue-injector] Task "${id}" alive epoch changed before element appears`
+							`[vue-injector] Task "${taskId}" alive epoch changed before element appears`
 						);
 						return;
 					}
-					this.handleInjectionReady(el, id);
+					this.handleInjectionReady(el, taskId);
 				},
 				document,
 				{ once: true, timeout: this.injectConfig.timeout }
@@ -241,21 +272,21 @@ export class Injector {
 				stopReadyObserver();
 			};
 			context.isObserver = true;
-			console.log(`[vue-injector] Task "${id}" awaiting target element for re-injection`);
+			console.log(`[vue-injector] Task "${taskId}" awaiting target element for re-injection`);
 		}
 	}
 
-	public stopAlive(id: string): void {
-		const context = this.taskContext.get(id);
+	public stopAlive(taskId: string): void {
+		const context = this.taskContext.get(taskId);
 
 		if (!context) {
-			console.error(`[vue-injector] Task "${id}" not found`);
+			console.error(`[vue-injector] Task "${taskId}" not found`);
 			return;
 		}
 
-		// status check: if not set alive mode or no stopAlive handler, warn and exit
+		// status check: if not set alive mode or set false to alive mode, warn and exit
 		if (!context.alive) {
-			console.warn(`[vue-injector] Task "${id}" has no active alive observer to stop`);
+			console.warn(`[vue-injector] Task "${taskId}" has no active alive observer to stop`);
 			return;
 		}
 
@@ -275,17 +306,17 @@ export class Injector {
 		this.taskContext.setPinia(pinia);
 	}
 
-	public destroyed(id: string): void {
-		const context: InjectionContext | undefined = this.taskContext.get(id);
+	public destroyed(taskId: string): void {
+		const context: Task | undefined = this.taskContext.get(taskId);
 		if (context?.alive) {
-			this.stopAlive(id);
+			this.stopAlive(taskId);
 		}
-		this.taskContext.destroy(id);
+		this.taskContext.destroy(taskId);
 	}
 
 	public destroyedAll(): void {
 		for (const id of this.taskContext.keys()) {
-			const context: InjectionContext | undefined = this.taskContext.get(id);
+			const context: Task | undefined = this.taskContext.get(id);
 			if (context?.alive) {
 				this.stopAlive(id);
 			}
@@ -293,11 +324,11 @@ export class Injector {
 		this.taskContext.destroyedAll();
 	}
 	// TODO: add config option to enable flush sync or pre
-	public bindActivitySignal(id: string, source: WatchSource<boolean>): void {
+	public bindActivitySignal(taskId: string, source: WatchSource<boolean>): void {
 		// Bind a reactive signal to control automatic listener attach/detach for this task
-		const context: InjectionContext | undefined = this.taskContext.get(id);
+		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(`[vue-injector] Task "${id}" not found, unable to bind activity signal`);
+			console.error(`[vue-injector] Task "${taskId}" not found, unable to bind activity signal`);
 			return;
 		}
 
@@ -311,9 +342,7 @@ export class Injector {
 		const unWatch: WatchHandle = watch(
 			source,
 			(newSignal) => {
-				this.listenerActivity(id, {
-					type: newSignal ? Action.OPEN : Action.CLOSE
-				});
+				this.listenerActivity(taskId, newSignal ? Action.OPEN : Action.CLOSE);
 			},
 			{ immediate: true }
 		);
@@ -322,20 +351,20 @@ export class Injector {
 		context.watchSource = source;
 	}
 
-	public listenerActivity(id: string, event: ActionEvent): void {
-		const context: InjectionContext | undefined = this.taskContext.get(id);
+	public listenerActivity(taskId: string, event: ActionEvent): void {
+		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(`[vue-injector] Task "${id}" not found, unable to manage listener state`);
+			console.error(`[vue-injector] Task "${taskId}" not found, unable to manage listener state`);
 			return;
 		}
 
 		// Check if event binding is configured
 		if (!context.withEvent || !context.listenAt || !context.event || !context.callback) {
-			console.warn(`[vue-injector] Task "${id}" has no event binding configured`);
+			console.warn(`[vue-injector] Task "${taskId}" has no event binding configured`);
 			return;
 		}
 
-		switch (event.type) {
+		switch (event) {
 			case Action.OPEN: {
 				// If controller already exists, event is already bound
 				if (context.controller) {
@@ -343,7 +372,7 @@ export class Injector {
 				}
 
 				const newController = this.attachEvent(
-					id,
+					taskId,
 					context.listenAt,
 					context.event,
 					context.callback
@@ -353,7 +382,7 @@ export class Injector {
 					context.controller = newController;
 				} else {
 					console.error(
-						`[vue-injector] Failed to attach event "${context.event}" for task "${id}"`
+						`[vue-injector] Failed to attach event "${context.event}" for task "${taskId}"`
 					);
 				}
 				break;
@@ -365,35 +394,35 @@ export class Injector {
 
 				context.controller.abort(); // Abort event listener
 				context.controller = undefined;
-				console.log(`[vue-injector] Event "${context.event}" detached from task "${id}"`);
+				console.log(`[vue-injector] Event "${context.event}" detached from task "${taskId}"`);
 				break;
 			}
 
 			default: {
-				console.warn(`[vue-injector] Unknown action type "${event.type}" for task "${id}"`);
+				console.warn(`[vue-injector] Unknown action type "${event}" for task "${taskId}"`);
 			}
 		}
 	}
 
-	private handleInjectionReady(targetElement: HTMLElement, id: string): void {
-		const context = this.taskContext.get(id);
+	private handleInjectionReady(targetElement: HTMLElement, taskId: string): void {
+		const context = this.taskContext.get(taskId);
 		if (!context) {
 			console.error(
-				`[vue-injector] Task "${id}" not found, unable to proceed with injection`
+				`[vue-injector] Task "${taskId}" not found, unable to proceed with injection`
 			);
 			return;
 		}
 
 		// Mount component
 		if (context.component) {
-			this.injectComponent(targetElement, id);
+			this.injectComponent(targetElement, taskId);
 		}
 		// If event binding is configured, bind the event
 		if (context.withEvent) {
 			if (context.activitySignal) {
-				this.bindActivitySignal(id, context.activitySignal());
+				this.bindActivitySignal(taskId, context.activitySignal());
 			} else {
-				this.listenerActivity(id, { type: Action.OPEN });
+				this.listenerActivity(taskId, Action.OPEN);
 			}
 		}
 	}
@@ -463,7 +492,7 @@ export class Injector {
 
 	// Inject component into the matched DOM element
 	private injectComponent(matchedElement: HTMLElement, taskId: string): boolean {
-		const context: InjectionContext | undefined = this.taskContext.get(taskId);
+		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context || !context.componentInjectAt) {
 			console.error(`[vue-injector] Task "${taskId}" context missing, injection aborted`);
 			return false;

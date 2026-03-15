@@ -1,12 +1,10 @@
-import type { App, Component, ComponentPublicInstance, Ref, WatchHandle, WatchSource } from 'vue';
+﻿import type { App, Component, ComponentPublicInstance, Ref, WatchHandle, WatchSource } from 'vue';
 
 export enum Action {
 	OPEN = 'OPEN',
 	CLOSE = 'CLOSE'
 }
-export type ActionEvent = {
-	type: Action;
-};
+export type ActionEvent = 'OPEN' | 'CLOSE';
 
 export type ComponentOptions = {
 	alive?: boolean;
@@ -23,12 +21,12 @@ export type ObserverOptions =
 	| { once: boolean; timeout?: number }
 	| { once?: boolean; timeout: number };
 
-export type InjectionRecord = {
+export type TaskRecord = {
 	taskId: string;
 	injectAt: string;
 };
 
-export type InjectionErrorMessage = {
+export type TaskErrorMessage = {
 	taskId: string;
 	injectAt: string;
 };
@@ -38,7 +36,7 @@ export type InjectionConfig = {
 	timeout?: number;
 };
 export type InjectCallback = (el: HTMLElement, observer?: MutationObserver) => void;
-export type InjectionContext = {
+export type Task = {
 	// Unique task identifier
 	taskId: string;
 
@@ -70,7 +68,13 @@ export type InjectionContext = {
 	stopAlive?: () => void;
 };
 export type RegisterResult = {
-	id: string;
+	taskId: string;
+	isSuccess: boolean;
 	keepAlive: () => void;
 	stopAlive: () => void;
+};
+
+export type ListenerRegisterResult = {
+	taskId: string;
+	isSuccess: boolean;
 };

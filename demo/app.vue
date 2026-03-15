@@ -86,7 +86,7 @@ function runInjector() {
         }
     });
 
-    const listenerId = injector.registerListener(
+    const listenerResult = injector.registerListener(
         '#target-5-btn',
         'click',
         () => {
@@ -100,7 +100,7 @@ function runInjector() {
         scope: 'local',
     });
 
-    addLog('info', `[Demo] Pure listener registered, id: ${listenerId}`)
+    addLog('info', `[Demo] Pure listener registered, id: ${listenerResult.taskId}`)
 
     // 更新顶层 provide 的响应式对象
     componentInfo.injectorInstance = injector
