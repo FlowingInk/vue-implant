@@ -40,25 +40,25 @@ export class Injector {
 	}
 
 	public run(): void {
-		if (this.taskContext.getRunningFlag()) {
-			console.warn(
-				'[vue-injector] Injector is already running, duplicate run() call ignored'
-			);
-			return;
-		}
 		if (this.taskContext.taskRecords.length === 0) {
 			throw new Error(
 				'[vue-injector] No registered tasks found, call register() before run()'
 			);
 		}
-		this.taskContext.setRunningFlag(true);
 		this.taskContext.taskRecords.forEach(({ taskId: id, injectAt }) => {
+			const status = this.taskContext.getTaskStatus(id);
+			if (status === 'active' || status === 'pending') return;
+
 			this.domWatcher.onDomReady(
 				injectAt,
 				(el): void => this.handleInjectionReady(el, id),
 				document,
 				{ once: true, timeout: this.injectConfig.timeout }
 			);
+			if (this.taskContext.getTaskStatus(id) !== 'active') {
+				// when the target element is exist, will sync call the func ,so we do not set to pending
+				this.taskContext.setTaskStatus(id, 'pending');
+			}
 		});
 	}
 
@@ -70,15 +70,6 @@ export class Injector {
 	): ListenerRegisterResult {
 		// Standalone method for registering event listeners without component injection
 		const id: string = `listener-${listenAt}-${event}`;
-		if (this.taskContext.getRunningFlag()) {
-			console.warn(
-				`[vue-injector] Injector is already running, registerListener() for "${id}" is ignored`
-			);
-			return {
-				taskId: id,
-				isSuccess: false
-			};
-		}
 
 		if (this.taskContext.has(id)) {
 			console.warn(`[vue-injector] Listener "${id}" is already registered, skipping`);
@@ -90,6 +81,7 @@ export class Injector {
 
 		const context: Task = {
 			taskId: id,
+			taskStatus: 'idle',
 			listenerName: id,
 			withEvent: true,
 			listenAt,
@@ -115,17 +107,6 @@ export class Injector {
 		option?: ComponentOptions
 	): RegisterResult {
 		const taskId: string = this.getTaskId(component, injectAt);
-		if (this.taskContext.getRunningFlag()) {
-			console.warn(
-				`[vue-injector] Injector is already running, register() for "${taskId}" is ignored`
-			);
-			return {
-				taskId: taskId,
-				isSuccess: false,
-				keepAlive: () => { },
-				stopAlive: () => { }
-			};
-		}
 
 		if (this.taskContext.has(taskId)) {
 			// Component already registered, return directly
@@ -140,6 +121,7 @@ export class Injector {
 		// Use unified Task to store all information
 		const context: Task = {
 			taskId,
+			taskStatus: 'idle',
 			componentName: this.getComponentName(component),
 			componentInjectAt: injectAt,
 			component: this.markRawComponent(component),
@@ -205,7 +187,7 @@ export class Injector {
 		context.alive = true;
 		context.isObserver = false;
 		// placeholder stop handler for pending async setup
-		context.stopAlive = () => { };
+		context.stopAlive = () => {};
 
 		// Case 1: Component is already mounted and connected - set up the alive observer directly
 		if (context.app && context.appRoot?.isConnected) {
@@ -306,6 +288,24 @@ export class Injector {
 		this.taskContext.setPinia(pinia);
 	}
 
+	public reseted(taskId: string): void {
+		const context: Task | undefined = this.taskContext.get(taskId);
+		if (context?.alive) {
+			this.stopAlive(taskId);
+		}
+		this.taskContext.resetState(taskId);
+	}
+
+	public resetedAll(): void {
+		for (const id of this.taskContext.keys()) {
+			const context: Task | undefined = this.taskContext.get(id);
+			if (context?.alive) {
+				this.stopAlive(id);
+			}
+		}
+		this.taskContext.resetAll();
+	}
+
 	public destroyed(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (context?.alive) {
@@ -324,12 +324,14 @@ export class Injector {
 		this.taskContext.destroyedAll();
 	}
 	// TODO: add config option to enable flush sync or pre
-	public bindActivitySignal(taskId: string, source: WatchSource<boolean>): void {
+	public bindActivitySignal(taskId: string, source: WatchSource<boolean>): boolean {
 		// Bind a reactive signal to control automatic listener attach/detach for this task
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(`[vue-injector] Task "${taskId}" not found, unable to bind activity signal`);
-			return;
+			console.error(
+				`[vue-injector] Task "${taskId}" not found, unable to bind activity signal`
+			);
+			return false;
 		}
 
 		// Stop the previous watcher before creating a new one
@@ -339,29 +341,37 @@ export class Injector {
 			context.watcher = undefined;
 		}
 
-		const unWatch: WatchHandle = watch(
-			source,
-			(newSignal) => {
-				this.listenerActivity(taskId, newSignal ? Action.OPEN : Action.CLOSE);
-			},
-			{ immediate: true }
-		);
+		try {
+			const unWatch: WatchHandle = watch(
+				source,
+				(newSignal) => {
+					this.listenerActivity(taskId, newSignal ? Action.OPEN : Action.CLOSE);
+				},
+				{ immediate: true }
+			);
 
-		context.watcher = unWatch;
-		context.watchSource = source;
+			context.watcher = unWatch;
+			context.watchSource = source;
+			return true;
+		} catch (e) {
+			console.error(`[vue-injector] Failed to bind activity signal for task "${taskId}":`, e);
+			return false;
+		}
 	}
 
-	public listenerActivity(taskId: string, event: ActionEvent): void {
+	public listenerActivity(taskId: string, event: ActionEvent): boolean {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(`[vue-injector] Task "${taskId}" not found, unable to manage listener state`);
-			return;
+			console.error(
+				`[vue-injector] Task "${taskId}" not found, unable to manage listener state`
+			);
+			return false;
 		}
 
 		// Check if event binding is configured
 		if (!context.withEvent || !context.listenAt || !context.event || !context.callback) {
 			console.warn(`[vue-injector] Task "${taskId}" has no event binding configured`);
-			return;
+			return false;
 		}
 
 		switch (event) {
@@ -394,14 +404,18 @@ export class Injector {
 
 				context.controller.abort(); // Abort event listener
 				context.controller = undefined;
-				console.log(`[vue-injector] Event "${context.event}" detached from task "${taskId}"`);
+				console.log(
+					`[vue-injector] Event "${context.event}" detached from task "${taskId}"`
+				);
 				break;
 			}
 
 			default: {
 				console.warn(`[vue-injector] Unknown action type "${event}" for task "${taskId}"`);
+				return false;
 			}
 		}
+		return true;
 	}
 
 	private handleInjectionReady(targetElement: HTMLElement, taskId: string): void {
@@ -413,18 +427,35 @@ export class Injector {
 			return;
 		}
 
+		if (context.taskStatus === 'active') {
+			return;
+		}
+
 		// Mount component
 		if (context.component) {
-			this.injectComponent(targetElement, taskId);
-		}
-		// If event binding is configured, bind the event
-		if (context.withEvent) {
-			if (context.activitySignal) {
-				this.bindActivitySignal(taskId, context.activitySignal());
-			} else {
-				this.listenerActivity(taskId, Action.OPEN);
+			const result: boolean = this.injectComponent(targetElement, taskId);
+			if (!result) {
+				context.taskStatus = 'idle';
+				return;
 			}
 		}
+
+		// If event binding is configured, bind the event
+		if (context.withEvent) {
+			let result: boolean | null = null;
+			if (context.activitySignal) {
+				result = this.bindActivitySignal(taskId, context.activitySignal());
+			} else {
+				result = this.listenerActivity(taskId, Action.OPEN);
+			}
+
+			if (result === false) {
+				context.taskStatus = 'idle';
+				return;
+			}
+		}
+
+		context.taskStatus = 'active';
 	}
 
 	private getTaskId(component: Component, selector: string): string {

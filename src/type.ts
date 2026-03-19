@@ -39,6 +39,7 @@ export type InjectCallback = (el: HTMLElement, observer?: MutationObserver) => v
 export type Task = {
 	// Unique task identifier
 	taskId: string;
+	taskStatus?: 'idle' | 'pending' | 'active';
 
 	// Component injection info
 	app?: App<Element>;
