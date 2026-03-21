@@ -11,7 +11,7 @@ describe('Injector', () => {
 	let taskContext: TaskContext;
 	beforeEach(() => {
 		injector = new Injector();
-		taskContext = injector.getTaskContext() as TaskContext;
+		taskContext = injector.getContext() as TaskContext;
 		document.body.innerHTML = '';
 		vi.spyOn(console, 'log').mockImplementation(() => {});
 	});
@@ -161,7 +161,7 @@ describe('Injector', () => {
 		});
 
 		it('should skip activity Task and inject not active Task register() after run() has started', () => {
-			const taskContext = injector.getTaskContext();
+			const taskContext = injector.getContext();
 			const div = document.createElement('div');
 			div.id = 'late';
 			document.body.appendChild(div);
@@ -1067,7 +1067,7 @@ describe('Injector', () => {
 
 					await nextTick();
 
-					const taskContext = injector.getTaskContext();
+					const taskContext = injector.getContext();
 					const ctx = taskContext?.get('NoDupRun@#app');
 					expect(ctx?.isObserver).toBe(true);
 					expect(ctx?.disableAlive).toBeInstanceOf(Function);
@@ -1301,7 +1301,7 @@ describe('Injector', () => {
 				);
 				disableAlive();
 
-				const taskContext = injector.getTaskContext();
+				const taskContext = injector.getContext();
 				expect(taskContext?.get('App@#app')?.alive).toBe(false);
 				expect(taskContext?.get('App@#app')?.isObserver).toBe(false);
 			});
@@ -1318,7 +1318,7 @@ describe('Injector', () => {
 				);
 				disableAlive();
 
-				const taskContext = injector.getTaskContext();
+				const taskContext = injector.getContext();
 				expect(taskContext?.get('App@#app')?.disableAlive).toBeUndefined();
 			});
 			it('should increment aliveEpoch when disableAlive is called to invalidate in-flight async callbacks', async () => {
@@ -1337,7 +1337,7 @@ describe('Injector', () => {
 
 				await nextTick();
 
-				const taskContext = injector.getTaskContext();
+				const taskContext = injector.getContext();
 				expect(taskContext?.get('App@#app')?.aliveEpoch).toBe(1);
 			});
 			it('should invoke the stored disableAlive handler to tear down the active observer', () => {
@@ -1348,7 +1348,7 @@ describe('Injector', () => {
 				const fakeStopHandler = vi.fn();
 				const { taskId: id } = injector.register('#app', { name: 'App' }, { alive: true });
 
-				const taskContext = injector.getTaskContext();
+				const taskContext = injector.getContext();
 				const ctx = taskContext?.get(id);
 				if (!ctx) throw new Error('Task context should exist for registered component');
 
