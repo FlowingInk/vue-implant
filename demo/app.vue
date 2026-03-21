@@ -86,7 +86,7 @@ function run() {
 
 
 function reset() {
-    injector.resetedAll()
+    injector.resetAll()
     reinjectActive.value = false
     activitySignal.value = true
     addLog('Reset complete: all task states reset.')

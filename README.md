@@ -121,8 +121,8 @@ Return value:
 | --- | --- | --- | --- |
 | `taskId` | `string` | Unique task identifier. | `[ComponentName]@[CSSSelector]` |
 | `isSuccess` | `boolean` | Whether registration succeeds. | success `true`, failure `false` |
-| `keepAlive` | `() => void` | Manually enables re-injection; empty function when registration fails. | callback function |
-| `stopAlive` | `() => void` | Manually disables re-injection; empty function when registration fails. | callback function |
+| `enableAlive` | `() => void` | Manually enables re-injection; empty function when registration fails. | callback function |
+| `disableAlive` | `() => void` | Manually disables re-injection; empty function when registration fails. | callback function |
 
 > [!NOTE]
 > Re-registering the same component at the same target will not throw; it warns and returns the first registration result.
@@ -154,7 +154,7 @@ Return value:
 > [!NOTE]
 > You can call `registerListener()` after `run()`. The new listener task will be activated on the next `run()` call.
 
-### `Injector.keepAlive(taskId: string): void`
+### `Injector.enableAlive(taskId: string): void`
 
 Enables re-injection for a component task.
 
@@ -171,14 +171,14 @@ import TestAppComponent from './TestAppComponent.vue';
 const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
-injector.keepAlive(taskId);
+injector.enableAlive(taskId);
 injector.run();
 ```
 
 > [!NOTE]
 > Tasks registered via pure event listeners cannot use this API. Forced calls will warn and return immediately.
 
-### `Injector.stopAlive(taskId: string): void`
+### `Injector.disableAlive(taskId: string): void`
 
 Disables re-injection for a component task.
 
@@ -195,15 +195,15 @@ import TestAppComponent from './TestAppComponent.vue';
 const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
-injector.keepAlive(taskId);
-injector.stopAlive(taskId);
+injector.enableAlive(taskId);
+injector.disableAlive(taskId);
 injector.run();
 ```
 
 > [!NOTE]
 > If re-injection is not currently enabled for this task, it will warn and return immediately.
 
-### `Injector.destroyed(taskId: string): void`
+### `Injector.destroy(taskId: string): void`
 
 Destroys a specific task and releases associated listeners, component instances, and state.
 
@@ -221,10 +221,10 @@ const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
 injector.run();
-injector.destroyed(taskId);
+injector.destroy(taskId);
 ```
 
-### `Injector.destroyedAll(): void`
+### `Injector.destroyAll(): void`
 
 Destroys all tasks registered in the current `Injector`.
 
@@ -239,10 +239,10 @@ injector.register('#app', TestAppComponent);
 injector.registerListener('#btn', 'click', () => console.log('clicked'));
 
 injector.run();
-injector.destroyedAll();
+injector.destroyAll();
 ```
 
-### `Injector.reseted(taskId: string): void`
+### `Injector.reset(taskId: string): void`
 
 Resets a specific task to reusable initial runtime state while keeping registration metadata.
 
@@ -257,7 +257,7 @@ Behavior summary:
 - Aborts listener and stops watcher.
 - Keeps the task entry in context, so the task can be reused.
 
-### `Injector.resetedAll(): void`
+### `Injector.resetAll(): void`
 
 Resets all registered tasks to reusable initial runtime state.
 
@@ -267,7 +267,7 @@ Behavior summary:
 - Calls context-level full reset once to clean runtime fields of every task.
 - Keeps task registrations and task IDs in context.
 
-### `Injector.bindActivitySignal(taskId: string, source: WatchSource<boolean>): boolean`
+### `Injector.bindListenerSignal(taskId: string, source: WatchSource<boolean>): boolean`
 
 Binds an external reactive signal to listener activation: listener opens when `true`, closes when `false`.
 
@@ -294,11 +294,11 @@ const { taskId } = injector.register('#app', TestAppComponent, {
 	}
 });
 
-injector.bindActivitySignal(taskId, enabled);
+injector.bindListenerSignal(taskId, enabled);
 injector.run();
 ```
 
-### `Injector.listenerActivity(taskId: string, event: ActionEvent): boolean`
+### `Injector.controlListener(taskId: string, event: ActionEvent): boolean`
 
 Manually controls the external listener state of a registered task: `Action.OPEN` to enable, `Action.CLOSE` to disable.
 
@@ -322,8 +322,8 @@ const { taskId } = injector.register('#app', TestAppComponent, {
 	}
 });
 
-injector.listenerActivity(taskId, Action.OPEN);
-injector.listenerActivity(taskId, Action.CLOSE);
+injector.controlListener(taskId, Action.OPEN);
+injector.controlListener(taskId, Action.CLOSE);
 ```
 
 
@@ -348,7 +348,7 @@ No. Re-registering the same `listenAt + event` emits a warning and returns the s
 - `local`: smaller observation scope, lower side effects, recommended by default.
 - `global`: more robust for local DOM rebuild scenarios, but with a larger observation scope and higher performance cost.
 
-### 4) Can `keepAlive`/`stopAlive` be used for pure listener tasks?
+### 4) Can `enableAlive`/`disableAlive` be used for pure listener tasks?
 
 No. Calling these APIs on pure listener tasks returns immediately with warnings.
 

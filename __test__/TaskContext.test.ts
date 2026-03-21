@@ -60,7 +60,7 @@ describe('TaskContext', () => {
 			};
 			taskContext.set('test1', context1);
 			taskContext.set('test2', context2);
-			taskContext.destroyedAll();
+			taskContext.destroyAll();
 			expect(taskContext.get('test1')).toBeUndefined();
 			expect(taskContext.get('test2')).toBeUndefined();
 		});
@@ -223,7 +223,7 @@ describe('TaskContext', () => {
 			};
 			taskContext.set('test1', context1);
 			taskContext.set('test2', context2);
-			taskContext.destroyedAll();
+			taskContext.destroyAll();
 			expect(taskContext.get('test1')).toBeUndefined();
 			expect(taskContext.get('test2')).toBeUndefined();
 		});
@@ -232,14 +232,14 @@ describe('TaskContext', () => {
 			taskContext.taskRecords.push({ taskId: 'test2', injectAt: 'inject_test2' });
 			taskContext.taskErrorMessages.push({ taskId: 'test3', injectAt: 'inject_test3' });
 			taskContext.taskErrorMessages.push({ taskId: 'test4', injectAt: 'inject_test4' });
-			taskContext.destroyedAll();
+			taskContext.destroyAll();
 			expect(taskContext.taskRecords).toHaveLength(0);
 			expect(taskContext.taskErrorMessages).toHaveLength(0);
 		});
-		it('should clear all tasks after destroyedAll', () => {
+		it('should clear all tasks after destroyAll', () => {
 			taskContext.set('destroy-all-a', { taskId: 'destroy-all-a', taskStatus: 'active' });
 			taskContext.set('destroy-all-b', { taskId: 'destroy-all-b', taskStatus: 'idle' });
-			taskContext.destroyedAll();
+			taskContext.destroyAll();
 			expect(taskContext.get('destroy-all-a')).toBeUndefined();
 			expect(taskContext.get('destroy-all-b')).toBeUndefined();
 		});
@@ -273,13 +273,13 @@ describe('TaskContext', () => {
 
 			taskContext.set('test1', context1);
 			taskContext.set('test2', context2);
-			taskContext.destroyedAll();
+			taskContext.destroyAll();
 
 			expect(mockWatcher1).toHaveBeenCalled();
 			expect(mockWatcher2).toHaveBeenCalled();
 		});
 		it('should not throw an error when contextMap is empty', () => {
-			expect(() => taskContext.destroyedAll()).not.toThrow();
+			expect(() => taskContext.destroyAll()).not.toThrow();
 		});
 	});
 
@@ -510,7 +510,7 @@ describe('TaskContext', () => {
 			);
 		});
 	});
-	describe('resetState', () => {
+	describe('reset', () => {
 		it('should reset all context properties except taskId', () => {
 			const mockWatcher = vi.fn() as unknown as WatchHandle;
 			const mockAbort = vi.fn();
@@ -533,11 +533,11 @@ describe('TaskContext', () => {
 				appRoot: { remove: mockRemove } as unknown as HTMLElement,
 				instance: {} as ComponentPublicInstance,
 				isObserver: true,
-				stopAlive: mockStopAlive
+				disableAlive: mockStopAlive
 			};
 
 			taskContext.set('test', context);
-			taskContext.resetState('test');
+			taskContext.reset('test');
 
 			expect(context.taskId).toBe('test');
 
@@ -551,7 +551,7 @@ describe('TaskContext', () => {
 			expect(context.instance).toBeUndefined();
 
 			expect(context.isObserver).toBe(false);
-			expect(context.stopAlive).toBe(mockStopAlive);
+			expect(context.disableAlive).toBe(mockStopAlive);
 
 			expect(mockAbort).toHaveBeenCalledOnce();
 			expect(mockWatcher).toHaveBeenCalledOnce();
@@ -560,15 +560,15 @@ describe('TaskContext', () => {
 			expect(mockStopAlive).not.toHaveBeenCalled();
 		});
 		it('should not throw error if context is undefined', () => {
-			expect(() => taskContext.resetState('nonexistent')).not.toThrow();
+			expect(() => taskContext.reset('nonexistent')).not.toThrow();
 		});
-		it('should stay in map after resetState', () => {
+		it('should stay in map after reset', () => {
 			const context: Task = {
 				taskId: 'test',
 				taskStatus: 'idle'
 			};
 			taskContext.set('test', context);
-			taskContext.resetState('test');
+			taskContext.reset('test');
 			expect(taskContext.get('test')).toEqual({
 				taskId: 'test',
 				taskStatus: 'idle',

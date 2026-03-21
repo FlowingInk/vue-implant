@@ -71,8 +71,8 @@ describe('Injector', () => {
 			});
 
 			expect(result.taskId).toBe('MyComp@#app');
-			expect(typeof result.keepAlive).toBe('function');
-			expect(typeof result.stopAlive).toBe('function');
+			expect(typeof result.enableAlive).toBe('function');
+			expect(typeof result.disableAlive).toBe('function');
 		});
 
 		it('should use __name when name is not present (SFC-style component)', () => {
@@ -188,26 +188,26 @@ describe('Injector', () => {
 			expect(r2.taskId).toBe('Shared@#b');
 		});
 
-		it('destroyed() should not warn about missing task (proves context exists)', () => {
+		it('destroy() should not warn about missing task (proves context exists)', () => {
 			const { taskId: id } = injector.register('#app', { name: 'Del' });
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			injector.destroyed(id);
+			injector.destroy(id);
 
 			expect(warnSpy).not.toHaveBeenCalledWith(
 				expect.stringContaining('may already be destroyed')
 			);
 		});
 
-		it('returned keepAlive() should not throw for a component task', () => {
+		it('returned enableAlive() should not throw for a component task', () => {
 			vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { keepAlive } = injector.register('#app', { name: 'KA' });
-			expect(() => keepAlive()).not.toThrow();
+			const { enableAlive } = injector.register('#app', { name: 'KA' });
+			expect(() => enableAlive()).not.toThrow();
 		});
 
-		it('returned stopAlive() should warn when alive was not started', () => {
+		it('returned disableAlive() should warn when alive was not started', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			const { stopAlive } = injector.register('#app', { name: 'SA' });
-			stopAlive();
+			const { disableAlive } = injector.register('#app', { name: 'SA' });
+			disableAlive();
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('no active alive observer')
 			);
@@ -227,7 +227,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.listenerActivity(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
 
 			btn.click();
 			expect(cb).toHaveBeenCalledOnce();
@@ -237,7 +237,7 @@ describe('Injector', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { taskId: id } = injector.register('#app', { name: 'NoEvt' });
 
-			injector.listenerActivity(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('no event binding configured')
@@ -488,7 +488,7 @@ describe('Injector', () => {
 			expect(context?.appRoot?.parentElement).toBe(host);
 		});
 
-		it('should route to bindActivitySignal when activitySignal is provided', () => {
+		it('should route to bindListenerSignal when activitySignal is provided', () => {
 			const host = document.createElement('div');
 			host.id = 'ready-with-signal';
 			document.body.appendChild(host);
@@ -497,8 +497,8 @@ describe('Injector', () => {
 			btn.id = 'btn-signal';
 			document.body.appendChild(btn);
 
-			const bindSignalSpy = vi.spyOn(injector, 'bindActivitySignal');
-			const listenerSpy = vi.spyOn(injector, 'listenerActivity');
+			const bindSignalSpy = vi.spyOn(injector, 'bindListenerSignal');
+			const listenerSpy = vi.spyOn(injector, 'controlListener');
 			const signal = ref(true);
 
 			injector.register(
@@ -523,7 +523,7 @@ describe('Injector', () => {
 			);
 		});
 
-		it('should call listenerActivity OPEN directly when activitySignal is not provided', () => {
+		it('should call controlListener OPEN directly when activitySignal is not provided', () => {
 			const host = document.createElement('div');
 			host.id = 'ready-open';
 			document.body.appendChild(host);
@@ -532,7 +532,7 @@ describe('Injector', () => {
 			btn.id = 'btn-open';
 			document.body.appendChild(btn);
 
-			const listenerSpy = vi.spyOn(injector, 'listenerActivity');
+			const listenerSpy = vi.spyOn(injector, 'controlListener');
 
 			const { taskId: id } = injector.register(
 				'#ready-open',
@@ -572,7 +572,7 @@ describe('Injector', () => {
 		});
 	});
 
-	describe('listenerActivity', () => {
+	describe('controlListener', () => {
 		it('Action.OPEN should bind event and save controller', () => {
 			const btn = document.createElement('button');
 			btn.id = 'open-bind';
@@ -587,7 +587,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.listenerActivity(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
 
 			expect(addSpy).toHaveBeenCalledOnce();
 			expect(taskContext.get(id)?.controller).toBeInstanceOf(AbortController);
@@ -607,8 +607,8 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.listenerActivity(id, Action.OPEN);
-			injector.listenerActivity(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
 
 			expect(addSpy).toHaveBeenCalledOnce();
 		});
@@ -627,7 +627,7 @@ describe('Injector', () => {
 			if (!context) throw new Error('Task context not found');
 			context.controller = controller;
 
-			injector.listenerActivity(id, Action.CLOSE);
+			injector.controlListener(id, Action.CLOSE);
 
 			expect(abortSpy).toHaveBeenCalledOnce();
 			expect(context.controller).toBeUndefined();
@@ -637,7 +637,7 @@ describe('Injector', () => {
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const { taskId: id } = injector.register('#app', { name: 'NoEventConfig' });
 
-			injector.listenerActivity(id, Action.OPEN);
+			injector.controlListener(id, Action.OPEN);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('has no event binding configured')
@@ -654,7 +654,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.listenerActivity(id, 'UNKNOWN' as Action);
+			injector.controlListener(id, 'UNKNOWN' as Action);
 
 			expect(warnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Unknown action type "UNKNOWN"')
@@ -662,10 +662,10 @@ describe('Injector', () => {
 		});
 	});
 
-	describe('bindActivitySignal', () => {
+	describe('bindListenerSignal', () => {
 		it('should trigger OPEN when signal becomes true and CLOSE when false', async () => {
 			const signal = ref(false);
-			const spy = vi.spyOn(injector, 'listenerActivity');
+			const spy = vi.spyOn(injector, 'controlListener');
 			const { taskId: id } = injector.register(
 				'#app',
 				{ name: 'SignalFlow' },
@@ -674,7 +674,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.bindActivitySignal(id, signal);
+			injector.bindListenerSignal(id, signal);
 
 			signal.value = true;
 			await nextTick();
@@ -701,7 +701,7 @@ describe('Injector', () => {
 			if (!context) throw new Error('Task context not found');
 			context.watcher = oldWatcher as unknown as WatchHandle;
 
-			injector.bindActivitySignal(id, signal);
+			injector.bindListenerSignal(id, signal);
 
 			expect(oldWatcher).toHaveBeenCalledOnce();
 			expect(context.watcher).toBeInstanceOf(Function);
@@ -709,7 +709,7 @@ describe('Injector', () => {
 
 		it('should run immediately once when binding (immediate: true)', () => {
 			const signal = ref(true);
-			const spy = vi.spyOn(injector, 'listenerActivity');
+			const spy = vi.spyOn(injector, 'controlListener');
 			const { taskId: id } = injector.register(
 				'#app',
 				{ name: 'ImmediateSignal' },
@@ -718,7 +718,7 @@ describe('Injector', () => {
 				}
 			);
 
-			injector.bindActivitySignal(id, signal);
+			injector.bindListenerSignal(id, signal);
 
 			expect(spy).toHaveBeenCalledWith(id, Action.OPEN);
 		});
@@ -823,8 +823,8 @@ describe('Injector', () => {
 		});
 	});
 
-	describe('destroyed / destroyedAll', () => {
-		it('destroyed should stop alive task first, then call taskContext.destroy', () => {
+	describe('destroy / destroyAll', () => {
+		it('destroy should stop alive task first, then call taskContext.destroy', () => {
 			const { taskId: id } = injector.register(
 				'#app',
 				{ name: 'DestroyOne' },
@@ -834,10 +834,10 @@ describe('Injector', () => {
 			if (!context) throw new Error('Task context not found');
 			context.alive = true;
 
-			const stopAliveSpy = vi.spyOn(injector, 'stopAlive');
+			const stopAliveSpy = vi.spyOn(injector, 'disableAlive');
 			const destroySpy = vi.spyOn(taskContext, 'destroy');
 
-			injector.destroyed(id);
+			injector.destroy(id);
 
 			expect(stopAliveSpy).toHaveBeenCalledWith(id);
 			expect(destroySpy).toHaveBeenCalledWith(id);
@@ -847,7 +847,7 @@ describe('Injector', () => {
 			expect(taskContext.get(id)).toBeUndefined();
 		});
 
-		it('destroyedAll should stop alive tasks then clear all contexts', () => {
+		it('destroyAll should stop alive tasks then clear all contexts', () => {
 			const aliveA = injector.register('#a', { name: 'AliveA' }, { alive: true }).taskId;
 			const aliveB = injector.register('#b', { name: 'AliveB' }, { alive: true }).taskId;
 			const normal = injector.register('#c', { name: 'NormalC' }).taskId;
@@ -858,10 +858,10 @@ describe('Injector', () => {
 			a.alive = true;
 			b.alive = true;
 
-			const stopAliveSpy = vi.spyOn(injector, 'stopAlive');
-			const destroyAllSpy = vi.spyOn(taskContext, 'destroyedAll');
+			const stopAliveSpy = vi.spyOn(injector, 'disableAlive');
+			const destroyAllSpy = vi.spyOn(taskContext, 'destroyAll');
 
-			injector.destroyedAll();
+			injector.destroyAll();
 
 			expect(stopAliveSpy).toHaveBeenCalledWith(aliveA);
 			expect(stopAliveSpy).toHaveBeenCalledWith(aliveB);
@@ -873,17 +873,17 @@ describe('Injector', () => {
 		});
 	});
 
-	describe('reseted / resetedAll', () => {
-		it('reseted should stop alive task first, then call taskContext.resetState', () => {
+	describe('reset / resetAll', () => {
+		it('reset should stop alive task first, then call taskContext.reset', () => {
 			const { taskId: id } = injector.register('#app', { name: 'ResetOne' }, { alive: true });
 			const context = taskContext.get(id);
 			if (!context) throw new Error('Task context not found');
 			context.alive = true;
 
-			const stopAliveSpy = vi.spyOn(injector, 'stopAlive');
-			const resetStateSpy = vi.spyOn(taskContext, 'resetState');
+			const stopAliveSpy = vi.spyOn(injector, 'disableAlive');
+			const resetStateSpy = vi.spyOn(taskContext, 'reset');
 
-			injector.reseted(id);
+			injector.reset(id);
 
 			expect(stopAliveSpy).toHaveBeenCalledWith(id);
 			expect(resetStateSpy).toHaveBeenCalledWith(id);
@@ -892,7 +892,7 @@ describe('Injector', () => {
 			);
 		});
 
-		it('resetedAll should stop alive tasks and call taskContext.resetAll once', () => {
+		it('resetAll should stop alive tasks and call taskContext.resetAll once', () => {
 			const aliveA = injector.register(
 				'#ra',
 				{ name: 'ResetAliveA' },
@@ -911,10 +911,10 @@ describe('Injector', () => {
 			a.alive = true;
 			b.alive = true;
 
-			const stopAliveSpy = vi.spyOn(injector, 'stopAlive');
+			const stopAliveSpy = vi.spyOn(injector, 'disableAlive');
 			const resetAllSpy = vi.spyOn(taskContext, 'resetAll');
 
-			injector.resetedAll();
+			injector.resetAll();
 
 			expect(stopAliveSpy).toHaveBeenCalledWith(aliveA);
 			expect(stopAliveSpy).toHaveBeenCalledWith(aliveB);
@@ -942,30 +942,30 @@ describe('Injector', () => {
 			expect(install).toHaveBeenCalledOnce();
 		});
 	});
-	describe('keepAlive/stopAlive', () => {
-		describe('keepAlive', () => {
+	describe('enableAlive/disableAlive', () => {
+		describe('enableAlive', () => {
 			it('should warn and return early when called on a pure listener task (no component)', () => {
 				const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 				const { taskId: id } = injector.registerListener('#app', 'click', () => {});
-				injector.keepAlive(id);
+				injector.enableAlive(id);
 				expect(warnSpy).toHaveBeenCalledWith(
-					expect.stringContaining('keepAlive is not applicable to non-component task')
+					expect.stringContaining('enableAlive is not applicable to non-component task')
 				);
 			});
 			it('should warn and skip when an alive observer is already active (alive=true && isObserver=true)', () => {
 				const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 				const { taskId: id } = injector.register('#app', { name: 'NoDupRun' });
-				injector.keepAlive(id);
-				injector.keepAlive(id);
+				injector.enableAlive(id);
+				injector.enableAlive(id);
 				expect(warnSpy).toHaveBeenCalledWith(
 					expect.stringContaining('already has an active alive observer')
 				);
 			});
-			it('should increment aliveEpoch each time keepAlive is called', () => {
+			it('should increment aliveEpoch each time enableAlive is called', () => {
 				const { taskId: id } = injector.register('#app', { name: 'NoDupRun' });
 				const epoch = taskContext.get(id)?.aliveEpoch;
 				expect(epoch).toBe(0);
-				injector.keepAlive(id);
+				injector.enableAlive(id);
 				const epoch2 = taskContext.get(id)?.aliveEpoch;
 				expect(epoch2).toBe(1);
 			});
@@ -1057,7 +1057,7 @@ describe('Injector', () => {
 					expect(selector).toBe('#app');
 					expect(opts).toEqual({ once: true, timeout: 5000 });
 				});
-				it('should set isObserver=true and assign stopAlive handler after onDomAlive is called', async () => {
+				it('should set isObserver=true and assign disableAlive handler after onDomAlive is called', async () => {
 					const div = document.createElement('div');
 					div.id = 'app';
 					document.body.appendChild(div);
@@ -1070,7 +1070,7 @@ describe('Injector', () => {
 					const taskContext = injector.getTaskContext();
 					const ctx = taskContext?.get('NoDupRun@#app');
 					expect(ctx?.isObserver).toBe(true);
-					expect(ctx?.stopAlive).toBeInstanceOf(Function);
+					expect(ctx?.disableAlive).toBeInstanceOf(Function);
 				});
 
 				it('should abort setup and call the returned stopHandler if alive was cancelled during nextTick', async () => {
@@ -1089,8 +1089,8 @@ describe('Injector', () => {
 
 					// Cancel alive synchronously before nextTick fires,
 					// simulating "alive was cancelled during nextTick"
-					injector.keepAlive(id);
-					injector.stopAlive(id);
+					injector.enableAlive(id);
+					injector.disableAlive(id);
 
 					await nextTick();
 
@@ -1117,12 +1117,12 @@ describe('Injector', () => {
 					// Mock onDomAlive to simulate epoch changing *after* onDomAlive is called
 					// but before isObserver is assigned (i.e. the second guard is the one that fires)
 					vi.spyOn(DOMWatcher.prototype, 'onDomAlive').mockImplementation(() => {
-						// Calling keepAlive again bumps aliveEpoch, making the current epoch stale
-						injector.keepAlive(id);
+						// Calling enableAlive again bumps aliveEpoch, making the current epoch stale
+						injector.enableAlive(id);
 						return fakeStopHandler;
 					});
 
-					injector.keepAlive(id);
+					injector.enableAlive(id);
 					await nextTick();
 
 					// The second guard inside the nextTick callback detects a stale epoch and
@@ -1134,7 +1134,7 @@ describe('Injector', () => {
 			});
 
 			describe('Case 2 — app exists but appRoot disconnected from DOM', () => {
-				it('should call resetState to clean up stale app when appRoot is disconnected, then fall through to re-inject', () => {
+				it('should call reset to clean up stale app when appRoot is disconnected, then fall through to re-inject', () => {
 					const div = document.createElement('div');
 					div.id = 'detach-test';
 					document.body.appendChild(div);
@@ -1153,15 +1153,15 @@ describe('Injector', () => {
 					div.remove();
 					expect(ctx?.appRoot?.isConnected).toBe(false);
 
-					injector.stopAlive(id);
+					injector.disableAlive(id);
 					expect(ctx?.alive).toBe(false);
 
-					const resetStateSpy = vi.spyOn(taskContext, 'resetState');
+					const resetStateSpy = vi.spyOn(taskContext, 'reset');
 					const onDomReadySpy = vi
 						.spyOn(DOMWatcher.prototype, 'onDomReady')
 						.mockReturnValue(() => {});
 
-					injector.keepAlive(id);
+					injector.enableAlive(id);
 
 					expect(resetStateSpy).toHaveBeenCalledWith(id);
 					expect(onDomReadySpy).toHaveBeenCalled();
@@ -1169,7 +1169,7 @@ describe('Injector', () => {
 					expect(ctx?.isObserver).toBe(true);
 				});
 
-				it('should not call resetState when appRoot is still connected (Case 1 path)', async () => {
+				it('should not call reset when appRoot is still connected (Case 1 path)', async () => {
 					const div = document.createElement('div');
 					div.id = 'connected-test';
 					document.body.appendChild(div);
@@ -1185,15 +1185,15 @@ describe('Injector', () => {
 					expect(ctx?.app).toBeDefined();
 					expect(ctx?.appRoot?.isConnected).toBe(true);
 
-					// stopAlive, then keepAlive while DOM is still connected
-					injector.stopAlive(id);
+					// disableAlive, then enableAlive while DOM is still connected
+					injector.disableAlive(id);
 
-					const resetStateSpy = vi.spyOn(taskContext, 'resetState');
-					injector.keepAlive(id);
+					const resetStateSpy = vi.spyOn(taskContext, 'reset');
+					injector.enableAlive(id);
 
 					await nextTick();
 
-					// Should NOT call resetState — goes through Case 1 (connected path) instead
+					// Should NOT call reset — goes through Case 1 (connected path) instead
 					expect(resetStateSpy).not.toHaveBeenCalled();
 				});
 			});
@@ -1202,16 +1202,16 @@ describe('Injector', () => {
 				it('should call domWatcher.onDomReady to wait for the target element when app is undefined', () => {
 					const onDomReadySpy = vi.spyOn(DOMWatcher.prototype, 'onDomReady');
 					const { taskId: id } = injector.register('#app', { name: 'App' });
-					injector.keepAlive(id);
+					injector.enableAlive(id);
 
 					expect(onDomReadySpy).toHaveBeenCalledOnce();
 				});
-				it('should set isObserver=true and assign a cancellable stopAlive handler', () => {
+				it('should set isObserver=true and assign a cancellable disableAlive handler', () => {
 					const { taskId: id } = injector.register('#app', { name: 'App' });
-					injector.keepAlive(id);
+					injector.enableAlive(id);
 
 					expect(taskContext.get(id)?.isObserver).toBe(true);
-					expect(taskContext.get(id)?.stopAlive).toBeInstanceOf(Function);
+					expect(taskContext.get(id)?.disableAlive).toBeInstanceOf(Function);
 				});
 				it('should not invoke handleInjectionReady if the observer was cancelled before element appears', () => {
 					const stopHandler = vi.fn();
@@ -1225,9 +1225,9 @@ describe('Injector', () => {
 						'handleInjectionReady'
 					);
 
-					const { taskId: id, stopAlive } = injector.register('#app', { name: 'App' });
-					injector.keepAlive(id);
-					stopAlive();
+					const { taskId: id, disableAlive } = injector.register('#app', { name: 'App' });
+					injector.enableAlive(id);
+					disableAlive();
 
 					expect(onDomReadySpy).toHaveBeenCalled();
 					expect(stopHandler).toHaveBeenCalled();
@@ -1259,7 +1259,7 @@ describe('Injector', () => {
 					);
 
 					const { taskId: id } = injector.register('#app', { name: 'App' });
-					injector.keepAlive(id);
+					injector.enableAlive(id);
 
 					expect(consoleSpy).toHaveBeenCalledWith(
 						expect.stringContaining('alive epoch changed before element appears')
@@ -1270,61 +1270,77 @@ describe('Injector', () => {
 			});
 		});
 
-		describe('stopAlive', () => {
-			it('should warn when stopAlive is called and alive is false', () => {
+		describe('disableAlive', () => {
+			it('should warn when disableAlive is called and alive is false', () => {
 				const div = document.createElement('div');
 				div.id = 'app';
 				document.body.appendChild(div);
 
 				const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-				const { stopAlive } = injector.register('#app', { name: 'App' }, { alive: false });
-				stopAlive();
+				const { disableAlive } = injector.register(
+					'#app',
+					{ name: 'App' },
+					{ alive: false }
+				);
+				disableAlive();
 
 				expect(consoleSpy).toHaveBeenCalledWith(
 					expect.stringContaining('has no active alive observer to stop')
 				);
 			});
-			it('should set alive=false and isObserver=false after stopAlive is called', () => {
+			it('should set alive=false and isObserver=false after disableAlive is called', () => {
 				const div = document.createElement('div');
 				div.id = 'app';
 				document.body.appendChild(div);
 
-				const { stopAlive } = injector.register('#app', { name: 'App' }, { alive: true });
-				stopAlive();
+				const { disableAlive } = injector.register(
+					'#app',
+					{ name: 'App' },
+					{ alive: true }
+				);
+				disableAlive();
 
 				const taskContext = injector.getTaskContext();
 				expect(taskContext?.get('App@#app')?.alive).toBe(false);
 				expect(taskContext?.get('App@#app')?.isObserver).toBe(false);
 			});
 
-			it('should set stopAlive handler to undefined after stopAlive is called', () => {
+			it('should set disableAlive handler to undefined after disableAlive is called', () => {
 				const div = document.createElement('div');
 				div.id = 'app';
 				document.body.appendChild(div);
 
-				const { stopAlive } = injector.register('#app', { name: 'App' }, { alive: true });
-				stopAlive();
+				const { disableAlive } = injector.register(
+					'#app',
+					{ name: 'App' },
+					{ alive: true }
+				);
+				disableAlive();
 
 				const taskContext = injector.getTaskContext();
-				expect(taskContext?.get('App@#app')?.stopAlive).toBeUndefined();
+				expect(taskContext?.get('App@#app')?.disableAlive).toBeUndefined();
 			});
-			it('should increment aliveEpoch when stopAlive is called to invalidate in-flight async callbacks', async () => {
+			it('should increment aliveEpoch when disableAlive is called to invalidate in-flight async callbacks', async () => {
 				const div = document.createElement('div');
 				div.id = 'app';
 				document.body.appendChild(div);
 
-				const { stopAlive } = injector.register('#app', { name: 'App' }, { alive: true });
+				const { disableAlive } = injector.register(
+					'#app',
+					{ name: 'App' },
+					{ alive: true }
+				);
 				injector.run();
 
-				stopAlive();
+				disableAlive();
 
 				await nextTick();
 
 				const taskContext = injector.getTaskContext();
 				expect(taskContext?.get('App@#app')?.aliveEpoch).toBe(1);
 			});
-			it('should invoke the stored stopAlive handler to tear down the active observer', () => {
+			it('should invoke the stored disableAlive handler to tear down the active observer', () => {
 				const div = document.createElement('div');
 				div.id = 'app';
 				document.body.appendChild(div);
@@ -1336,16 +1352,16 @@ describe('Injector', () => {
 				const ctx = taskContext?.get(id);
 				if (!ctx) throw new Error('Task context should exist for registered component');
 
-				ctx.stopAlive = fakeStopHandler;
+				ctx.disableAlive = fakeStopHandler;
 				ctx.alive = true;
 				ctx.isObserver = true;
 
-				injector.stopAlive(id);
+				injector.disableAlive(id);
 
 				expect(fakeStopHandler).toHaveBeenCalledOnce();
 				expect(ctx.alive).toBe(false);
 				expect(ctx.isObserver).toBe(false);
-				expect(ctx.stopAlive).toBeUndefined();
+				expect(ctx.disableAlive).toBeUndefined();
 			});
 		});
 	});

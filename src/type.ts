@@ -66,13 +66,13 @@ export type Task = {
 	alive?: boolean;
 	aliveEpoch?: number;
 	scope?: 'local' | 'global';
-	stopAlive?: () => void;
+	disableAlive?: () => void;
 };
 export type RegisterResult = {
 	taskId: string;
 	isSuccess: boolean;
-	keepAlive: () => void;
-	stopAlive: () => void;
+	enableAlive: () => void;
+	disableAlive: () => void;
 };
 
 export type ListenerRegisterResult = {
