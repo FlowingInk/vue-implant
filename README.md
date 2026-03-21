@@ -26,7 +26,7 @@ It is suitable for scenarios where page structures are unstable, async rendering
 
 ## Demo 🎬
 
-There is no public demo site yet. You can run the local `demo/` in this repository for a hands-on experience, or build a static demo site into `docs/` for GitHub Pages.
+Public demo site: https://flowingink.github.io/vue-implant/
 
 ## Installation 📦
 

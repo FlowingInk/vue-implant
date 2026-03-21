@@ -24,7 +24,7 @@
 
 ## 演示 🎬
 
-暂未提供公开演示站点，可先运行仓库内 `demo/` 进行本地体验，或构建到 `docs/` 作为 GitHub Pages 静态站点。
+公开演示站点：https://flowingink.github.io/vue-implant/
 
 ## 安装 📦
 
