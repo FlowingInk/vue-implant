@@ -1,148 +1,148 @@
 name: Patch Release
 
 on:
-    push:
-        branches:
-            - main
-        paths:
-            - package.json
-    workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+  workflow_dispatch:
 
 permissions:
-    contents: write
-    id-token: write
+  contents: write
+  id-token: write
 
 jobs:
-    patch-release:
-        runs-on: ubuntu-latest
+  patch-release:
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 24
-                  cache: npm
-                  registry-url: https://registry.npmjs.org
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
 
-            - name: Check version rule (patch only)
-              id: versions
-              shell: bash
-              run: |
-                  node <<'NODE'
-                  const fs = require('node:fs');
-                  const { execSync } = require('node:child_process');
+      - name: Check version rule (patch only)
+        id: versions
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execSync } = require('node:child_process');
 
-                  const newVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
-                  let oldVersion = '';
+          const newVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+          let oldVersion = '';
 
-                  try {
-                    const previousPackageJson = execSync('git show HEAD^:package.json', { encoding: 'utf8' });
-                    oldVersion = JSON.parse(previousPackageJson).version;
-                  } catch {
-                    oldVersion = '';
-                  }
+          try {
+            const previousPackageJson = execSync('git show HEAD^:package.json', { encoding: 'utf8' });
+            oldVersion = JSON.parse(previousPackageJson).version;
+          } catch {
+            oldVersion = '';
+          }
 
-                  const parseSemver = (value) => {
-                    const match = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(value || '');
-                    if (!match) return null;
-                    return {
-                      major: Number(match[1]),
-                      minor: Number(match[2]),
-                      patch: Number(match[3]),
-                    };
-                  };
+          const parseSemver = (value) => {
+            const match = /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(value || '');
+            if (!match) return null;
+            return {
+              major: Number(match[1]),
+              minor: Number(match[2]),
+              patch: Number(match[3]),
+            };
+          };
 
-                  const oldParsed = parseSemver(oldVersion);
-                  const newParsed = parseSemver(newVersion);
+          const oldParsed = parseSemver(oldVersion);
+          const newParsed = parseSemver(newVersion);
 
-                  const shouldRelease = Boolean(
-                    oldParsed &&
-                      newParsed &&
-                      oldParsed.major === newParsed.major &&
-                      oldParsed.minor === newParsed.minor &&
-                      oldParsed.patch !== newParsed.patch
-                  );
+          const shouldRelease = Boolean(
+            oldParsed &&
+              newParsed &&
+              oldParsed.major === newParsed.major &&
+              oldParsed.minor === newParsed.minor &&
+              oldParsed.patch !== newParsed.patch
+          );
 
-                  fs.appendFileSync(process.env.GITHUB_OUTPUT, `old_version=${oldVersion}\n`);
-                  fs.appendFileSync(process.env.GITHUB_OUTPUT, `new_version=${newVersion}\n`);
-                  fs.appendFileSync(process.env.GITHUB_OUTPUT, `should_release=${shouldRelease}\n`);
-                  NODE
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `old_version=${oldVersion}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `new_version=${newVersion}\n`);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `should_release=${shouldRelease}\n`);
+          NODE
 
-            - name: Stop when not patch-only bump
-              if: steps.versions.outputs.should_release != 'true'
-              run: |
-                  echo "Skip release. old=${{ steps.versions.outputs.old_version }}, new=${{ steps.versions.outputs.new_version }}"
+      - name: Stop when not patch-only bump
+        if: steps.versions.outputs.should_release != 'true'
+        run: |
+          echo "Skip release. old=${{ steps.versions.outputs.old_version }}, new=${{ steps.versions.outputs.new_version }}"
 
-            - name: Prepare tag and release text
-              if: steps.versions.outputs.should_release == 'true'
-              id: release_meta
-              shell: bash
-              run: |
-                  git fetch --tags --force
+      - name: Prepare tag and release text
+        if: steps.versions.outputs.should_release == 'true'
+        id: release_meta
+        shell: bash
+        run: |
+          git fetch --tags --force
 
-                  NEW_TAG="v${{ steps.versions.outputs.new_version }}"
-                  PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${NEW_TAG}$" | head -n 1 || true)
+          NEW_TAG="v${{ steps.versions.outputs.new_version }}"
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${NEW_TAG}$" | head -n 1 || true)
 
-                  if [ -n "$PREV_TAG" ]; then
-                    RELEASE_BODY="View this change:https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${NEW_TAG}"
-                  else
-                    RELEASE_BODY="First release, view repository:https://github.com/${{ github.repository }}"
-                  fi
+          if [ -n "$PREV_TAG" ]; then
+            RELEASE_BODY="View this change:https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${NEW_TAG}"
+          else
+            RELEASE_BODY="First release, view repository:https://github.com/${{ github.repository }}"
+          fi
 
-                  {
-                    echo "new_tag=$NEW_TAG"
-                    echo "prev_tag=$PREV_TAG"
-                    echo "release_body=$RELEASE_BODY"
-                  } >> "$GITHUB_OUTPUT"
+          {
+            echo "new_tag=$NEW_TAG"
+            echo "prev_tag=$PREV_TAG"
+            echo "release_body=$RELEASE_BODY"
+          } >> "$GITHUB_OUTPUT"
 
-            - name: Install dependencies
-              if: steps.versions.outputs.should_release == 'true'
-              run: npm ci
+      - name: Install dependencies
+        if: steps.versions.outputs.should_release == 'true'
+        run: npm ci
 
-            - name: Run tests
-              if: steps.versions.outputs.should_release == 'true'
-              run: npm run test
+      - name: Run tests
+        if: steps.versions.outputs.should_release == 'true'
+        run: npm run test
 
-            - name: Build project
-              if: steps.versions.outputs.should_release == 'true'
-              run: npm run build
+      - name: Build project
+        if: steps.versions.outputs.should_release == 'true'
+        run: npm run build
 
-            - name: Create and push tag
-              if: steps.versions.outputs.should_release == 'true'
-              shell: bash
-              run: |
-                  TAG="${{ steps.release_meta.outputs.new_tag }}"
-                  BODY="${{ steps.release_meta.outputs.release_body }}"
+      - name: Create and push tag
+        if: steps.versions.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          TAG="${{ steps.release_meta.outputs.new_tag }}"
+          BODY="${{ steps.release_meta.outputs.release_body }}"
 
-                  if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-                    echo "Tag ${TAG} already exists on remote, skip creating tag."
-                  else
-                    git tag -a "$TAG" -m "$BODY"
-                    git push origin "$TAG"
-                  fi
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists on remote, skip creating tag."
+          else
+            git tag -a "$TAG" -m "$BODY"
+            git push origin "$TAG"
+          fi
 
-            - name: Create or update GitHub Release
-              if: steps.versions.outputs.should_release == 'true'
-              env:
-                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              shell: bash
-              run: |
-                  TAG="${{ steps.release_meta.outputs.new_tag }}"
-                  BODY="${{ steps.release_meta.outputs.release_body }}"
+      - name: Create or update GitHub Release
+        if: steps.versions.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${{ steps.release_meta.outputs.new_tag }}"
+          BODY="${{ steps.release_meta.outputs.release_body }}"
 
-                  if gh release view "$TAG" >/dev/null 2>&1; then
-                    gh release edit "$TAG" --title "$TAG" --notes "$BODY"
-                  else
-                    gh release create "$TAG" --title "$TAG" --notes "$BODY"
-                  fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes "$BODY"
+          else
+            gh release create "$TAG" --title "$TAG" --notes "$BODY"
+          fi
 
-            # - name: Publish to npm
-            #   if: steps.versions.outputs.should_release == 'true'
-            #   env:
-            #       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-            #   run: npm publish --access public
+      - name: Publish to npm
+        if: steps.versions.outputs.should_release == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
