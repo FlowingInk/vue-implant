@@ -11,9 +11,9 @@ const result:RegisterResult = inject<RegisterResult>('delayCase:result') as Regi
 
 const triggerAlive = () => {
     if (delayAliveEnabled.value) {
-        result.stopAlive()
+        result.disableAlive()
     } else {
-        result.keepAlive()
+        result.enableAlive()
     }
     delayAliveEnabled.value = !delayAliveEnabled.value
 }

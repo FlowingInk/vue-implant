@@ -114,8 +114,8 @@ export class Injector {
 			return {
 				taskId: taskId,
 				isSuccess: true,
-				keepAlive: () => this.keepAlive(taskId),
-				stopAlive: () => this.stopAlive(taskId)
+				enableAlive: () => this.enableAlive(taskId),
+				disableAlive: () => this.disableAlive(taskId)
 			};
 		}
 		// Use unified Task to store all information
@@ -156,22 +156,22 @@ export class Injector {
 		return {
 			taskId: taskId,
 			isSuccess: true,
-			keepAlive: () => this.keepAlive(taskId),
-			stopAlive: () => this.stopAlive(taskId)
+			enableAlive: () => this.enableAlive(taskId),
+			disableAlive: () => this.disableAlive(taskId)
 		};
 	}
 
-	public keepAlive(taskId: string): void {
+	public enableAlive(taskId: string): void {
 		const context = this.taskContext.get(taskId);
 		if (!context) {
 			console.error(`[vue-injector] Task "${taskId}" not found`);
 			return;
 		}
 
-		// keepAlive only applies to component tasks
+		// enableAlive only applies to component tasks
 		if (!context.component || !context.componentInjectAt) {
 			console.warn(
-				`[vue-injector] keepAlive is not applicable to non-component task "${taskId}"`
+				`[vue-injector] enableAlive is not applicable to non-component task "${taskId}"`
 			);
 			return;
 		}
@@ -187,7 +187,7 @@ export class Injector {
 		context.alive = true;
 		context.isObserver = false;
 		// placeholder stop handler for pending async setup
-		context.stopAlive = () => {};
+		context.disableAlive = () => {};
 
 		// Case 1: Component is already mounted and connected - set up the alive observer directly
 		if (context.app && context.appRoot?.isConnected) {
@@ -209,7 +209,7 @@ export class Injector {
 					matchedElement,
 					injectAt,
 					() => {
-						this.taskContext.resetState(taskId);
+						this.taskContext.reset(taskId);
 					},
 					(el): void => this.handleInjectionReady(el, taskId),
 					context.scope === 'global' ? currentDocument : matchedElement,
@@ -223,7 +223,7 @@ export class Injector {
 					stopHandler();
 					return;
 				}
-				context.stopAlive = stopHandler;
+				context.disableAlive = stopHandler;
 				context.isObserver = true;
 				console.log(`[vue-injector] Task "${taskId}" alive observer activated`);
 			});
@@ -231,13 +231,13 @@ export class Injector {
 		}
 
 		// Case 2: Component app exists but appRoot is disconnected from DOM
-		// This happens when stopAlive was called after the node was removed but before cleanup.
+		// This happens when disableAlive was called after the node was removed but before cleanup.
 		// We need to reset the state and re-trigger onDomReady for re-injection.
 		if (context.app && !context.appRoot?.isConnected) {
-			this.taskContext.resetState(taskId);
+			this.taskContext.reset(taskId);
 		}
 
-		// Case 3: Component is not mounted (e.g., removed from DOM after stopAlive was called)
+		// Case 3: Component is not mounted (e.g., removed from DOM after disableAlive was called)
 		// Re-trigger onDomReady to wait for the target element and re-inject
 		if (!context.app) {
 			let cancelled = false;
@@ -255,7 +255,7 @@ export class Injector {
 				document,
 				{ once: true, timeout: this.injectConfig.timeout }
 			);
-			context.stopAlive = () => {
+			context.disableAlive = () => {
 				if (cancelled) return;
 				cancelled = true;
 				stopReadyObserver();
@@ -265,7 +265,7 @@ export class Injector {
 		}
 	}
 
-	public stopAlive(taskId: string): void {
+	public disableAlive(taskId: string): void {
 		const context = this.taskContext.get(taskId);
 
 		if (!context) {
@@ -280,14 +280,14 @@ export class Injector {
 		}
 
 		context.aliveEpoch = (context.aliveEpoch ?? 0) + 1;
-		const stopHandler = context.stopAlive;
+		const stopHandler = context.disableAlive;
 		context.alive = false;
 		context.isObserver = false;
-		context.stopAlive = undefined;
+		context.disableAlive = undefined;
 		stopHandler?.();
 	}
 
-	public getTaskContext(): TaskContext | undefined {
+	public getContext(): TaskContext | undefined {
 		return this.taskContext;
 	}
 
@@ -295,43 +295,43 @@ export class Injector {
 		this.taskContext.setPinia(pinia);
 	}
 
-	public reseted(taskId: string): void {
+	public reset(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (context?.alive) {
-			this.stopAlive(taskId);
+			this.disableAlive(taskId);
 		}
-		this.taskContext.resetState(taskId);
+		this.taskContext.reset(taskId);
 	}
 
-	public resetedAll(): void {
+	public resetAll(): void {
 		for (const id of this.taskContext.keys()) {
 			const context: Task | undefined = this.taskContext.get(id);
 			if (context?.alive) {
-				this.stopAlive(id);
+				this.disableAlive(id);
 			}
 		}
 		this.taskContext.resetAll();
 	}
 
-	public destroyed(taskId: string): void {
+	public destroy(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (context?.alive) {
-			this.stopAlive(taskId);
+			this.disableAlive(taskId);
 		}
 		this.taskContext.destroy(taskId);
 	}
 
-	public destroyedAll(): void {
+	public destroyAll(): void {
 		for (const id of this.taskContext.keys()) {
 			const context: Task | undefined = this.taskContext.get(id);
 			if (context?.alive) {
-				this.stopAlive(id);
+				this.disableAlive(id);
 			}
 		}
-		this.taskContext.destroyedAll();
+		this.taskContext.destroyAll();
 	}
 	// TODO: add config option to enable flush sync or pre
-	public bindActivitySignal(taskId: string, source: WatchSource<boolean>): boolean {
+	public bindListenerSignal(taskId: string, source: WatchSource<boolean>): boolean {
 		// Bind a reactive signal to control automatic listener attach/detach for this task
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
@@ -352,7 +352,7 @@ export class Injector {
 			const unWatch: WatchHandle = watch(
 				source,
 				(newSignal) => {
-					this.listenerActivity(taskId, newSignal ? Action.OPEN : Action.CLOSE);
+					this.controlListener(taskId, newSignal ? Action.OPEN : Action.CLOSE);
 				},
 				{ immediate: true }
 			);
@@ -366,7 +366,7 @@ export class Injector {
 		}
 	}
 
-	public listenerActivity(taskId: string, event: ActionEvent): boolean {
+	public controlListener(taskId: string, event: ActionEvent): boolean {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
 			console.error(
@@ -451,9 +451,9 @@ export class Injector {
 		if (context.withEvent) {
 			let result: boolean | null = null;
 			if (context.activitySignal) {
-				result = this.bindActivitySignal(taskId, context.activitySignal());
+				result = this.bindListenerSignal(taskId, context.activitySignal());
 			} else {
-				result = this.listenerActivity(taskId, Action.OPEN);
+				result = this.controlListener(taskId, Action.OPEN);
 			}
 
 			if (result === false) {
@@ -602,7 +602,7 @@ export class Injector {
 						matchedElement,
 						injectAt,
 						() => {
-							this.taskContext.resetState(taskId);
+							this.taskContext.reset(taskId);
 						},
 						(el): void => this.handleInjectionReady(el, taskId),
 						context.scope === 'global' ? currentDocument : matchedElement,
@@ -622,7 +622,7 @@ export class Injector {
 						stopHandler();
 						return;
 					}
-					context.stopAlive = stopHandler;
+					context.disableAlive = stopHandler;
 					context.isObserver = true;
 					console.log(`[vue-injector] Task "${taskId}" alive observer activated`);
 				});

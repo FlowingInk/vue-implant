@@ -145,7 +145,7 @@ export class TaskContext {
 	/**
 	 * Destroys all registered tasks and resets shared runtime state.
 	 */
-	public destroyedAll(): void {
+	public destroyAll(): void {
 		const ids: string[] = Array.from(this.contextMap.keys());
 
 		// Phase 1: Stop all watchers first to prevent reactive callbacks during cleanup
@@ -272,7 +272,7 @@ export class TaskContext {
 	 *
 	 * @param id Unique task id.
 	 */
-	public resetState(id: string): void {
+	public reset(id: string): void {
 		const context = this.contextMap.get(id);
 		if (!context) return;
 
@@ -308,7 +308,7 @@ export class TaskContext {
 
 	public resetAll(): void {
 		for (const id of this.contextMap.keys()) {
-			this.resetState(id);
+			this.reset(id);
 		}
 	}
 }

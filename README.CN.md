@@ -119,8 +119,8 @@ type InjectionConfig = {
 | --- | --- | --- | --- |
 | `taskId` | `string` | 任务唯一标识。 | `[组件名]@[CSS选择器]` |
 | `isSuccess` | `boolean` | 注册是否成功。 | 成功 `true`，失败 `false` |
-| `keepAlive` | `() => void` | 手动开启重注入；注册失败时为空函数。 | 回调函数 |
-| `stopAlive` | `() => void` | 手动关闭重注入；注册失败时为空函数。 | 回调函数 |
+| `enableAlive` | `() => void` | 手动开启重注入；注册失败时为空函数。 | 回调函数 |
+| `disableAlive` | `() => void` | 手动关闭重注入；注册失败时为空函数。 | 回调函数 |
 
 > [!NOTE]
 > 重复注册同一组件到同一位置时不会抛错，会报警告并返回第一次注册结果。
@@ -152,7 +152,7 @@ type InjectionConfig = {
 > [!NOTE]
 > 支持在 `run()` 后继续 `registerListener()`，新增监听任务会在下一次 `run()` 时激活。
 
-### `Injector.keepAlive(taskId: string): void`
+### `Injector.enableAlive(taskId: string): void`
 
 开启组件的重注入机制。
 
@@ -169,14 +169,14 @@ import TestAppComponent from './TestAppComponent.vue';
 const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
-injector.keepAlive(taskId);
+injector.enableAlive(taskId);
 injector.run();
 ```
 
 > [!NOTE]
 > 外部事件监听器注册的任务无法使用该 API，强行调用会报警告并直接返回。
 
-### `Injector.stopAlive(taskId: string): void`
+### `Injector.disableAlive(taskId: string): void`
 
 关闭组件任务的重注入机制。
 
@@ -193,15 +193,15 @@ import TestAppComponent from './TestAppComponent.vue';
 const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
-injector.keepAlive(taskId);
-injector.stopAlive(taskId);
+injector.enableAlive(taskId);
+injector.disableAlive(taskId);
 injector.run();
 ```
 
 > [!NOTE]
 > 若该任务当前未开启重注入，调用会报警告并直接返回。
 
-### `Injector.destroyed(taskId: string): void`
+### `Injector.destroy(taskId: string): void`
 
 销毁指定任务，并释放关联的监听器、组件实例与状态。
 
@@ -219,10 +219,10 @@ const injector = new Injector();
 const { taskId } = injector.register('#app', TestAppComponent);
 
 injector.run();
-injector.destroyed(taskId);
+injector.destroy(taskId);
 ```
 
-### `Injector.destroyedAll(): void`
+### `Injector.destroyAll(): void`
 
 销毁当前 `Injector` 已注册的全部任务。
 
@@ -237,10 +237,10 @@ injector.register('#app', TestAppComponent);
 injector.registerListener('#btn', 'click', () => console.log('clicked'));
 
 injector.run();
-injector.destroyedAll();
+injector.destroyAll();
 ```
 
-### `Injector.reseted(taskId: string): void`
+### `Injector.reset(taskId: string): void`
 
 将指定任务重置为可复用的初始运行时状态，同时保留任务注册信息。
 
@@ -255,7 +255,7 @@ injector.destroyedAll();
 - 中止监听器并停止 watcher。
 - 任务在上下文中仍保留，可用于后续复用。
 
-### `Injector.resetedAll(): void`
+### `Injector.resetAll(): void`
 
 将当前已注册的全部任务重置为可复用的初始运行时状态。
 
@@ -265,7 +265,7 @@ injector.destroyedAll();
 - 统一调用一次上下文级别全量重置，清理每个任务的运行时字段。
 - 保留任务注册与任务 ID，不做销毁。
 
-### `Injector.bindActivitySignal(taskId: string, source: WatchSource<boolean>): boolean`
+### `Injector.bindListenerSignal(taskId: string, source: WatchSource<boolean>): boolean`
 
 将外部响应式信号绑定到任务事件开关：`true` 时开启监听，`false` 时关闭监听。
 
@@ -292,11 +292,11 @@ const { taskId } = injector.register('#app', TestAppComponent, {
 	}
 });
 
-injector.bindActivitySignal(taskId, enabled);
+injector.bindListenerSignal(taskId, enabled);
 injector.run();
 ```
 
-### `Injector.listenerActivity(taskId: string, event: ActionEvent): boolean`
+### `Injector.controlListener(taskId: string, event: ActionEvent): boolean`
 
 手动控制注册的外部事件监听器开关：`Action.OPEN` 开启，`Action.CLOSE` 关闭。
 
@@ -320,8 +320,8 @@ const { taskId } = injector.register('#app', TestAppComponent, {
 	}
 });
 
-injector.listenerActivity(taskId, Action.OPEN);
-injector.listenerActivity(taskId, Action.CLOSE);
+injector.controlListener(taskId, Action.OPEN);
+injector.controlListener(taskId, Action.CLOSE);
 ```
 
 
@@ -346,7 +346,7 @@ injector.listenerActivity(taskId, Action.CLOSE);
 - `local`：监听范围更小，副作用更低，默认推荐。
 - `global`：更稳妥覆盖局部 DOM 重建场景，但监听范围更大,对性能消耗也更大。
 
-### 4) `keepAlive`/`stopAlive` 能用于纯监听任务吗？
+### 4) `enableAlive`/`disableAlive` 能用于纯监听任务吗？
 
 不能。纯监听任务调用这两个 API 会直接返回并给出警告。
 
