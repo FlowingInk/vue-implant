@@ -62,10 +62,13 @@ export type Task = {
 	watcher?: WatchHandle;
 	watchSource?: WatchSource<boolean>;
 
+	//config info
 	isObserver?: boolean;
 	alive?: boolean;
 	aliveEpoch?: number;
 	scope?: 'local' | 'global';
+
+	//placeholder
 	disableAlive?: () => void;
 };
 export type RegisterResult = {

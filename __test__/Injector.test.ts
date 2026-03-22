@@ -1,9 +1,9 @@
 ﻿/// <reference types="vitest/config" />
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
-import { DOMWatcher } from '../src/core/DomWatcher';
 import { Injector } from '../src/core/Injector';
-import type { TaskContext } from '../src/core/TaskContext';
+import type { TaskContext } from '../src/core/task/TaskContext';
+import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 import { Action, type RegisterResult } from '../src/type';
 
 describe('Injector', () => {
@@ -337,9 +337,7 @@ describe('Injector', () => {
 			const testInjector = new Injector({
 				timeout: 10000
 			});
-			const onDomReadyspy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadyspy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 			testInjector.register('#app', { name: 'RunTest' });
 			testInjector.run();
 			testInjector.run();
@@ -367,9 +365,7 @@ describe('Injector', () => {
 		});
 
 		it('should call domWatcher.onDomReady once for a single injectPoint with correct args', () => {
-			const onDomReadySpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 			injector.register('#root', { name: 'Single' });
 			injector.run();
@@ -382,9 +378,7 @@ describe('Injector', () => {
 		});
 
 		it('should call domWatcher.onDomReady once per injectPoint for multiple registrations', () => {
-			const onDomReadySpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 			injector.register('#header', { name: 'CompA' });
 			injector.register('#footer', { name: 'CompB' });
@@ -416,9 +410,7 @@ describe('Injector', () => {
 		});
 
 		it('should pass the custom timeout from InjectionConfig to onDomReady', () => {
-			const onDomReadySpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 			const customInjector = new Injector({ timeout: 8000 });
 			customInjector.register('#app', { name: 'TimeoutComp' });
@@ -432,9 +424,7 @@ describe('Injector', () => {
 		});
 
 		it('should always pass once: true to onDomReady regardless of injectConfig', () => {
-			const onDomReadySpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 			injector.register('#target', { name: 'OnceCheck' });
 			injector.run();
@@ -445,9 +435,7 @@ describe('Injector', () => {
 		});
 
 		it('should pass the injectAt selector of each injectPoint as the first arg to onDomReady', () => {
-			const onDomReadySpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomReady')
-				.mockReturnValue(() => {});
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 			const selectors = ['#one', '.two', '[data-three]'];
 			for (const sel of selectors) {
@@ -464,7 +452,7 @@ describe('Injector', () => {
 			host.id = 'app';
 			document.body.appendChild(host);
 
-			const onDomReadySpy = vi.spyOn(DOMWatcher.prototype, 'onDomReady');
+			const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady');
 
 			injector.register('#app', { name: 'NoDupRun' });
 			injector.run();
@@ -744,7 +732,7 @@ describe('Injector', () => {
 			detached.id = 'detached-host';
 
 			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-			vi.spyOn(DOMWatcher.prototype, 'onDomReady').mockImplementation((_, cb) => {
+			vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_, cb) => {
 				cb(detached);
 				return () => {};
 			});
@@ -764,7 +752,7 @@ describe('Injector', () => {
 			document.body.appendChild(host);
 
 			let cbRef: ((el: HTMLElement) => void) | undefined;
-			vi.spyOn(DOMWatcher.prototype, 'onDomReady').mockImplementation((_, cb) => {
+			vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_, cb) => {
 				cbRef = cb;
 				return () => {};
 			});
@@ -788,9 +776,7 @@ describe('Injector', () => {
 			host.id = 'alive-inject';
 			document.body.appendChild(host);
 
-			const onDomAliveSpy = vi
-				.spyOn(DOMWatcher.prototype, 'onDomAlive')
-				.mockReturnValue(() => {});
+			const onDomAliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
 
 			injector.register('#alive-inject', { name: 'AliveInject' }, { alive: true });
 			injector.run();
@@ -977,7 +963,7 @@ describe('Injector', () => {
 					document.body.appendChild(div);
 
 					const onDomAliveSpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomAlive')
+						.spyOn(DOMWatcher, 'onDomAlive')
 						.mockReturnValue(() => {});
 					const testInjector = new Injector({ alive: true });
 					testInjector.register('#app', { name: 'NoDupRun' }, { alive: true });
@@ -992,7 +978,7 @@ describe('Injector', () => {
 					document.body.appendChild(div);
 
 					const onDomAliveSpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomAlive')
+						.spyOn(DOMWatcher, 'onDomAlive')
 						.mockReturnValue(() => {});
 					const testInjector = new Injector({ alive: true });
 					testInjector.register('#app', { name: 'NoDupRun' });
@@ -1013,7 +999,7 @@ describe('Injector', () => {
 					document.body.appendChild(div);
 
 					const onDomAliveSpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomAlive')
+						.spyOn(DOMWatcher, 'onDomAlive')
 						.mockReturnValue(() => {});
 					const testInjector = new Injector({ alive: true });
 					testInjector.register(
@@ -1037,7 +1023,7 @@ describe('Injector', () => {
 					document.body.appendChild(div);
 
 					const onDomAliveSpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomAlive')
+						.spyOn(DOMWatcher, 'onDomAlive')
 						.mockReturnValue(() => {});
 
 					const testInjector = new Injector({ alive: true });
@@ -1079,7 +1065,7 @@ describe('Injector', () => {
 					document.body.appendChild(div);
 
 					const onDomAliveSpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomAlive')
+						.spyOn(DOMWatcher, 'onDomAlive')
 						.mockReturnValue(vi.fn());
 
 					const { taskId: id } = injector.register('#abort-test', {
@@ -1116,7 +1102,7 @@ describe('Injector', () => {
 					const fakeStopHandler = vi.fn();
 					// Mock onDomAlive to simulate epoch changing *after* onDomAlive is called
 					// but before isObserver is assigned (i.e. the second guard is the one that fires)
-					vi.spyOn(DOMWatcher.prototype, 'onDomAlive').mockImplementation(() => {
+					vi.spyOn(DOMWatcher, 'onDomAlive').mockImplementation(() => {
 						// Calling enableAlive again bumps aliveEpoch, making the current epoch stale
 						injector.enableAlive(id);
 						return fakeStopHandler;
@@ -1158,7 +1144,7 @@ describe('Injector', () => {
 
 					const resetStateSpy = vi.spyOn(taskContext, 'reset');
 					const onDomReadySpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomReady')
+						.spyOn(DOMWatcher, 'onDomReady')
 						.mockReturnValue(() => {});
 
 					injector.enableAlive(id);
@@ -1200,7 +1186,7 @@ describe('Injector', () => {
 
 			describe('Case 3 — component not yet mounted (app is undefined)', () => {
 				it('should call domWatcher.onDomReady to wait for the target element when app is undefined', () => {
-					const onDomReadySpy = vi.spyOn(DOMWatcher.prototype, 'onDomReady');
+					const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady');
 					const { taskId: id } = injector.register('#app', { name: 'App' });
 					injector.enableAlive(id);
 
@@ -1216,7 +1202,7 @@ describe('Injector', () => {
 				it('should not invoke handleInjectionReady if the observer was cancelled before element appears', () => {
 					const stopHandler = vi.fn();
 					const onDomReadySpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomReady')
+						.spyOn(DOMWatcher, 'onDomReady')
 						.mockReturnValue(stopHandler);
 					const handleInjectionReadySpy = vi.spyOn(
 						injector as unknown as {
@@ -1241,7 +1227,7 @@ describe('Injector', () => {
 					const stopHandler = () => {};
 
 					const onDomReadySpy = vi
-						.spyOn(DOMWatcher.prototype, 'onDomReady')
+						.spyOn(DOMWatcher, 'onDomReady')
 						.mockImplementation((selector, cb, document, opts) => {
 							const ctx = taskContext.get(id);
 							if (ctx?.aliveEpoch) ctx.aliveEpoch += 1;

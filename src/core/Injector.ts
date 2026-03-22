@@ -3,7 +3,6 @@
 	type Component,
 	type ComponentPublicInstance,
 	createApp,
-	markRaw,
 	nextTick,
 	type Plugin,
 	type Ref,
@@ -20,15 +19,15 @@ import {
 	type RegisterResult,
 	type Task
 } from '../type';
+import { getComponentName } from '../util/getComponentName';
+import { markRawComponent } from '../util/markRawComponent';
 import { UUID } from '../util/uuid';
-import { DOMWatcher } from './DomWatcher';
-import { TaskContext } from './TaskContext';
+import { TaskContext } from './task/TaskContext';
+import { DOMWatcher } from './watcher/DomWatcher';
 
 export class Injector {
 	// Unified task context containing all component-related data
 	private readonly taskContext: TaskContext = new TaskContext();
-	private readonly domWatcher: DOMWatcher = new DOMWatcher();
-	private readonly anonymousComponentNames: WeakMap<object, string> = new WeakMap();
 	private readonly injectConfig: InjectionConfig = {
 		alive: false,
 		scope: 'local',
@@ -49,7 +48,7 @@ export class Injector {
 			const status = this.taskContext.getTaskStatus(id);
 			if (status === 'active' || status === 'pending') return;
 
-			this.domWatcher.onDomReady(
+			DOMWatcher.onDomReady(
 				injectAt,
 				(el): void => this.handleInjectionReady(el, id),
 				document,
@@ -122,9 +121,9 @@ export class Injector {
 		const context: Task = {
 			taskId,
 			taskStatus: 'idle',
-			componentName: this.getComponentName(component),
+			componentName: getComponentName(component),
 			componentInjectAt: injectAt,
-			component: this.markRawComponent(component),
+			component: markRawComponent(component),
 			withEvent: false,
 
 			alive: option?.alive ?? this.injectConfig.alive,
@@ -205,7 +204,7 @@ export class Injector {
 			nextTick().then(() => {
 				if (!context.alive || context.aliveEpoch !== aliveEpoch) return;
 
-				const stopHandler = this.domWatcher.onDomAlive(
+				const stopHandler = DOMWatcher.onDomAlive(
 					matchedElement,
 					injectAt,
 					() => {
@@ -241,7 +240,7 @@ export class Injector {
 		// Re-trigger onDomReady to wait for the target element and re-inject
 		if (!context.app) {
 			let cancelled = false;
-			const stopReadyObserver = this.domWatcher.onDomReady(
+			const stopReadyObserver = DOMWatcher.onDomReady(
 				context.componentInjectAt,
 				(el): void => {
 					if (cancelled || !context.alive || context.aliveEpoch !== aliveEpoch) {
@@ -466,30 +465,8 @@ export class Injector {
 	}
 
 	private getTaskId(component: Component, selector: string): string {
-		const name: string = this.getComponentName(component);
+		const name: string = getComponentName(component);
 		return name ? `${name}@${selector}` : `component-${selector}`;
-	}
-
-	private getComponentName(component: Component): string {
-		// biome-ignore lint: false positive
-		const name: string = component?.name || (component as any)?.__name;
-		if (name) return name;
-
-		if (typeof component === 'string') {
-			return component;
-		}
-
-		if (typeof component === 'object' || typeof component === 'function') {
-			const cacheKey: object = component as unknown as object;
-			const cachedName: string | undefined = this.anonymousComponentNames.get(cacheKey);
-			if (cachedName) return cachedName;
-
-			const generatedName: string = `component-${UUID()}`;
-			this.anonymousComponentNames.set(cacheKey, generatedName);
-			return generatedName;
-		}
-
-		return 'component-anonymous';
 	}
 
 	// Event binding function
@@ -510,7 +487,7 @@ export class Injector {
 		}
 
 		const proxyController = new AbortController();
-		this.domWatcher.onDomReady(
+		DOMWatcher.onDomReady(
 			listenAt,
 			(el) => {
 				if (proxyController.signal.aborted) return;
@@ -598,7 +575,7 @@ export class Injector {
 					)
 						return;
 
-					const stopHandler = this.domWatcher.onDomAlive(
+					const stopHandler = DOMWatcher.onDomAlive(
 						matchedElement,
 						injectAt,
 						() => {
@@ -634,9 +611,5 @@ export class Injector {
 			appRoot.remove();
 			return false;
 		}
-	}
-
-	private markRawComponent(component: Component): Component {
-		return import.meta.env.PROD ? markRaw(component) : component;
 	}
 }
