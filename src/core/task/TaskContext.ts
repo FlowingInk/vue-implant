@@ -1,5 +1,5 @@
 ﻿import type { Plugin } from 'vue';
-import type { Task, TaskErrorMessage, TaskRecord } from '../type';
+import type { Task, TaskErrorMessage, TaskRecord } from '../../type';
 
 /**
  * Central runtime registry for all injection tasks.
@@ -29,7 +29,7 @@ export class TaskContext {
 	/**
 	 * Shared Pinia plugin instance used by injected apps.
 	 */
-	private pinia: Plugin | null = null;
+	private pinia: Plugin | undefined = undefined;
 
 	/**
 	 * Registers or replaces a task context by id.
@@ -75,7 +75,7 @@ export class TaskContext {
 	 *
 	 * @returns Pinia plugin instance or `null` when unset.
 	 */
-	public getPinia(): Plugin | null {
+	public getPinia(): Plugin | undefined {
 		return this.pinia;
 	}
 
@@ -168,7 +168,7 @@ export class TaskContext {
 		this.taskRecords = [];
 		this.taskErrorMessages = [];
 
-		this.pinia = null;
+		this.pinia = undefined;
 
 		console.log('[vue-injector] All tasks destroyed');
 	}

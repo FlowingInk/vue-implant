@@ -1,13 +1,10 @@
 /// <reference types="vitest/config" />
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DOMWatcher } from '../src/core/DomWatcher';
+import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 import type { InjectCallback } from '../src/type';
 
 describe('DOMWatcher', () => {
-	let watcher: DOMWatcher;
-
 	beforeEach(() => {
-		watcher = new DOMWatcher();
 		document.body.innerHTML = '';
 		vi.useFakeTimers();
 	});
@@ -27,7 +24,7 @@ describe('DOMWatcher', () => {
 			const cb = vi.fn<InjectCallback>();
 
 			// Act
-			watcher.onDomReady('#existing', cb, document, { once: true });
+			DOMWatcher.onDomReady('#existing', cb, document, { once: true });
 
 			// Assert
 			expect(cb).toHaveBeenCalledOnce();
@@ -37,7 +34,7 @@ describe('DOMWatcher', () => {
 		it('should invoke callback when element is added later (MutationObserver)', async () => {
 			const cb = vi.fn<InjectCallback>();
 
-			watcher.onDomReady('#later', cb, document, { once: true });
+			DOMWatcher.onDomReady('#later', cb, document, { once: true });
 			expect(cb).not.toHaveBeenCalled();
 
 			// Use real timers briefly to let MutationObserver flush
@@ -56,7 +53,7 @@ describe('DOMWatcher', () => {
 		it('should invoke callback for nested matching element added later', async () => {
 			const cb = vi.fn<InjectCallback>();
 
-			watcher.onDomReady('.nested-child', cb, document, { once: true });
+			DOMWatcher.onDomReady('.nested-child', cb, document, { once: true });
 			expect(cb).not.toHaveBeenCalled();
 
 			vi.useRealTimers();
@@ -80,7 +77,7 @@ describe('DOMWatcher', () => {
 			document.body.appendChild(el);
 
 			const cb = vi.fn<InjectCallback>();
-			watcher.onDomReady('#once-target', cb, document, { once: true });
+			DOMWatcher.onDomReady('#once-target', cb, document, { once: true });
 
 			expect(cb).toHaveBeenCalledOnce();
 			expect(consoleSpy).toHaveBeenCalledWith(
@@ -91,7 +88,7 @@ describe('DOMWatcher', () => {
 		it('should NOT disconnect observer when once is not set (continuous mode)', async () => {
 			const cb = vi.fn<InjectCallback>();
 
-			watcher.onDomReady('.repeated', cb, document, { once: false, timeout: 5000 });
+			DOMWatcher.onDomReady('.repeated', cb, document, { once: false, timeout: 5000 });
 
 			vi.useRealTimers();
 
@@ -113,7 +110,7 @@ describe('DOMWatcher', () => {
 			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const cb = vi.fn<InjectCallback>();
 
-			watcher.onDomReady('#missing', cb, document, { once: false, timeout: 3000 });
+			DOMWatcher.onDomReady('#missing', cb, document, { once: false, timeout: 3000 });
 
 			// Element never added
 			vi.advanceTimersByTime(3500);
@@ -132,7 +129,7 @@ describe('DOMWatcher', () => {
 			root.appendChild(el);
 
 			const cb = vi.fn<InjectCallback>();
-			watcher.onDomReady('.scoped', cb, root, { once: true });
+			DOMWatcher.onDomReady('.scoped', cb, root, { once: true });
 
 			expect(cb).toHaveBeenCalledOnce();
 			expect(cb.mock.calls[0][0]).toBe(el);
@@ -150,7 +147,9 @@ describe('DOMWatcher', () => {
 			const onRemove = vi.fn();
 			const onRestore = vi.fn<InjectCallback>();
 
-			watcher.onDomAlive(el, '#alive-target', onRemove, onRestore, document, { once: true });
+			DOMWatcher.onDomAlive(el, '#alive-target', onRemove, onRestore, document, {
+				once: true
+			});
 
 			// Remove target
 			document.body.removeChild(el);
@@ -169,7 +168,9 @@ describe('DOMWatcher', () => {
 			const onRemove = vi.fn();
 			const onRestore = vi.fn<InjectCallback>();
 
-			watcher.onDomAlive(el, '#revive-target', onRemove, onRestore, document, { once: true });
+			DOMWatcher.onDomAlive(el, '#revive-target', onRemove, onRestore, document, {
+				once: true
+			});
 
 			// Remove
 			document.body.removeChild(el);
@@ -197,7 +198,7 @@ describe('DOMWatcher', () => {
 			const onRestore = vi.fn<InjectCallback>();
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			const stop = watcher.onDomAlive(el, '#stoppable', onRemove, onRestore, document, {
+			const stop = DOMWatcher.onDomAlive(el, '#stoppable', onRemove, onRestore, document, {
 				once: true
 			});
 
@@ -228,14 +229,14 @@ describe('DOMWatcher', () => {
 		it('should not throw when observing on document directly', () => {
 			expect(() => {
 				const cb = vi.fn<InjectCallback>();
-				watcher.onDomReady('#no-exist', cb, document, { once: true, timeout: 100 });
+				DOMWatcher.onDomReady('#no-exist', cb, document, { once: true, timeout: 100 });
 			}).not.toThrow();
 		});
 
 		it('should handle non-element nodes gracefully (text nodes added)', async () => {
 			const cb = vi.fn<InjectCallback>();
 
-			watcher.onDomReady('#target-el', cb, document, { once: true });
+			DOMWatcher.onDomReady('#target-el', cb, document, { once: true });
 
 			vi.useRealTimers();
 			// Add a text node – should NOT trigger callback
@@ -263,7 +264,7 @@ describe('DOMWatcher', () => {
 			el.id = 'race';
 			document.body.appendChild(el);
 
-			watcher.onDomReady('#race', cb, document, { once: true, timeout: 1000 });
+			DOMWatcher.onDomReady('#race', cb, document, { once: true, timeout: 1000 });
 
 			// Wait well past timeout
 			await new Promise((r) => setTimeout(r, 50));

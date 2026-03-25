@@ -1,6 +1,6 @@
 ﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { App, ComponentPublicInstance, Ref, WatchHandle } from 'vue';
-import { TaskContext } from '../src/core/TaskContext';
+import { TaskContext } from '../src/core/task/TaskContext';
 import type { Task } from '../src/type';
 
 describe('TaskContext', () => {
