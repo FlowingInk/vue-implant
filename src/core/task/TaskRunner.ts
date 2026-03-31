@@ -1,33 +1,51 @@
 import type { App, ComponentPublicInstance, Plugin, WatchHandle, WatchSource } from 'vue';
 import { createApp, nextTick, watch } from 'vue';
-import { Action, type ActionEvent, type InjectionConfig, type Task } from '../../type';
+import {
+	Action,
+	type ActionEvent,
+	type ILogger,
+	type InjectionConfig,
+	type Task
+} from '../../type';
 import { UUID } from '../../util/uuid';
+import { Logger } from '../logger/Logger';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
 
 export class TaskRunner {
 	private readonly taskContext: TaskContext;
 	private readonly injectConfig: InjectionConfig;
+	private readonly logger: ILogger;
 
-	constructor(taskContext: TaskContext, injectConfig: InjectionConfig) {
+	constructor(taskContext: TaskContext, injectConfig: InjectionConfig, logger?: ILogger) {
 		this.taskContext = taskContext;
 		this.injectConfig = injectConfig;
+		this.logger = logger ?? injectConfig.logger ?? new Logger();
 	}
 
 	public run(): void {
 		if (this.taskContext.taskRecords.length === 0) {
-			throw new Error(
-				'[vue-injector] No registered tasks found, call register() before run()'
-			);
+			throw new Error('No registered tasks found, call register() before run()');
 		}
 		this.taskContext.taskRecords.forEach(({ taskId: id, injectAt }) => {
-			const status = this.taskContext.getTaskStatus(id);
+			const status: 'idle' | 'pending' | 'active' | undefined =
+				this.taskContext.getTaskStatus(id);
+
+			const task: Task | undefined = this.taskContext.get(id);
+
+			if (!task || !status) return;
 			if (status === 'active' || status === 'pending') return;
 
-			DOMWatcher.onDomReady(injectAt, (el): void => this.onTargetReady(el, id), document, {
-				once: true,
-				timeout: this.injectConfig.timeout
-			});
+			DOMWatcher.onDomReady(
+					injectAt,
+					(el): void => this.onTargetReady(el, id),
+					document,
+					{
+						once: true,
+						timeout: task.timeout
+				},
+					this.logger
+				);
 			if (this.taskContext.getTaskStatus(id) !== 'active') {
 				// when the target element is exist, will sync call the func ,so we do not set to pending
 				this.taskContext.setTaskStatus(id, 'pending');
@@ -38,9 +56,7 @@ export class TaskRunner {
 	public onTargetReady(targetElement: HTMLElement, taskId: string): void {
 		const context = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(
-				`[vue-injector] Task "${taskId}" not found, unable to proceed with injection`
-			);
+			this.logger.error(`Task "${taskId}" not found, unable to proceed with injection`);
 			return;
 		}
 
@@ -79,9 +95,7 @@ export class TaskRunner {
 		// Bind a reactive signal to control automatic listener attach/detach for this task
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(
-				`[vue-injector] Task "${taskId}" not found, unable to bind activity signal`
-			);
+			this.logger.error(`Task "${taskId}" not found, unable to bind activity signal`);
 			return false;
 		}
 
@@ -105,22 +119,20 @@ export class TaskRunner {
 			context.watchSource = source;
 			return true;
 		} catch (e) {
-			console.error(`[vue-injector] Failed to bind activity signal for task "${taskId}":`, e);
+			this.logger.error(`Failed to bind activity signal for task "${taskId}":`, e);
 			return false;
 		}
 	}
 	public controlListener(taskId: string, event: ActionEvent): boolean {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context) {
-			console.error(
-				`[vue-injector] Task "${taskId}" not found, unable to manage listener state`
-			);
+			this.logger.error(`Task "${taskId}" not found, unable to manage listener state`);
 			return false;
 		}
 
 		// Check if event binding is configured
 		if (!context.withEvent || !context.listenAt || !context.event || !context.callback) {
-			console.warn(`[vue-injector] Task "${taskId}" has no event binding configured`);
+			this.logger.warn(`Task "${taskId}" has no event binding configured`);
 			return false;
 		}
 
@@ -141,8 +153,8 @@ export class TaskRunner {
 				if (newController) {
 					context.controller = newController;
 				} else {
-					console.error(
-						`[vue-injector] Failed to attach event "${context.event}" for task "${taskId}"`
+					this.logger.error(
+						`Failed to attach event "${context.event}" for task "${taskId}"`
 					);
 					return false;
 				}
@@ -155,14 +167,12 @@ export class TaskRunner {
 
 				context.controller.abort(); // Abort event listener
 				context.controller = undefined;
-				console.log(
-					`[vue-injector] Event "${context.event}" detached from task "${taskId}"`
-				);
+				this.logger.info(`Event "${context.event}" detached from task "${taskId}"`);
 				break;
 			}
 
 			default: {
-				console.warn(`[vue-injector] Unknown action type "${event}" for task "${taskId}"`);
+				this.logger.warn(`Unknown action type "${event}" for task "${taskId}"`);
 				return false;
 			}
 		}
@@ -180,47 +190,44 @@ export class TaskRunner {
 			element.addEventListener(event, callback, {
 				signal: controller.signal
 			});
-			console.log(`[vue-injector] Event "${event}" attached at "${listenAt}" (task: ${id})`);
+			this.logger.info(`Event "${event}" attached at "${listenAt}" (task: ${id})`);
 			return controller;
 		}
 
-		const proxyController = new AbortController();
-		DOMWatcher.onDomReady(
-			listenAt,
-			(el) => {
-				if (proxyController.signal.aborted) return;
-				el.addEventListener(event, callback, {
-					signal: proxyController.signal
+			const proxyController = new AbortController();
+			DOMWatcher.onDomReady(
+				listenAt,
+				(el) => {
+					if (proxyController.signal.aborted) return;
+					el.addEventListener(event, callback, {
+						signal: proxyController.signal
 				});
-				console.log(
-					`[vue-injector] Event "${event}" attached at "${listenAt}" (task: ${id})`
-				);
-			},
-			document,
-			{ once: true, timeout: this.injectConfig.timeout }
-		);
+					this.logger.info(`Event "${event}" attached at "${listenAt}" (task: ${id})`);
+				},
+				document,
+				{ once: true, timeout: this.injectConfig.timeout },
+				this.logger
+			);
 
 		return proxyController;
 	}
 	private injectComponent(matchedElement: HTMLElement, taskId: string): boolean {
 		const context: Task | undefined = this.taskContext.get(taskId);
 		if (!context || !context.componentInjectAt) {
-			console.error(`[vue-injector] Task "${taskId}" context missing, injection aborted`);
+			this.logger.error(`Task "${taskId}" context missing, injection aborted`);
 			return false;
 		}
 
 		if (context?.app) {
-			console.warn(`[vue-injector] Task "${taskId}" is already mounted, skipping`);
+			this.logger.warn(`Task "${taskId}" is already mounted, skipping`);
 			return false;
 		}
 
-			const injectAt: string = context.componentInjectAt;
-			const plugins: Plugin[] = this.taskContext.getPlugins();
+		const injectAt: string = context.componentInjectAt;
+		const plugins: Plugin[] = this.taskContext.getPlugins();
 
 		if (!context?.component || !context.taskId) {
-			console.error(
-				`[vue-injector] No component found for task "${taskId}", injection aborted`
-			);
+			this.logger.error(`No component found for task "${taskId}", injection aborted`);
 			return false;
 		}
 		const currentDocument = matchedElement.ownerDocument || document;
@@ -234,18 +241,18 @@ export class TaskRunner {
 		if (matchedElement.isConnected) {
 			matchedElement.appendChild(appRoot); // matchedElement is the target host element
 		} else {
-			console.warn(
-				`[vue-injector] Target element for task "${taskId}" is detached from DOM, injection skipped`
+			this.logger.warn(
+				`Target element for task "${taskId}" is detached from DOM, injection skipped`
 			);
 			return false;
 		}
 
 		try {
 			// Create a Vue app instance and mount it to the newly created DOM node
-				const subApp: App<Element> = createApp(context.component);
-				for (const plugin of plugins) {
-					subApp.use(plugin);
-				}
+			const subApp: App<Element> = createApp(context.component);
+			for (const plugin of plugins) {
+				subApp.use(plugin);
+			}
 			const vm: ComponentPublicInstance = subApp.mount(appRoot);
 
 			// Save to context
@@ -253,9 +260,7 @@ export class TaskRunner {
 			context.instance = vm;
 			context.appRoot = appRoot;
 
-			console.log(
-				`[vue-injector] Component "${context.componentName}" injected at "${injectAt}"`
-			);
+			this.logger.info(`Component "${context.componentName}" injected at "${injectAt}"`);
 
 			if (context.alive && !context.isObserver) {
 				const aliveEpoch = context.aliveEpoch ?? 0;
@@ -269,20 +274,21 @@ export class TaskRunner {
 						context.aliveEpoch !== aliveEpoch ||
 						context.app !== subApp
 					)
-						return;
+					return;
 
 					const stopHandler = DOMWatcher.onDomAlive(
 						matchedElement,
 						injectAt,
 						() => {
 							this.taskContext.reset(taskId);
-						},
+				},
 						(el): void => this.onTargetReady(el, taskId),
 						context.scope === 'global' ? currentDocument : matchedElement,
 						{
 							once: true,
 							timeout: this.injectConfig.timeout
-						}
+				},
+					this.logger
 					);
 
 					// if changes happen during async setup,
@@ -293,17 +299,17 @@ export class TaskRunner {
 						context.app !== subApp
 					) {
 						stopHandler();
-						return;
-					}
+					return;
+				}
 					context.disableAlive = stopHandler;
 					context.isObserver = true;
-					console.log(`[vue-injector] Task "${taskId}" alive observer activated`);
+					this.logger.info(`Task "${taskId}" alive observer activated`);
 				});
 			}
 
 			return true;
 		} catch (error) {
-			console.error(`[vue-injector] Component mount failed for task "${taskId}":`, error);
+			this.logger.error(`Component mount failed for task "${taskId}":`, error);
 			appRoot.remove();
 			return false;
 		}
