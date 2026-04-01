@@ -1,16 +1,11 @@
 import type { Component, Ref } from 'vue';
-import type {
-	_RegisterResult,
-	ComponentOptions,
-	ILogger,
-	InjectionConfig,
-	ListenerRegisterResult,
-	Task
-} from '../../type';
 import { getComponentName } from '../../util/getComponentName';
 import { markRawComponent } from '../../util/markRawComponent';
+import type { ComponentOptions, InjectionConfig } from '../Injector.types';
 import { Logger } from '../logger/Logger';
+import type { ILogger } from '../logger/types';
 import type { TaskContext } from './TaskContext';
+import type { _RegisterResult, ListenerRegisterResult, Task } from './types';
 
 export class TaskRegister {
 	private readonly taskContext: TaskContext;

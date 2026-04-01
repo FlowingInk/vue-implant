@@ -1,6 +1,7 @@
-﻿import type { Plugin } from 'vue';
-import type { ILogger, Task, TaskErrorMessage, TaskRecord } from '../../type';
+import type { Plugin } from 'vue';
 import { Logger } from '../logger/Logger';
+import type { ILogger } from '../logger/types';
+import type { Task, TaskErrorMessage, TaskRecord } from './types';
 
 /**
  * Central runtime registry for all injection tasks.
