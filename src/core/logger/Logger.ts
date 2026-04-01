@@ -1,4 +1,4 @@
-import type { ILogger, LoggerLevel } from '../../type';
+import type { ILogger, LoggerLevel } from './types';
 
 export class Logger implements ILogger {
 	private static readonly LEVELS = ['debug', 'info', 'warn', 'error'];

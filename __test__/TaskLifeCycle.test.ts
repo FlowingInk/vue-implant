@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { TaskContext } from '../src/core/task/TaskContext';
 import { TaskLifeCycle } from '../src/core/task/TaskLifeCycle';
+import type { Task } from '../src/core/task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
-import type { Task } from '../src/type';
 
 describe('TaskLifeCycle', () => {
 	let taskContext: TaskContext;

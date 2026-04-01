@@ -2,12 +2,12 @@ import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { Injector } from '../src/core/Injector';
+import { Action } from '../src/core/Injector.types';
 import { TaskContext } from '../src/core/task/TaskContext';
 import type { TaskLifeCycle } from '../src/core/task/TaskLifeCycle';
 import type { TaskRegister } from '../src/core/task/TaskRegister';
 import type { TaskRunner } from '../src/core/task/TaskRunner';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
-import { Action } from '../src/type';
 
 describe('Injector', () => {
 	let injector: Injector;
@@ -101,10 +101,16 @@ describe('Injector', () => {
 		testInjector.register('#app', { name: 'AppComp' });
 		testInjector.run();
 
-		expect(onDomReadySpy).toHaveBeenCalledWith('#app', expect.any(Function), document, {
-			once: true,
-			timeout: 10000
-		}, expect.anything());
+		expect(onDomReadySpy).toHaveBeenCalledWith(
+			'#app',
+			expect.any(Function),
+			document,
+			{
+				once: true,
+				timeout: 10000
+			},
+			expect.anything()
+		);
 	});
 
 	it('should run task with custom timeout', () => {
@@ -119,10 +125,16 @@ describe('Injector', () => {
 		);
 		testInjector.run();
 
-		expect(onDomReadySpy).toHaveBeenCalledWith('#app', expect.any(Function), document, {
-			once: true,
-			timeout: 5000
-		}, expect.anything());
+		expect(onDomReadySpy).toHaveBeenCalledWith(
+			'#app',
+			expect.any(Function),
+			document,
+			{
+				once: true,
+				timeout: 5000
+			},
+			expect.anything()
+		);
 	});
 
 	it('should register shared plugins in Injector', () => {

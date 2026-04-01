@@ -1,17 +1,12 @@
-﻿import type { Component, Plugin, Ref, WatchSource } from 'vue';
-import type {
-	ActionEvent,
-	ComponentOptions,
-	ILogger,
-	InjectionConfig,
-	ListenerRegisterResult,
-	RegisterResult
-} from '../type';
+import type { Component, Plugin, Ref, WatchSource } from 'vue';
+import type { ActionEvent, ComponentOptions, InjectionConfig } from './Injector.types';
 import { Logger } from './logger/Logger';
+import type { ILogger } from './logger/types';
 import { TaskContext } from './task/TaskContext';
 import { TaskLifeCycle } from './task/TaskLifeCycle';
 import { TaskRegister } from './task/TaskRegister';
 import { TaskRunner } from './task/TaskRunner';
+import type { ListenerRegisterResult, RegisterResult } from './task/types';
 
 export class Injector {
 	// Unified task context containing all component-related data

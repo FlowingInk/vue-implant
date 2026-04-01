@@ -1,16 +1,12 @@
 import type { App, ComponentPublicInstance, Plugin, WatchHandle, WatchSource } from 'vue';
 import { createApp, nextTick, watch } from 'vue';
-import {
-	Action,
-	type ActionEvent,
-	type ILogger,
-	type InjectionConfig,
-	type Task
-} from '../../type';
 import { UUID } from '../../util/uuid';
+import { Action, type ActionEvent, type InjectionConfig } from '../Injector.types';
 import { Logger } from '../logger/Logger';
+import type { ILogger } from '../logger/types';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
+import type { Task } from './types';
 
 export class TaskRunner {
 	private readonly taskContext: TaskContext;
@@ -37,15 +33,15 @@ export class TaskRunner {
 			if (status === 'active' || status === 'pending') return;
 
 			DOMWatcher.onDomReady(
-					injectAt,
-					(el): void => this.onTargetReady(el, id),
-					document,
-					{
-						once: true,
-						timeout: task.timeout
+				injectAt,
+				(el): void => this.onTargetReady(el, id),
+				document,
+				{
+					once: true,
+					timeout: task.timeout
 				},
-					this.logger
-				);
+				this.logger
+			);
 			if (this.taskContext.getTaskStatus(id) !== 'active') {
 				// when the target element is exist, will sync call the func ,so we do not set to pending
 				this.taskContext.setTaskStatus(id, 'pending');
@@ -194,20 +190,20 @@ export class TaskRunner {
 			return controller;
 		}
 
-			const proxyController = new AbortController();
-			DOMWatcher.onDomReady(
-				listenAt,
-				(el) => {
-					if (proxyController.signal.aborted) return;
-					el.addEventListener(event, callback, {
-						signal: proxyController.signal
+		const proxyController = new AbortController();
+		DOMWatcher.onDomReady(
+			listenAt,
+			(el) => {
+				if (proxyController.signal.aborted) return;
+				el.addEventListener(event, callback, {
+					signal: proxyController.signal
 				});
-					this.logger.info(`Event "${event}" attached at "${listenAt}" (task: ${id})`);
-				},
-				document,
-				{ once: true, timeout: this.injectConfig.timeout },
-				this.logger
-			);
+				this.logger.info(`Event "${event}" attached at "${listenAt}" (task: ${id})`);
+			},
+			document,
+			{ once: true, timeout: this.injectConfig.timeout },
+			this.logger
+		);
 
 		return proxyController;
 	}
@@ -274,21 +270,21 @@ export class TaskRunner {
 						context.aliveEpoch !== aliveEpoch ||
 						context.app !== subApp
 					)
-					return;
+						return;
 
 					const stopHandler = DOMWatcher.onDomAlive(
 						matchedElement,
 						injectAt,
 						() => {
 							this.taskContext.reset(taskId);
-				},
+						},
 						(el): void => this.onTargetReady(el, taskId),
 						context.scope === 'global' ? currentDocument : matchedElement,
 						{
 							once: true,
 							timeout: this.injectConfig.timeout
-				},
-					this.logger
+						},
+						this.logger
 					);
 
 					// if changes happen during async setup,
@@ -299,8 +295,8 @@ export class TaskRunner {
 						context.app !== subApp
 					) {
 						stopHandler();
-					return;
-				}
+						return;
+					}
 					context.disableAlive = stopHandler;
 					context.isObserver = true;
 					this.logger.info(`Task "${taskId}" alive observer activated`);

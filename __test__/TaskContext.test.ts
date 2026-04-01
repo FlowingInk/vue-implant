@@ -1,7 +1,7 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { App, ComponentPublicInstance, Ref, WatchHandle } from 'vue';
 import { TaskContext } from '../src/core/task/TaskContext';
-import type { Task } from '../src/type';
+import type { Task } from '../src/core/task/types';
 
 describe('TaskContext', () => {
 	let taskContext: TaskContext;
@@ -260,11 +260,11 @@ describe('TaskContext', () => {
 			// context 浠嶄粠 map 涓垹闄?			expect(taskContext.get('test')).toBeUndefined();
 		});
 	});
-		describe('destroyAll', () => {
-			it('should destroy all contexts correctly', () => {
-				const context1: Task = {
-					taskId: 'test1'
-				};
+	describe('destroyAll', () => {
+		it('should destroy all contexts correctly', () => {
+			const context1: Task = {
+				taskId: 'test1'
+			};
 			const context2: Task = {
 				taskId: 'test2'
 			};
@@ -325,22 +325,22 @@ describe('TaskContext', () => {
 			expect(mockWatcher1).toHaveBeenCalled();
 			expect(mockWatcher2).toHaveBeenCalled();
 		});
-			it('should not throw an error when contextMap is empty', () => {
-				expect(() => taskContext.destroyAll()).not.toThrow();
-			});
-
-			it('should clear shared plugins and legacy pinia on destroyAll', () => {
-				const plugin = { install: vi.fn() };
-				const pinia = { install: vi.fn() };
-
-				taskContext.use(plugin);
-				taskContext.setPinia(pinia);
-				taskContext.destroyAll();
-
-				expect(taskContext.getPlugins()).toEqual([]);
-				expect(taskContext.getPinia()).toBeUndefined();
-			});
+		it('should not throw an error when contextMap is empty', () => {
+			expect(() => taskContext.destroyAll()).not.toThrow();
 		});
+
+		it('should clear shared plugins and legacy pinia on destroyAll', () => {
+			const plugin = { install: vi.fn() };
+			const pinia = { install: vi.fn() };
+
+			taskContext.use(plugin);
+			taskContext.setPinia(pinia);
+			taskContext.destroyAll();
+
+			expect(taskContext.getPlugins()).toEqual([]);
+			expect(taskContext.getPinia()).toBeUndefined();
+		});
+	});
 
 	describe('releaseComponentInstance', () => {
 		it('should unmount app and remove DOM element', () => {

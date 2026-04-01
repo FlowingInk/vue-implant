@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
+import { Action } from '../src/core/Injector.types';
 import { TaskContext } from '../src/core/task/TaskContext';
 import { TaskRunner } from '../src/core/task/TaskRunner';
+import type { Task } from '../src/core/task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
-import { Action, type Task } from '../src/type';
 
 describe('TaskRunner', () => {
 	let taskContext: TaskContext;
@@ -37,9 +38,15 @@ describe('TaskRunner', () => {
 
 		taskRunner.run();
 
-		expect(spy).toHaveBeenCalledWith('#app', expect.any(Function), document, {
-			once: true
-		}, expect.anything());
+		expect(spy).toHaveBeenCalledWith(
+			'#app',
+			expect.any(Function),
+			document,
+			{
+				once: true
+			},
+			expect.anything()
+		);
 		expect(taskContext.getTaskStatus('task-a')).toBe('pending');
 	});
 
@@ -610,9 +617,15 @@ describe('TaskRunner', () => {
 
 		taskRunner.run();
 
-		expect(onDomReadySpy).toHaveBeenCalledWith('#app', expect.any(Function), document, {
-			once: true,
-			timeout: 5000
-		}, expect.anything());
+		expect(onDomReadySpy).toHaveBeenCalledWith(
+			'#app',
+			expect.any(Function),
+			document,
+			{
+				once: true,
+				timeout: 5000
+			},
+			expect.anything()
+		);
 	});
 });

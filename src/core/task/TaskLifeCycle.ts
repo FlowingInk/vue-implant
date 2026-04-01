@@ -1,8 +1,10 @@
 import { nextTick } from 'vue';
-import type { ILogger, InjectionConfig, Task } from '../../type';
+import type { InjectionConfig } from '../Injector.types';
 import { Logger } from '../logger/Logger';
+import type { ILogger } from '../logger/types';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
+import type { Task } from './types';
 
 export class TaskLifeCycle {
 	private readonly taskContext: TaskContext;
@@ -48,15 +50,15 @@ export class TaskLifeCycle {
 		// placeholder stop handler for pending async setup
 		context.disableAlive = () => {};
 
-			// Case 1: Component is already mounted and connected - set up the alive observer directly
-			if (context.app && context.appRoot?.isConnected) {
-				const matchedElement = context.appRoot.parentElement;
-				if (!matchedElement) {
-					this.logger.warn(
-						`Task "${taskId}": host element not found, unable to activate alive observer`
-					);
-					return;
-				}
+		// Case 1: Component is already mounted and connected - set up the alive observer directly
+		if (context.app && context.appRoot?.isConnected) {
+			const matchedElement = context.appRoot.parentElement;
+			if (!matchedElement) {
+				this.logger.warn(
+					`Task "${taskId}": host element not found, unable to activate alive observer`
+				);
+				return;
+			}
 
 			const currentDocument = matchedElement.ownerDocument || document;
 			const injectAt = context.componentInjectAt;
@@ -64,20 +66,20 @@ export class TaskLifeCycle {
 			nextTick().then(() => {
 				if (!context.alive || context.aliveEpoch !== aliveEpoch) return;
 
-					const stopHandler = DOMWatcher.onDomAlive(
-						matchedElement,
-						injectAt,
-						() => {
-							this.taskContext.reset(taskId);
-				},
-						(el): void => this.onTargetReady(el, taskId),
-						context.scope === 'global' ? currentDocument : matchedElement,
-						{
-							once: true,
-							timeout: this.injectConfig.timeout
-				},
+				const stopHandler = DOMWatcher.onDomAlive(
+					matchedElement,
+					injectAt,
+					() => {
+						this.taskContext.reset(taskId);
+					},
+					(el): void => this.onTargetReady(el, taskId),
+					context.scope === 'global' ? currentDocument : matchedElement,
+					{
+						once: true,
+						timeout: this.injectConfig.timeout
+					},
 					this.logger
-					);
+				);
 
 				if (!context.alive || context.aliveEpoch !== aliveEpoch) {
 					stopHandler();
@@ -103,19 +105,19 @@ export class TaskLifeCycle {
 			let cancelled = false;
 			const stopReadyObserver = DOMWatcher.onDomReady(
 				context.componentInjectAt,
-					(el): void => {
-						if (cancelled || !context.alive || context.aliveEpoch !== aliveEpoch) {
-					this.logger.warn(
-								`Task "${taskId}" alive epoch changed before element appears`
-					);
+				(el): void => {
+					if (cancelled || !context.alive || context.aliveEpoch !== aliveEpoch) {
+						this.logger.warn(
+							`Task "${taskId}" alive epoch changed before element appears`
+						);
 						return;
 					}
-						this.onTargetReady(el, taskId);
+					this.onTargetReady(el, taskId);
 				},
-					document,
-					{ once: true, timeout: this.injectConfig.timeout },
-					this.logger
-				);
+				document,
+				{ once: true, timeout: this.injectConfig.timeout },
+				this.logger
+			);
 			context.disableAlive = () => {
 				if (cancelled) return;
 				cancelled = true;

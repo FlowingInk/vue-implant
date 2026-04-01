@@ -1,5 +1,6 @@
-import type { ILogger, InjectCallback, ObserverOptions } from '../../type';
 import { Logger } from '../logger/Logger';
+import type { ILogger } from '../logger/types';
+import type { InjectCallback, ObserverOptions } from './types';
 
 /**
  * Observe the DOM for elements matching the given selector.
