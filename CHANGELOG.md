@@ -17,3 +17,12 @@
 ## [1.0.1] - 2026-03-21
 
 - Relax the versions of vue and pinia
+
+## [1.1.0] - 2026-03-21
+
+- **refactor/modularize:** Injector core and decompose into specialized task modules by @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/15
+- **feat(injector):** support shared Vue plugins and unified plugin management by @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/16
+- **Feat/inject enhancement:** add some config to enhancement the dev and support custom Logger DI by ILogger interface @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/17
+- **refactor/Split global types:** Split global types into file of different module @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/18
+- **fix/lifecycle-routing-leak:** Fix the vulnerability where Injector bypasses TaskLifeCycle and directly calls the internal lifecycle, ensuring state is controlled.  @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/19
+- **chore/docs:** Refine README and add best practices by @FlowingInk in https://github.com/FlowingInk/vue-implant/pull/20
