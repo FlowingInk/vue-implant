@@ -111,10 +111,9 @@ export class TaskRegister {
 				kind: 'component'
 			}
 		});
+		const taskId: string = this.getTaskId(component, injectAt);
 
 		try {
-			const taskId: string = this.getTaskId(component, injectAt);
-
 			if (this.taskContext.has(taskId)) {
 				// Component already registered, return directly
 				this.logger.warn(`Task "${taskId}" is already registered, skipping`);
@@ -182,12 +181,17 @@ export class TaskRegister {
 			};
 		} catch (error) {
 			this.emit('register:error', {
+				taskId,
 				injectAt,
 				error,
 				meta: {
 					kind: 'component'
 				}
 			});
+			return {
+				taskId,
+				isSuccess: false
+			};
 		}
 	}
 }
