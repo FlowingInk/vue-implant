@@ -44,3 +44,7 @@
 
 - add `ObserverHub` unit tests and extend task/injector/watcher tests around observability events
 - update README and README.CN with observability hooks and logger usage examples
+
+## [1.2.1] - 2026-04-09
+
+- Fix the return issue in TaskRegister
