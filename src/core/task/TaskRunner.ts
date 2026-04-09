@@ -125,6 +125,11 @@ export class TaskRunner {
 		}
 
 		context.taskStatus = 'active';
+		this.emit('task:active', {
+			taskId,
+			injectAt: context.componentInjectAt ?? context.listenAt,
+			status: 'active'
+		});
 	}
 
 	public bindListenerSignal(taskId: string, source: WatchSource<boolean>): boolean {

@@ -553,7 +553,11 @@ describe('TaskLifeCycle', () => {
 		expect(events).toContain('alive:observeStart');
 		expect(events).toContain('alive:disable');
 		expect(events).toContain('alive:observeStop');
+		expect(events).toContain('task:beforeReset');
 		expect(events).toContain('task:reset');
+		expect(events).toContain('task:afterReset');
+		expect(events).toContain('task:beforeDestroy');
 		expect(events).toContain('task:destroy');
+		expect(events).toContain('task:afterDestroy');
 	});
 });

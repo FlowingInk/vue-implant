@@ -5,6 +5,7 @@ import { DOMWatcher } from './core/watcher/DomWatcher';
 
 export { Injector, DOMWatcher, Action, ObserverHub };
 export type {
+	LifecycleHookMap,
 	ObserveEvent,
 	ObserveEventName,
 	ObserveHook

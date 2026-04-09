@@ -17,6 +17,11 @@ export type ObserveEventName =
 	| 'alive:disable'
 	| 'alive:observeStart'
 	| 'alive:observeStop'
+	| 'task:active'
+	| 'task:beforeReset'
+	| 'task:afterReset'
+	| 'task:beforeDestroy'
+	| 'task:afterDestroy'
 	| 'task:reset'
 	| 'task:destroy'
 	| 'resource:watcherReleased'
@@ -39,6 +44,10 @@ export type ObserveEvent = {
 };
 
 export type ObserveHook = (event: ObserveEvent) => void;
+
+export type LifecycleHookMap = Partial<
+	Record<ObserveEventName, ObserveHook | ObserveHook[]>
+>;
 
 export type ObserveEmitter = (
 	name: ObserveEventName,

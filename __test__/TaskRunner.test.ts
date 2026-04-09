@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
 import { Action } from '../src/core/Injector/types';
+import { ObserverHub } from '../src/core/hooks/ObservabilityHook/ObserverHub';
 import { TaskContext } from '../src/core/task/TaskContext';
 import { TaskRunner } from '../src/core/task/TaskRunner';
 import type { Task } from '../src/core/task/types';
@@ -85,6 +86,36 @@ describe('TaskRunner', () => {
 		expect(task.app).toBeDefined();
 		expect(task.appRoot?.parentElement).toBe(host);
 		expect(task.taskStatus).toBe('active');
+	});
+
+	it('should emit task:active when a task becomes active', () => {
+		const observer = new ObserverHub();
+		const activeEvents: string[] = [];
+		taskRunner = new TaskRunner(taskContext, {
+			alive: false,
+			scope: 'local',
+			timeout: 5000,
+			observer
+		});
+		observer.on('task:active', (event) => {
+			activeEvents.push(`${event.taskId}:${event.status}`);
+		});
+
+		const host = document.createElement('div');
+		host.id = 'active-event-host';
+		document.body.appendChild(host);
+
+		taskContext.set('active-event-task', {
+			taskId: 'active-event-task',
+			taskStatus: 'idle',
+			componentName: 'ActiveEventComp',
+			componentInjectAt: '#active-event-host',
+			component: { name: 'ActiveEventComp', render: () => null }
+		});
+
+		taskRunner.onTargetReady(host, 'active-event-task');
+
+		expect(activeEvents).toEqual(['active-event-task:active']);
 	});
 
 	it('should install all registered shared plugins when mounting component', () => {

@@ -109,6 +109,7 @@ type InjectionConfig = {
 	timeout?: number;
 	logger?: ILogger;
 	observer?: ObserverHub;
+	hooks?: LifecycleHookMap;
 };
 ```
 
@@ -119,6 +120,7 @@ type InjectionConfig = {
 | `timeout` | `number` | 初始注入与重注入的超时阈值（毫秒）。不建议显式设置为 `undefined`。 | `5000` |
 | `logger` | `ILogger` | 自定义日志实现；未传入时使用内置 logger。 | 内置 logger |
 | `observer` | `ObserverHub` | 可选可观测中心，用于订阅运行时事件。 | `new ObserverHub()` |
+| `hooks` | `LifecycleHookMap` | 可选生命周期钩子映射，内部会注册到当前 `ObserverHub`。 | `undefined` |
 
 ### `Injector.run(): void`
 
@@ -243,6 +245,22 @@ injector.usePlugins(pinia, analyticsPlugin);
 
 返回当前注入器持有的 `ObserverHub` 实例，可用于注册/移除可观测事件监听。
 
+### `Injector.on(event: ObserveEventName, hook: ObserveHook): () => void`
+
+直接在当前注入器上注册一个生命周期钩子，并返回取消订阅函数。
+
+### `Injector.onAny(hook: ObserveHook): () => void`
+
+直接在当前注入器上注册一个全量事件钩子，并返回取消订阅函数。
+
+### `Injector.off(event: ObserveEventName, hook?: ObserveHook): void`
+
+移除某个事件上的指定钩子；当 `hook` 省略时，会清空该事件下的全部钩子。
+
+### `Injector.offAny(hook: ObserveHook): void`
+
+移除之前通过 `onAny()` 注册的钩子。
+
 ### 日志
 
 `vue-implant` 现在会通过统一的 logger 输出内部运行日志，不再在各个模块里直接调用`console`。
@@ -290,13 +308,30 @@ offFail();
 offAny();
 ```
 
+也可以直接在 `Injector` 配置中声明钩子：
+
+```ts
+import { Injector } from 'vue-implant';
+
+const injector = new Injector({
+	hooks: {
+		'inject:success': (event) => {
+			console.log('mounted:', event.taskId);
+		},
+		'task:afterDestroy': (event) => {
+			console.log('destroyed:', event.taskId);
+		}
+	}
+});
+```
+
 常用事件：
 
 - 注册：`register:start` / `register:success` / `register:duplicate` / `register:error`
 - 运行：`run:start` / `run:taskScheduled` / `run:taskSkipped`
 - 注入：`target:ready` / `inject:start` / `inject:success` / `inject:fail`
 - 监听器：`listener:open` / `listener:close` / `listener:attachFail`
-- 生命周期：`alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop` / `task:reset` / `task:destroy`
+- 生命周期：`alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop` / `task:active` / `task:beforeReset` / `task:afterReset` / `task:beforeDestroy` / `task:afterDestroy` / `task:reset` / `task:destroy`
 - 资源释放：`resource:watcherReleased` / `resource:listenerReleased` / `resource:componentUnmounted`
 - DOM 观察：`dom:readyFound` / `dom:readyTimeout` / `dom:removed` / `dom:restored`
 

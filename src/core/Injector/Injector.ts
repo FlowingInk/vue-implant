@@ -1,7 +1,12 @@
 import type { Component, Plugin, Ref, WatchSource } from 'vue';
 import { createObserveEmitter } from '../hooks/ObservabilityHook/createObserveEmitter';
 import { ObserverHub } from '../hooks/ObservabilityHook/ObserverHub';
-import type { ObserveEmitter } from '../hooks/ObservabilityHook/type';
+import type {
+	LifecycleHookMap,
+	ObserveEmitter,
+	ObserveEventName,
+	ObserveHook
+} from '../hooks/ObservabilityHook/type';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import { TaskContext } from '../task/TaskContext';
@@ -38,6 +43,7 @@ export class Injector {
 			logger: this.logger,
 			observer: this.observer
 		};
+		this.registerConfiguredHooks(config.hooks);
 		this.taskRegister = new TaskRegister(this.taskContext, this.injectConfig, this.logger);
 		this.taskRunner = new TaskRunner(this.taskContext, this.injectConfig, this.logger);
 		this.taskLifeCycle = new TaskLifeCycle(
@@ -90,6 +96,22 @@ export class Injector {
 		return this.observer;
 	}
 
+	public on(event: ObserveEventName, hook: ObserveHook): () => void {
+		return this.observer.on(event, hook);
+	}
+
+	public onAny(hook: ObserveHook): () => void {
+		return this.observer.onAny(hook);
+	}
+
+	public off(event: ObserveEventName, hook?: ObserveHook): void {
+		this.observer.off(event, hook);
+	}
+
+	public offAny(hook: ObserveHook): void {
+		this.observer.offAny(hook);
+	}
+
 	public getLogger(): ILogger {
 		return this.logger;
 	}
@@ -138,5 +160,20 @@ export class Injector {
 
 	public controlListener(taskId: string, event: ActionEvent): boolean {
 		return this.taskRunner.controlListener(taskId, event);
+	}
+
+	private registerConfiguredHooks(hooks?: LifecycleHookMap): void {
+		if (!hooks) return;
+
+		for (const [eventName, hookOrHooks] of Object.entries(hooks) as Array<
+			[ObserveEventName, ObserveHook | ObserveHook[] | undefined]
+		>) {
+			if (!hookOrHooks) continue;
+
+			const hooksToRegister = Array.isArray(hookOrHooks) ? hookOrHooks : [hookOrHooks];
+			for (const hook of hooksToRegister) {
+				this.observer.on(eventName, hook);
+			}
+		}
 	}
 }

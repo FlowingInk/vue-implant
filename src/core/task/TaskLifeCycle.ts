@@ -192,6 +192,11 @@ export class TaskLifeCycle {
 
 	public destroy(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
+		this.emit('task:beforeDestroy', {
+			taskId,
+			injectAt: context?.componentInjectAt,
+			status: context?.taskStatus
+		});
 		this.emit('task:destroy', {
 			taskId,
 			injectAt: context?.componentInjectAt,
@@ -201,6 +206,11 @@ export class TaskLifeCycle {
 			this.disableAlive(taskId);
 		}
 		this.taskContext.destroy(taskId);
+		this.emit('task:afterDestroy', {
+			taskId,
+			injectAt: context?.componentInjectAt,
+			status: 'idle'
+		});
 	}
 
 	public destroyAll(): void {
@@ -214,6 +224,11 @@ export class TaskLifeCycle {
 	}
 	public reset(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
+		this.emit('task:beforeReset', {
+			taskId,
+			injectAt: context?.componentInjectAt,
+			status: context?.taskStatus
+		});
 		this.emit('task:reset', {
 			taskId,
 			injectAt: context?.componentInjectAt,
@@ -223,6 +238,11 @@ export class TaskLifeCycle {
 			this.disableAlive(taskId);
 		}
 		this.taskContext.reset(taskId);
+		this.emit('task:afterReset', {
+			taskId,
+			injectAt: context?.componentInjectAt,
+			status: 'idle'
+		});
 	}
 	public resetAll(): void {
 		for (const id of this.taskContext.keys()) {

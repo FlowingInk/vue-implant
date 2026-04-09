@@ -230,6 +230,40 @@ describe('Injector', () => {
 		expect(events).toContain('run:start');
 		expect(events).toContain('target:ready');
 		expect(events).toContain('inject:success');
+		expect(events).toContain('task:active');
+	});
+
+	it('should register hooks from config and expose observer facade methods', () => {
+		const injectSuccessHook = vi.fn();
+		const afterDestroyHook = vi.fn();
+		const anyHook = vi.fn();
+		const hookedInjector = new Injector({
+			hooks: {
+				'inject:success': injectSuccessHook,
+				'task:afterDestroy': [afterDestroyHook]
+			}
+		});
+
+		const offAny = hookedInjector.onAny(anyHook);
+		const offFail = hookedInjector.on('inject:fail', vi.fn());
+
+		const host = document.createElement('div');
+		host.id = 'hooked-host';
+		document.body.appendChild(host);
+
+		const { taskId } = hookedInjector.register('#hooked-host', {
+			name: 'HookedComp',
+			render: () => null
+		});
+
+		hookedInjector.run();
+		hookedInjector.destroy(taskId);
+		offAny();
+		offFail();
+
+		expect(injectSuccessHook).toHaveBeenCalledOnce();
+		expect(afterDestroyHook).toHaveBeenCalledOnce();
+		expect(anyHook).toHaveBeenCalled();
 	});
 	it('should get the logger', () => {
 		const logger = new Logger();
