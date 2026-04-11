@@ -16,4 +16,4 @@ export type {
 	InjectionConfig
 } from './core/Injector/types';
 export type { ILogger, LoggerLevel } from './core/logger/types';
-export type { ListenerRegisterResult, RegisterResult } from './core/task/types';
+export type { ListenerRegisterResult, RegisterResult } from './core/Task/types';

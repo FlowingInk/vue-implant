@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import { TaskContext } from '../src/core/task/TaskContext';
-import { TaskRegister } from '../src/core/task/TaskRegister';
+import { TaskContext } from '../src/core/Task/TaskContext';
+import { TaskRegister } from '../src/core/Task/TaskRegister';
 import { createObserveEmitter } from '../src/util/createObserveEmitter';
 
 describe('TaskRegister', () => {

@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import { Action } from '../src/core/Injector/types';
-import { TaskContext } from '../src/core/task/TaskContext';
-import { TaskRunner } from '../src/core/task/TaskRunner';
-import type { Task } from '../src/core/task/types';
+import { TaskContext } from '../src/core/Task/TaskContext';
+import { TaskRunner } from '../src/core/Task/TaskRunner';
+import type { Task } from '../src/core/Task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 import { createObserveEmitter } from '../src/util/createObserveEmitter';
 

@@ -5,10 +5,10 @@ import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import { Injector } from '../src/core/Injector/Injector';
 import { Action } from '../src/core/Injector/types';
 import { Logger } from '../src/core/logger/Logger';
-import { TaskContext } from '../src/core/task/TaskContext';
-import type { TaskLifeCycle } from '../src/core/task/TaskLifeCycle';
-import type { TaskRegister } from '../src/core/task/TaskRegister';
-import type { TaskRunner } from '../src/core/task/TaskRunner';
+import { TaskContext } from '../src/core/Task/TaskContext';
+import type { TaskLifeCycle } from '../src/core/Task/TaskLifeCycle';
+import type { TaskRegister } from '../src/core/Task/TaskRegister';
+import type { TaskRunner } from '../src/core/Task/TaskRunner';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 
 describe('Injector', () => {

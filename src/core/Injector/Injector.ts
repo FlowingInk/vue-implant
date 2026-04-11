@@ -5,11 +5,11 @@ import { ObserverHub } from '../hooks/ObserverHub';
 import type { ObserveEmitter, ObserveEventName, ObserveHook } from '../hooks/type';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
-import { TaskContext } from '../task/TaskContext';
-import { TaskLifeCycle } from '../task/TaskLifeCycle';
-import { TaskRegister } from '../task/TaskRegister';
-import { TaskRunner } from '../task/TaskRunner';
-import type { ListenerRegisterResult, RegisterResult } from '../task/types';
+import { TaskContext } from '../Task/TaskContext';
+import { TaskLifeCycle } from '../Task/TaskLifeCycle';
+import { TaskRegister } from '../Task/TaskRegister';
+import { TaskRunner } from '../Task/TaskRunner';
+import type { ListenerRegisterResult, RegisterResult } from '../Task/types';
 import type { ActionEvent, ComponentOptions, InjectionConfig } from './types';
 
 export class Injector {

@@ -2,7 +2,7 @@
 defineOptions({ name: 'DelayedInjectionCase' })
 
 import { inject, onMounted, ref } from 'vue'
-import type { RegisterResult } from '../../src/core/task/types'
+import type { RegisterResult } from '../../src/core/Task/types'
 
 const hostVisible = ref(false);
 const delayAliveEnabled = ref(true);

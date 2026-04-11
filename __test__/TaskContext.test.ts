@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { App, ComponentPublicInstance, Ref, WatchHandle } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import { TaskContext } from '../src/core/task/TaskContext';
-import type { Task } from '../src/core/task/types';
+import { TaskContext } from '../src/core/Task/TaskContext';
+import type { Task } from '../src/core/Task/types';
 
 describe('TaskContext', () => {
 	let taskContext: TaskContext;
