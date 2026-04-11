@@ -1,7 +1,7 @@
 import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
-import { ObserverHub } from '../src/core/hooks/ObservabilityHook/ObserverHub';
+import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import { Injector } from '../src/core/Injector/Injector';
 import { Action } from '../src/core/Injector/types';
 import { Logger } from '../src/core/logger/Logger';
@@ -40,8 +40,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
 
 		const result = injector.register('#app', { name: 'FacadeComp' });
 
@@ -62,14 +62,14 @@ describe('Injector', () => {
 	});
 
 	it('should forward run to TaskRunner', () => {
-		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => {});
+		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => { });
 		injector.run();
 		expect(runSpy).toHaveBeenCalledOnce();
 	});
 
 	it('should forward enableAlive and disableAlive to TaskLifeCycle', () => {
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
 
 		injector.enableAlive('task-a');
 		injector.disableAlive('task-a');
@@ -237,6 +237,7 @@ describe('Injector', () => {
 		const injectSuccessHook = vi.fn();
 		const afterDestroyHook = vi.fn();
 		const anyHook = vi.fn();
+		const taskHook = vi.fn();
 		const hookedInjector = new Injector({
 			hooks: {
 				'inject:success': injectSuccessHook,
@@ -246,6 +247,7 @@ describe('Injector', () => {
 
 		const offAny = hookedInjector.onAny(anyHook);
 		const offFail = hookedInjector.on('inject:fail', vi.fn());
+		hookedInjector.onTask('hooked-host-task', 'inject:success', taskHook);
 
 		const host = document.createElement('div');
 		host.id = 'hooked-host';
@@ -256,6 +258,9 @@ describe('Injector', () => {
 			render: () => null
 		});
 
+		hookedInjector.offTask('hooked-host-task');
+		hookedInjector.onTask(taskId, 'inject:success', taskHook);
+
 		hookedInjector.run();
 		hookedInjector.destroy(taskId);
 		offAny();
@@ -264,6 +269,7 @@ describe('Injector', () => {
 		expect(injectSuccessHook).toHaveBeenCalledOnce();
 		expect(afterDestroyHook).toHaveBeenCalledOnce();
 		expect(anyHook).toHaveBeenCalled();
+		expect(taskHook).toHaveBeenCalledOnce();
 	});
 	it('should get the logger', () => {
 		const logger = new Logger();

@@ -1,4 +1,4 @@
-import type { ObserveEmitter } from '../hooks/ObservabilityHook/type';
+import type { ObserveEmitter } from '../hooks/type';
 import type { ILogger } from '../logger/types';
 
 export type InjectCallback = (el: HTMLElement, observer?: MutationObserver) => void;

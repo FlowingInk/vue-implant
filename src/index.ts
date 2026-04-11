@@ -1,4 +1,4 @@
-import { ObserverHub } from './core/hooks/ObservabilityHook/ObserverHub';
+import { ObserverHub } from './core/hooks/ObserverHub';
 import { Injector } from './core/Injector/Injector';
 import { Action } from './core/Injector/types';
 import { DOMWatcher } from './core/watcher/DomWatcher';
@@ -9,7 +9,7 @@ export type {
 	ObserveEvent,
 	ObserveEventName,
 	ObserveHook
-} from './core/hooks/ObservabilityHook/type';
+} from './core/hooks/type';
 export type {
 	ActionEvent,
 	ComponentOptions,

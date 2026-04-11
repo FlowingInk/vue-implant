@@ -1,4 +1,4 @@
-import { noopObserveEmitter } from '../hooks/ObservabilityHook/createObserveEmitter';
+import { noopObserveEmitter } from '../../util/createObserveEmitter';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import type { DomWatcherRuntime, InjectCallback, ObserverOptions } from './types';

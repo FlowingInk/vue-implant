@@ -1,5 +1,5 @@
-import type { ObserverHub } from './ObserverHub';
-import type { ObserveEmitter } from './type';
+import type { ObserverHub } from '../core/hooks/ObserverHub';
+import type { ObserveEmitter } from '../core/hooks/type';
 
 export const noopObserveEmitter: ObserveEmitter = () => {};
 

@@ -107,7 +107,6 @@ type InjectionConfig = {
 	timeout?: number;
 	logger?: ILogger;
 	observer?: ObserverHub;
-	hooks?: LifecycleHookMap;
 };
 ```
 
@@ -118,7 +117,6 @@ type InjectionConfig = {
 | `timeout` | `number` | Timeout threshold (ms) for initial injection and re-injection. Setting it explicitly to `undefined` is not recommended. | `5000` |
 | `logger` | `ILogger` | Custom logger implementation. When omitted, the built-in logger is used. | built-in logger |
 | `observer` | `ObserverHub` | Optional observability hub for subscribing runtime events. | `new ObserverHub()` |
-| `hooks` | `LifecycleHookMap` | Optional lifecycle hook map. Internally registered onto the current `ObserverHub`. | `undefined` |
 
 ### `Injector.run(): void`
 
@@ -243,22 +241,6 @@ Returns the Pinia instance previously set through `setPinia()`.
 
 Returns the `ObserverHub` instance held by the current injector, so you can subscribe/unsubscribe observability events directly.
 
-### `Injector.on(event: ObserveEventName, hook: ObserveHook): () => void`
-
-Registers a lifecycle hook directly on the current injector and returns an unsubscribe function.
-
-### `Injector.onAny(hook: ObserveHook): () => void`
-
-Registers a hook for all observe events on the current injector and returns an unsubscribe function.
-
-### `Injector.off(event: ObserveEventName, hook?: ObserveHook): void`
-
-Removes a specific hook, or clears all hooks for one event when `hook` is omitted.
-
-### `Injector.offAny(hook: ObserveHook): void`
-
-Removes a hook previously registered by `onAny()`.
-
 ### Logging
 
 `vue-implant` writes internal runtime logs through a unified logger instead of directly use `console` inside each module.
@@ -306,30 +288,13 @@ offFail();
 offAny();
 ```
 
-You can also register hooks directly in the injector config:
-
-```ts
-import { Injector } from 'vue-implant';
-
-const injector = new Injector({
-	hooks: {
-		'inject:success': (event) => {
-			console.log('mounted:', event.taskId);
-		},
-		'task:afterDestroy': (event) => {
-			console.log('destroyed:', event.taskId);
-		}
-	}
-});
-```
-
 Common events:
 
 - register: `register:start` / `register:success` / `register:duplicate` / `register:error`
 - run: `run:start` / `run:taskScheduled` / `run:taskSkipped`
 - injection: `target:ready` / `inject:start` / `inject:success` / `inject:fail`
 - listener: `listener:open` / `listener:close` / `listener:attachFail`
-- lifecycle: `alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop` / `task:active` / `task:beforeReset` / `task:afterReset` / `task:beforeDestroy` / `task:afterDestroy` / `task:reset` / `task:destroy`
+- lifecycle: `alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop` / `task:reset` / `task:destroy`
 - resources: `resource:watcherReleased` / `resource:listenerReleased` / `resource:componentUnmounted`
 - DOM watcher: `dom:readyFound` / `dom:readyTimeout` / `dom:removed` / `dom:restored`
 

@@ -1,8 +1,7 @@
 import type { App, ComponentPublicInstance, Plugin, WatchHandle, WatchSource } from 'vue';
 import { createApp, nextTick, watch } from 'vue';
 import { UUID } from '../../util/uuid';
-import { createObserveEmitter } from '../hooks/ObservabilityHook/createObserveEmitter';
-import type { ObserveEmitter } from '../hooks/ObservabilityHook/type';
+import type { ObserveEmitter } from '../hooks/type';
 import { Action, type ActionEvent, type InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
@@ -16,11 +15,16 @@ export class TaskRunner {
 	private readonly logger: ILogger;
 	private readonly emit: ObserveEmitter;
 
-	constructor(taskContext: TaskContext, injectConfig: InjectionConfig, logger?: ILogger) {
+	constructor(
+		taskContext: TaskContext,
+		injectConfig: InjectionConfig,
+		emitter: ObserveEmitter,
+		logger?: ILogger
+	) {
 		this.taskContext = taskContext;
 		this.injectConfig = injectConfig;
+		this.emit = emitter;
 		this.logger = logger ?? injectConfig.logger ?? new Logger();
-		this.emit = createObserveEmitter(this.injectConfig.observer);
 	}
 
 	public run(): void {
@@ -95,6 +99,7 @@ export class TaskRunner {
 			});
 			const result: boolean = this.injectComponent(targetElement, taskId);
 			if (!result) {
+				// inject fails, not need call setTaskStatus because this one will emit the other eventj
 				context.taskStatus = 'idle';
 				this.emit('inject:fail', {
 					taskId,
@@ -118,8 +123,14 @@ export class TaskRunner {
 				result = this.controlListener(taskId, Action.OPEN);
 			}
 
+			// listener attach fails, not need call setTaskStatus because this one will emit the other event
 			if (result === false) {
 				context.taskStatus = 'idle';
+				this.emit('listener:attachFail', {
+					taskId,
+					injectAt: context.componentInjectAt,
+					status: 'idle'
+				});
 				return;
 			}
 		}

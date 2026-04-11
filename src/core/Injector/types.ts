@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
-import type { ObserverHub } from '../hooks/ObservabilityHook/ObserverHub';
-import type { LifecycleHookMap } from '../hooks/ObservabilityHook/type';
+import type { ObserverHub } from '../hooks/ObserverHub';
+import type { LifecycleHookMap } from '../hooks/type';
 import type { ILogger } from '../logger/types';
 
 export enum Action {
@@ -20,6 +20,7 @@ export type ComponentOptions = {
 		callback: EventListener;
 		activitySignal?: () => Ref<boolean>;
 	};
+	hooks?: LifecycleHookMap;
 };
 
 export type InjectionConfig = {

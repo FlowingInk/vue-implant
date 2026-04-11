@@ -6,7 +6,7 @@ import type { RegisterResult } from '../../src/core/task/types'
 
 const hostVisible = ref(false);
 const delayAliveEnabled = ref(true);
-const result:RegisterResult = inject<RegisterResult>('delayCase:result') as RegisterResult;
+const result: RegisterResult = inject<RegisterResult>('delayCase:result') as RegisterResult;
 
 
 const triggerAlive = () => {

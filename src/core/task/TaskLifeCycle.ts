@@ -1,6 +1,5 @@
 import { nextTick } from 'vue';
-import { createObserveEmitter } from '../hooks/ObservabilityHook/createObserveEmitter';
-import type { ObserveEmitter } from '../hooks/ObservabilityHook/type';
+import type { ObserveEmitter } from '../hooks/type';
 import type { InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
@@ -19,13 +18,14 @@ export class TaskLifeCycle {
 		taskContext: TaskContext,
 		onTargetReady: (targetElement: HTMLElement, taskId: string) => void,
 		injectConfig: InjectionConfig,
+		emitter: ObserveEmitter,
 		logger?: ILogger
 	) {
 		this.taskContext = taskContext;
 		this.onTargetReady = onTargetReady;
 		this.injectConfig = injectConfig;
+		this.emit = emitter;
 		this.logger = logger ?? injectConfig.logger ?? new Logger();
-		this.emit = createObserveEmitter(this.injectConfig.observer);
 	}
 
 	public enableAlive(taskId: string): void {

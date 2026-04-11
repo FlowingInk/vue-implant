@@ -1,3 +1,5 @@
+export type ObserverStatus = 'idle' | 'pending' | 'active';
+
 export type ObserveEventName =
 	| 'register:start'
 	| 'register:success'
@@ -24,6 +26,7 @@ export type ObserveEventName =
 	| 'task:afterDestroy'
 	| 'task:reset'
 	| 'task:destroy'
+	| 'task:changeStatus'
 	| 'resource:watcherReleased'
 	| 'resource:listenerReleased'
 	| 'resource:componentUnmounted'
@@ -37,17 +40,17 @@ export type ObserveEvent = {
 	ts: number;
 	taskId?: string;
 	injectAt?: string;
-	status?: 'idle' | 'pending' | 'active';
+	status?: ObserverStatus;
 	durationMs?: number;
 	error?: unknown;
+	preStatus?: ObserverStatus;
+	nextStatus?: ObserverStatus;
 	meta?: Record<string, unknown>;
 };
 
 export type ObserveHook = (event: ObserveEvent) => void;
 
-export type LifecycleHookMap = Partial<
-	Record<ObserveEventName, ObserveHook | ObserveHook[]>
->;
+export type LifecycleHookMap = Partial<Record<ObserveEventName, ObserveHook | ObserveHook[]>>;
 
 export type ObserveEmitter = (
 	name: ObserveEventName,

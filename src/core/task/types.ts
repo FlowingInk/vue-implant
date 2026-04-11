@@ -1,4 +1,5 @@
 import type { App, Component, ComponentPublicInstance, Ref, WatchHandle, WatchSource } from 'vue';
+import type { LifecycleHookMap } from '../hooks/type';
 
 export type TaskRecord = {
 	taskId: string;
@@ -13,6 +14,7 @@ export type TaskErrorMessage = {
 export type Task = {
 	taskId: string;
 	taskStatus?: 'idle' | 'pending' | 'active';
+	kind: 'component' | 'listener';
 
 	app?: App<Element>;
 	appRoot?: HTMLElement;
@@ -39,6 +41,8 @@ export type Task = {
 	timeout?: number;
 
 	disableAlive?: () => void;
+
+	hooks?: LifecycleHookMap;
 };
 
 export type ListenerRegisterResult = {

@@ -1,20 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
-import { ObserverHub } from '../src/core/hooks/ObservabilityHook/ObserverHub';
+import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import { TaskContext } from '../src/core/task/TaskContext';
 import { TaskRegister } from '../src/core/task/TaskRegister';
+import { createObserveEmitter } from '../src/util/createObserveEmitter';
 
 describe('TaskRegister', () => {
 	let taskContext: TaskContext;
 	let taskRegister: TaskRegister;
 
 	beforeEach(() => {
+		const observer = new ObserverHub();
 		taskContext = new TaskContext();
-		taskRegister = new TaskRegister(taskContext, {
-			alive: false,
-			scope: 'local',
-			timeout: 5000
-		});
+		taskRegister = new TaskRegister(
+			taskContext,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000
+			},
+			createObserveEmitter(observer)
+		);
 		document.body.innerHTML = '';
 		vi.restoreAllMocks();
 	});
@@ -68,7 +74,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate component registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		const first = taskRegister.register('#dup', { name: 'CompDup' });
 		const second = taskRegister.register('#dup', { name: 'CompDup' });
@@ -99,7 +105,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate listener registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		const first = taskRegister.registerListener('#btn', 'click', vi.fn());
 		const second = taskRegister.registerListener('#btn', 'click', vi.fn());
@@ -111,12 +117,16 @@ describe('TaskRegister', () => {
 
 	it('should emit register lifecycle events', () => {
 		const observer = new ObserverHub();
-		const registerWithObserver = new TaskRegister(taskContext, {
-			alive: false,
-			scope: 'local',
-			timeout: 5000,
-			observer
-		});
+		const registerWithObserver = new TaskRegister(
+			taskContext,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				observer
+			},
+			createObserveEmitter(observer)
+		);
 		const callback = vi.fn();
 		const events: string[] = [];
 		observer.onAny((event) => {
@@ -133,12 +143,16 @@ describe('TaskRegister', () => {
 	});
 	it('should emit register lifecycle events of error', () => {
 		const observer = new ObserverHub();
-		const registerWithObserver = new TaskRegister(taskContext, {
-			alive: false,
-			scope: 'local',
-			timeout: 5000,
-			observer
-		});
+		const registerWithObserver = new TaskRegister(
+			taskContext,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				observer
+			},
+			createObserveEmitter(observer)
+		);
 
 		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {
 			throw new Error('set error');

@@ -1,6 +1,6 @@
 import type { Plugin } from 'vue';
-import { noopObserveEmitter } from '../hooks/ObservabilityHook/createObserveEmitter';
-import type { ObserveEmitter } from '../hooks/ObservabilityHook/type';
+import { noopObserveEmitter } from '../../util/createObserveEmitter';
+import type { ObserveEmitter, ObserverStatus } from '../hooks/type';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import type { Task, TaskErrorMessage, TaskRecord } from './types';
@@ -154,16 +154,24 @@ export class TaskContext {
 		this.use(piniaInstance);
 	}
 
-	public getTaskStatus(id: string): 'idle' | 'pending' | 'active' | undefined {
+	public getTaskStatus(id: string): ObserverStatus | undefined {
 		const task: Task | undefined = this.contextMap.get(id);
 		return task ? task.taskStatus : undefined;
 	}
 
-	public setTaskStatus(id: string, status: 'idle' | 'pending' | 'active'): void {
+	public setTaskStatus(id: string, status: ObserverStatus): void {
 		const task: Task | undefined = this.contextMap.get(id);
-		if (task) {
-			task.taskStatus = status;
+		if (!task) {
+			this.logger.warn(`Task "${id}" not found, may already be destroyed`);
+			return;
 		}
+		if (task.taskStatus === status) {
+			return;
+		}
+		task.taskStatus = status;
+
+		this.emit('task:changeStatus', {});
+		status === 'active' && this.emit('task:active', {});
 	}
 
 	/**
@@ -179,7 +187,7 @@ export class TaskContext {
 			this.logger.warn(`Task "${id}" not found, may already be destroyed`);
 			return;
 		}
-		context.taskStatus = 'idle';
+		this.setTaskStatus(id, 'idle');
 
 		// Remove the corresponding task record from the injection point list
 		this.taskRecords = this.taskRecords.filter((record) => record.taskId !== id);
@@ -351,7 +359,7 @@ export class TaskContext {
 			context.app.unmount();
 		}
 
-		context.taskStatus = 'idle';
+		this.setTaskStatus(id, 'idle');
 
 		// reset context of id to initial state
 		// but keep the record in contextMap for future reuse
