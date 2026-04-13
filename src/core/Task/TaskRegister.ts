@@ -1,4 +1,5 @@
 import type { Component, Ref } from 'vue';
+import { buildRegisterObservePayload } from '../../util/buildRegisterObservePayload';
 import { getComponentName } from '../../util/getComponentName';
 import { markRawComponent } from '../../util/markRawComponent';
 import { registerHooks } from '../../util/registerHooks';
@@ -39,24 +40,32 @@ export class TaskRegister {
 		activitySignal?: () => Ref<boolean>
 	): ListenerRegisterResult {
 		const id: string = `listener-${listenAt}-${event}`;
-		this.emit('register:start', {
-			injectAt: listenAt,
-			meta: {
+		this.emit(
+			'register:start',
+			buildRegisterObservePayload('register:start', {
+				taskId: id,
 				kind: 'listener',
-				event
-			}
-		});
+				injectAt: listenAt,
+				status: 'idle',
+				listenerEvent: event,
+				listenAt,
+				withEvent: true
+			})
+		);
 		// Standalone method for registering event listeners without component injection
 		try {
 			if (this.taskContext.has(id)) {
 				this.logger.warn(`Listener "${id}" is already registered, skipping`);
-				this.emit('register:duplicate', {
-					taskId: id,
-					injectAt: listenAt,
-					meta: {
-						kind: 'listener'
-					}
-				});
+				this.emit(
+					'register:duplicate',
+					buildRegisterObservePayload('register:duplicate', {
+						taskId: id,
+						kind: 'listener',
+						injectAt: listenAt,
+						status: this.taskContext.getTaskStatus(id) ?? 'idle',
+						listenerEvent: event
+					})
+				);
 				return {
 					taskId: id,
 					isSuccess: true
@@ -80,28 +89,35 @@ export class TaskRegister {
 			this.taskContext.set(id, context);
 			this.taskContext.taskRecords.push({ taskId: id, injectAt: listenAt });
 			this.logger.info(`Listener "${id}" registered`);
-			this.emit('register:success', {
-				taskId: id,
-				injectAt: listenAt,
-				status: 'idle',
-				meta: {
-					kind: 'listener'
-				}
-			});
+			this.emit(
+				'register:success',
+				buildRegisterObservePayload('register:success', {
+					taskId: id,
+					kind: 'listener',
+					injectAt: listenAt,
+					status: 'idle',
+					listenerEvent: event,
+					listenAt,
+					withEvent: true
+				})
+			);
 
 			return {
 				taskId: id,
 				isSuccess: true
 			};
 		} catch (error) {
-			this.emit('register:error', {
-				injectAt: listenAt,
-				error,
-				meta: {
+			this.emit(
+				'register:error',
+				buildRegisterObservePayload('register:error', {
+					taskId: id,
 					kind: 'listener',
-					event
-				}
-			});
+					injectAt: listenAt,
+					status: this.taskContext.getTaskStatus(id) ?? 'idle',
+					error,
+					listenerEvent: event
+				})
+			);
 			return {
 				taskId: id,
 				isSuccess: false
@@ -113,25 +129,46 @@ export class TaskRegister {
 		component: Component,
 		option?: ComponentOptions
 	): _RegisterResult {
-		this.emit('register:start', {
-			injectAt,
-			meta: {
-				kind: 'component'
-			}
-		});
+		const componentName = getComponentName(component);
 		const taskId: string = this.getTaskId(component, injectAt);
+		const withEvent = Boolean(option?.on);
+		const listenerEvent = option?.on?.type;
+		const listenAt = option?.on?.listenAt;
+		const alive = option?.alive ?? this.injectConfig.alive;
+		const scope = option?.scope ?? this.injectConfig.scope;
+		const timeout = option?.timeout ?? this.injectConfig.timeout;
+
+		this.emit(
+			'register:start',
+			buildRegisterObservePayload('register:start', {
+				taskId,
+				kind: 'component',
+				injectAt,
+				status: 'idle',
+				componentName,
+				listenerEvent,
+				listenAt,
+				alive,
+				scope,
+				timeout,
+				withEvent
+			})
+		);
 
 		try {
 			if (this.taskContext.has(taskId)) {
 				// Component already registered, return directly
 				this.logger.warn(`Task "${taskId}" is already registered, skipping`);
-				this.emit('register:duplicate', {
-					taskId,
-					injectAt,
-					meta: {
-						kind: 'component'
-					}
-				});
+				this.emit(
+					'register:duplicate',
+					buildRegisterObservePayload('register:duplicate', {
+						taskId,
+						kind: 'component',
+						injectAt,
+						status: this.taskContext.getTaskStatus(taskId) ?? 'idle',
+						componentName
+					})
+				);
 				return {
 					taskId: taskId,
 					isSuccess: true
@@ -143,15 +180,15 @@ export class TaskRegister {
 				taskStatus: 'idle',
 				kind: 'component',
 
-				componentName: getComponentName(component),
+				componentName,
 				componentInjectAt: injectAt,
 				component: markRawComponent(component),
 				withEvent: false,
 
-				alive: option?.alive ?? this.injectConfig.alive,
+				alive,
 				aliveEpoch: 0,
-				scope: option?.scope ?? this.injectConfig.scope,
-				timeout: option?.timeout ?? this.injectConfig.timeout,
+				scope,
+				timeout,
 				isObserver: false,
 
 				hooks: option?.hooks
@@ -184,28 +221,39 @@ export class TaskRegister {
 
 			this.logger.info(`Task "${taskId}" registered`);
 
-			this.emit('register:success', {
-				taskId,
-				injectAt,
-				status: 'idle',
-				meta: {
-					kind: 'component'
-				}
-			});
+			this.emit(
+				'register:success',
+				buildRegisterObservePayload('register:success', {
+					taskId,
+					kind: 'component',
+					injectAt,
+					status: 'idle',
+					componentName,
+					listenerEvent,
+					listenAt,
+					alive,
+					scope,
+					timeout,
+					withEvent
+				})
+			);
 
 			return {
 				taskId: taskId,
 				isSuccess: true
 			};
 		} catch (error) {
-			this.emit('register:error', {
-				taskId,
-				injectAt,
-				error,
-				meta: {
-					kind: 'component'
-				}
-			});
+			this.emit(
+				'register:error',
+				buildRegisterObservePayload('register:error', {
+					taskId,
+					kind: 'component',
+					injectAt,
+					status: this.taskContext.getTaskStatus(taskId) ?? 'idle',
+					error,
+					componentName
+				})
+			);
 			return {
 				taskId,
 				isSuccess: false

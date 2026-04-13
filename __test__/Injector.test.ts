@@ -40,8 +40,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
 
 		const result = injector.register('#app', { name: 'FacadeComp' });
 
@@ -62,14 +62,14 @@ describe('Injector', () => {
 	});
 
 	it('should forward run to TaskRunner', () => {
-		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => { });
+		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => {});
 		injector.run();
 		expect(runSpy).toHaveBeenCalledOnce();
 	});
 
 	it('should forward enableAlive and disableAlive to TaskLifeCycle', () => {
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
 
 		injector.enableAlive('task-a');
 		injector.disableAlive('task-a');

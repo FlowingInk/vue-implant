@@ -11,11 +11,15 @@ export type TaskErrorMessage = {
 	injectAt: string;
 };
 
+export type TaskStatus = 'idle' | 'pending' | 'active';
+export type TaskKind = 'component' | 'listener';
+
 export type Task = {
 	taskId: string;
-	taskStatus?: 'idle' | 'pending' | 'active';
-	kind: 'component' | 'listener';
+	kind: TaskKind;
+	taskStatus?: TaskStatus;
 
+	// component info
 	app?: App<Element>;
 	appRoot?: HTMLElement;
 	componentName?: string;
@@ -23,6 +27,7 @@ export type Task = {
 	component?: Component;
 	instance?: ComponentPublicInstance;
 
+	// listener info
 	listenerName?: string;
 	withEvent?: boolean;
 	listenAt?: string;
@@ -31,18 +36,19 @@ export type Task = {
 	controller?: AbortController;
 	activitySignal?: () => Ref<boolean>;
 
+	// watcher info
 	watcher?: WatchHandle;
 	watchSource?: WatchSource<boolean>;
 
+	// task info
 	isObserver?: boolean;
 	alive?: boolean;
 	aliveEpoch?: number;
 	scope?: 'local' | 'global';
 	timeout?: number;
+	hooks?: LifecycleHookMap;
 
 	disableAlive?: () => void;
-
-	hooks?: LifecycleHookMap;
 };
 
 export type ListenerRegisterResult = {
@@ -60,4 +66,9 @@ export type RegisterResult = {
 export type _RegisterResult = {
 	taskId: string;
 	isSuccess: boolean;
+};
+
+export type _InjectResult = {
+	isSuccess: boolean;
+	error?: unknown;
 };

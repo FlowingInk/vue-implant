@@ -78,7 +78,7 @@ describe('TaskContext', () => {
 
 	describe('shared plugins', () => {
 		it('should register shared plugins in order and ignore duplicates', () => {
-			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const pluginA = { install: vi.fn() };
 			const pluginB = { install: vi.fn() };
 
@@ -102,7 +102,7 @@ describe('TaskContext', () => {
 		});
 
 		it('should keep setPinia/getPinia compatible and replace previous pinia plugin', () => {
-			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			const otherPlugin = { install: vi.fn() };
 			const piniaA = { install: vi.fn() };
 			const piniaB = { install: vi.fn() };
@@ -146,7 +146,7 @@ describe('TaskContext', () => {
 
 	describe('destroy', () => {
 		it('should delete context of none existing id correctly', () => {
-			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			taskContext.destroy('nonexistent');
 			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('nonexistent'));
 		});
@@ -172,7 +172,7 @@ describe('TaskContext', () => {
 			expect(taskContext.taskErrorMessages).toHaveLength(0);
 		});
 		it('should destroy context of watcher correctly', () => {
-			const spy = vi.fn(() => { });
+			const spy = vi.fn(() => {});
 
 			const mockWatcher = spy as unknown as WatchHandle;
 
@@ -188,7 +188,7 @@ describe('TaskContext', () => {
 			expect(spy).toHaveBeenCalled();
 		});
 		it('should destroy context of listener correctly', () => {
-			const mockFn = vi.fn(() => { });
+			const mockFn = vi.fn(() => {});
 			const context: Task = {
 				taskId: 'test',
 				kind: 'component',
@@ -405,7 +405,7 @@ describe('TaskContext', () => {
 			};
 
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 			taskContext.releaseComponentInstance('test');
 
@@ -427,7 +427,7 @@ describe('TaskContext', () => {
 			};
 
 			taskContext.set('test', context);
-			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 			taskContext.releaseComponentInstance('test');
 
@@ -450,7 +450,7 @@ describe('TaskContext', () => {
 		});
 
 		it('should warn if context not found', () => {
-			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			taskContext.releaseDomElement('nonexistent');
 			expect(consoleWarnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Task "nonexistent" context not found')
@@ -464,7 +464,7 @@ describe('TaskContext', () => {
 				appRoot: undefined
 			};
 			taskContext.set('test', context);
-			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+			const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 			taskContext.releaseDomElement('test');
 			expect(consoleWarnSpy).toHaveBeenCalledWith(
 				expect.stringContaining('Root element for task "test" not found')
@@ -481,7 +481,7 @@ describe('TaskContext', () => {
 				appRoot: { remove: mockRemove } as unknown as HTMLElement
 			};
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseDomElement('test');
 			expect(mockRemove).toHaveBeenCalled();
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -516,7 +516,7 @@ describe('TaskContext', () => {
 			expect(context.activitySignal).toBeUndefined();
 		});
 		it('should do nothing if context not found', () => {
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseListener('nonexistent');
 			expect(consoleErrorSpy).not.toHaveBeenCalled();
 		});
@@ -536,7 +536,7 @@ describe('TaskContext', () => {
 				controller: { abort: mockAbort } as unknown as AbortController
 			};
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseListener('test');
 			expect(mockAbort).toHaveBeenCalled();
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -558,7 +558,7 @@ describe('TaskContext', () => {
 				controller: undefined
 			};
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseListener('test');
 			expect(consoleErrorSpy).not.toHaveBeenCalled();
 		});
@@ -585,7 +585,7 @@ describe('TaskContext', () => {
 				watcher: undefined
 			};
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseWatcher('test');
 			expect(consoleErrorSpy).not.toHaveBeenCalled();
 		});
@@ -600,7 +600,7 @@ describe('TaskContext', () => {
 				watcher: mockWatcher
 			};
 			taskContext.set('test', context);
-			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+			const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 			taskContext.releaseWatcher('test');
 			expect(mockWatcher).toHaveBeenCalled();
 			expect(consoleErrorSpy).toHaveBeenCalledWith(

@@ -99,7 +99,7 @@ export class TaskRunner {
 			});
 			const result: boolean = this.injectComponent(targetElement, taskId);
 			if (!result) {
-				// inject fails, not need call setTaskStatus because this one will emit the other eventj
+				// inject fails, not need call setTaskStatus because this one will emit the other event
 				context.taskStatus = 'idle';
 				this.emit('inject:fail', {
 					taskId,

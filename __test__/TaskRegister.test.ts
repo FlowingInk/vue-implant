@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
+import type { ObserveEvent } from '../src/core/hooks/type';
 import { TaskContext } from '../src/core/Task/TaskContext';
 import { TaskRegister } from '../src/core/Task/TaskRegister';
 import { createObserveEmitter } from '../src/util/createObserveEmitter';
@@ -74,7 +75,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate component registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const first = taskRegister.register('#dup', { name: 'CompDup' });
 		const second = taskRegister.register('#dup', { name: 'CompDup' });
@@ -105,7 +106,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate listener registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const first = taskRegister.registerListener('#btn', 'click', vi.fn());
 		const second = taskRegister.registerListener('#btn', 'click', vi.fn());
@@ -115,7 +116,7 @@ describe('TaskRegister', () => {
 		expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('already registered'));
 	});
 
-	it('should emit register lifecycle events', () => {
+	it('should emit normalized register payloads for component registration', () => {
 		const observer = new ObserverHub();
 		const registerWithObserver = new TaskRegister(
 			taskContext,
@@ -127,21 +128,175 @@ describe('TaskRegister', () => {
 			},
 			createObserveEmitter(observer)
 		);
-		const callback = vi.fn();
-		const events: string[] = [];
+		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
-			events.push(event.name);
+			if (event.name.startsWith('register:')) {
+				events.push(event);
+			}
 		});
 
+		const first = registerWithObserver.register('#obs', { name: 'ObsComp' });
 		registerWithObserver.register('#obs', { name: 'ObsComp' });
-		registerWithObserver.register('#obs', { name: 'ObsComp' });
-		registerWithObserver.registerListener('#btn-obs', 'click', callback);
 
-		expect(events).toContain('register:start');
-		expect(events).toContain('register:success');
-		expect(events).toContain('register:duplicate');
+		expect(events).toHaveLength(4);
+
+		expect(events[0]).toMatchObject({
+			name: 'register:start',
+			taskId: first.taskId,
+			kind: 'component',
+			injectAt: '#obs',
+			status: 'idle'
+		});
+		expect(events[0].meta).toEqual({
+			componentName: 'ObsComp',
+			listenerEvent: undefined,
+			listenAt: undefined,
+			alive: false,
+			scope: 'local',
+			timeout: 5000,
+			withEvent: false
+		});
+
+		expect(events[1]).toMatchObject({
+			name: 'register:success',
+			taskId: first.taskId,
+			kind: 'component',
+			injectAt: '#obs',
+			status: 'idle'
+		});
+		expect(events[1].meta).toEqual({
+			componentName: 'ObsComp',
+			listenerEvent: undefined,
+			listenAt: undefined,
+			alive: false,
+			scope: 'local',
+			timeout: 5000,
+			withEvent: false
+		});
+
+		expect(events[2]).toMatchObject({
+			name: 'register:start',
+			taskId: first.taskId,
+			kind: 'component',
+			injectAt: '#obs',
+			status: 'idle'
+		});
+		expect(events[2].meta).toEqual({
+			componentName: 'ObsComp',
+			listenerEvent: undefined,
+			listenAt: undefined,
+			alive: false,
+			scope: 'local',
+			timeout: 5000,
+			withEvent: false
+		});
+
+		expect(events[3]).toMatchObject({
+			name: 'register:duplicate',
+			taskId: first.taskId,
+			kind: 'component',
+			injectAt: '#obs',
+			status: 'idle',
+			meta: {
+				componentName: 'ObsComp'
+			}
+		});
+		expect(events[3].meta).toEqual({
+			componentName: 'ObsComp'
+		});
 	});
-	it('should emit register lifecycle events of error', () => {
+
+	it('should emit normalized register payloads for listener registration', () => {
+		const observer = new ObserverHub();
+		const registerWithObserver = new TaskRegister(
+			taskContext,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				observer
+			},
+			createObserveEmitter(observer)
+		);
+		const events: ObserveEvent[] = [];
+		observer.onAny((event) => {
+			if (event.name.startsWith('register:')) {
+				events.push(event);
+			}
+		});
+
+		const first = registerWithObserver.registerListener('#btn-obs', 'click', vi.fn());
+		registerWithObserver.registerListener('#btn-obs', 'click', vi.fn());
+
+		expect(events).toHaveLength(4);
+
+		expect(events[0]).toMatchObject({
+			name: 'register:start',
+			taskId: first.taskId,
+			kind: 'listener',
+			injectAt: '#btn-obs',
+			status: 'idle'
+		});
+		expect(events[0].meta).toEqual({
+			componentName: undefined,
+			listenerEvent: 'click',
+			listenAt: '#btn-obs',
+			alive: undefined,
+			scope: undefined,
+			timeout: undefined,
+			withEvent: true
+		});
+
+		expect(events[1]).toMatchObject({
+			name: 'register:success',
+			taskId: first.taskId,
+			kind: 'listener',
+			injectAt: '#btn-obs',
+			status: 'idle'
+		});
+		expect(events[1].meta).toEqual({
+			componentName: undefined,
+			listenerEvent: 'click',
+			listenAt: '#btn-obs',
+			alive: undefined,
+			scope: undefined,
+			timeout: undefined,
+			withEvent: true
+		});
+
+		expect(events[2]).toMatchObject({
+			name: 'register:start',
+			taskId: first.taskId,
+			kind: 'listener',
+			injectAt: '#btn-obs',
+			status: 'idle'
+		});
+		expect(events[2].meta).toEqual({
+			componentName: undefined,
+			listenerEvent: 'click',
+			listenAt: '#btn-obs',
+			alive: undefined,
+			scope: undefined,
+			timeout: undefined,
+			withEvent: true
+		});
+
+		expect(events[3]).toMatchObject({
+			name: 'register:duplicate',
+			taskId: first.taskId,
+			kind: 'listener',
+			injectAt: '#btn-obs',
+			status: 'idle',
+			meta: {
+				listenerEvent: 'click'
+			}
+		});
+		expect(events[3].meta).toEqual({
+			listenerEvent: 'click'
+		});
+	});
+
+	it('should emit register:error with normalized payload', () => {
 		const observer = new ObserverHub();
 		const registerWithObserver = new TaskRegister(
 			taskContext,
@@ -158,12 +313,68 @@ describe('TaskRegister', () => {
 			throw new Error('set error');
 		});
 
-		const events: string[] = [];
+		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
-			events.push(event.name);
+			if (event.name.startsWith('register:')) {
+				events.push(event);
+			}
 		});
 
 		registerWithObserver.register('#obs', { name: 'ObsComp' });
-		expect(events).toContain('register:error');
+
+		const errorEvent = events.find((event) => event.name === 'register:error');
+		expect(errorEvent).toBeDefined();
+		expect(errorEvent).toMatchObject({
+			name: 'register:error',
+			taskId: 'ObsComp@#obs',
+			kind: 'component',
+			injectAt: '#obs',
+			status: 'idle',
+			meta: {
+				componentName: 'ObsComp'
+			}
+		});
+		expect(errorEvent?.error).toBeInstanceOf(Error);
+	});
+
+	it('should emit register:error with listener identity payload', () => {
+		const observer = new ObserverHub();
+		const registerWithObserver = new TaskRegister(
+			taskContext,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				observer
+			},
+			createObserveEmitter(observer)
+		);
+
+		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {
+			throw new Error('set error');
+		});
+
+		const events: ObserveEvent[] = [];
+		observer.onAny((event) => {
+			if (event.name.startsWith('register:')) {
+				events.push(event);
+			}
+		});
+
+		registerWithObserver.registerListener('#btn-obs', 'click', vi.fn());
+
+		const errorEvent = events.find((event) => event.name === 'register:error');
+		expect(errorEvent).toBeDefined();
+		expect(errorEvent).toMatchObject({
+			name: 'register:error',
+			taskId: 'listener-#btn-obs-click',
+			kind: 'listener',
+			injectAt: '#btn-obs',
+			status: 'idle',
+			meta: {
+				listenerEvent: 'click'
+			}
+		});
+		expect(errorEvent?.error).toBeInstanceOf(Error);
 	});
 });

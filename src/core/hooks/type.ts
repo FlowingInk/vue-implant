@@ -1,5 +1,4 @@
-export type ObserverStatus = 'idle' | 'pending' | 'active';
-
+import type { TaskKind, TaskStatus } from '../Task/types';
 export type ObserveEventName =
 	| 'register:start'
 	| 'register:success'
@@ -39,12 +38,13 @@ export type ObserveEvent = {
 	name: ObserveEventName;
 	ts: number;
 	taskId?: string;
+	kind?: TaskKind;
 	injectAt?: string;
-	status?: ObserverStatus;
+	status?: TaskStatus;
 	durationMs?: number;
 	error?: unknown;
-	preStatus?: ObserverStatus;
-	nextStatus?: ObserverStatus;
+	preStatus?: TaskStatus;
+	nextStatus?: TaskStatus;
 	meta?: Record<string, unknown>;
 };
 

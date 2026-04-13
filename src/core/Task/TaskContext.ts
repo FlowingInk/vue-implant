@@ -1,9 +1,9 @@
 import type { Plugin } from 'vue';
 import { noopObserveEmitter } from '../../util/createObserveEmitter';
-import type { ObserveEmitter, ObserverStatus } from '../hooks/type';
+import type { ObserveEmitter } from '../hooks/type';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
-import type { Task, TaskErrorMessage, TaskRecord } from './types';
+import type { Task, TaskErrorMessage, TaskRecord, TaskStatus } from './types';
 
 /**
  * Central runtime registry for all injection tasks.
@@ -154,12 +154,12 @@ export class TaskContext {
 		this.use(piniaInstance);
 	}
 
-	public getTaskStatus(id: string): ObserverStatus | undefined {
+	public getTaskStatus(id: string): TaskStatus | undefined {
 		const task: Task | undefined = this.contextMap.get(id);
 		return task ? task.taskStatus : undefined;
 	}
 
-	public setTaskStatus(id: string, status: ObserverStatus): void {
+	public setTaskStatus(id: string, status: TaskStatus): void {
 		const task: Task | undefined = this.contextMap.get(id);
 		if (!task) {
 			this.logger.warn(`Task "${id}" not found, may already be destroyed`);
