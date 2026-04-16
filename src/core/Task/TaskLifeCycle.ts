@@ -6,6 +6,7 @@ import type { ILogger } from '../logger/types';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
 import type { Task } from './types';
+import { isComponentTask } from './util';
 
 export class TaskLifeCycle {
 	private readonly taskContext: TaskContext;
@@ -36,7 +37,7 @@ export class TaskLifeCycle {
 		}
 
 		// enableAlive only applies to component tasks
-		if (!context.component || !context.componentInjectAt) {
+		if (!isComponentTask(context)) {
 			this.logger.warn(`enableAlive is not applicable to non-component task "${taskId}"`);
 			return;
 		}
@@ -166,6 +167,11 @@ export class TaskLifeCycle {
 			return;
 		}
 
+		if (!isComponentTask(context)) {
+			this.logger.warn(`disableAlive is not applicable to non-component task "${taskId}"`);
+			return;
+		}
+
 		// status check: if not set alive mode or set false to alive mode, warn and exit
 		if (!context.alive) {
 			this.logger.warn(`Task "${taskId}" has no active alive observer to stop`);
@@ -192,23 +198,28 @@ export class TaskLifeCycle {
 
 	public destroy(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
+		const injectAt = context
+			? isComponentTask(context)
+				? context.componentInjectAt
+				: context.listenAt
+			: undefined;
 		this.emit('task:beforeDestroy', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: context?.taskStatus
 		});
 		this.emit('task:destroy', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: context?.taskStatus
 		});
-		if (context?.alive) {
+		if (context && isComponentTask(context) && context.alive) {
 			this.disableAlive(taskId);
 		}
 		this.taskContext.destroy(taskId);
 		this.emit('task:afterDestroy', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: 'idle'
 		});
 	}
@@ -216,7 +227,7 @@ export class TaskLifeCycle {
 	public destroyAll(): void {
 		for (const id of this.taskContext.keys()) {
 			const context: Task | undefined = this.taskContext.get(id);
-			if (context?.alive) {
+			if (context && isComponentTask(context) && context.alive) {
 				this.disableAlive(id);
 			}
 		}
@@ -224,30 +235,35 @@ export class TaskLifeCycle {
 	}
 	public reset(taskId: string): void {
 		const context: Task | undefined = this.taskContext.get(taskId);
+		const injectAt = context
+			? isComponentTask(context)
+				? context.componentInjectAt
+				: context.listenAt
+			: undefined;
 		this.emit('task:beforeReset', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: context?.taskStatus
 		});
 		this.emit('task:reset', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: context?.taskStatus
 		});
-		if (context?.alive) {
+		if (context && isComponentTask(context) && context.alive) {
 			this.disableAlive(taskId);
 		}
 		this.taskContext.reset(taskId);
 		this.emit('task:afterReset', {
 			taskId,
-			injectAt: context?.componentInjectAt,
+			injectAt,
 			status: 'idle'
 		});
 	}
 	public resetAll(): void {
 		for (const id of this.taskContext.keys()) {
 			const context: Task | undefined = this.taskContext.get(id);
-			if (context?.alive) {
+			if (context && isComponentTask(context) && context.alive) {
 				this.disableAlive(id);
 			}
 		}

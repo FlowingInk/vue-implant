@@ -1,9 +1,18 @@
 import type { Plugin } from 'vue';
-import { noopObserveEmitter } from '../../util/createObserveEmitter';
 import type { ObserveEmitter } from '../hooks/type';
+import { noopObserveEmitter } from '../hooks/util';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
-import type { Task, TaskErrorMessage, TaskRecord, TaskStatus } from './types';
+import type {
+	ComponentTask,
+	ListenerTask,
+	Task,
+	TaskErrorMessage,
+	TaskKind,
+	TaskRecord,
+	TaskStatus
+} from './types';
+import { getTaskInjectAt, getTaskListener, isComponentTask } from './util';
 
 /**
  * Central runtime registry for all injection tasks.
@@ -65,8 +74,19 @@ export class TaskContext {
 	 * @param key Unique task id.
 	 * @returns The task context if found, otherwise `undefined`.
 	 */
-	public get(key: string): Task | undefined {
-		return this.contextMap.get(key);
+	public get(key: string, kind: 'listener'): ListenerTask | undefined;
+	public get(key: string, kind: 'component'): ComponentTask | undefined;
+	public get<T extends Task>(key: string): T | undefined;
+	public get(key: string): Task | undefined;
+	public get(key: string, kind?: TaskKind): Task | undefined {
+		const task = this.contextMap.get(key);
+		if (!task) return undefined;
+
+		if (kind) {
+			return task.kind === kind ? task : undefined;
+		}
+
+		return task;
 	}
 
 	/**
@@ -202,7 +222,7 @@ export class TaskContext {
 		this.releaseListener(id);
 
 		// Unmount the app first, then remove the host element
-		if (context.componentName) {
+		if (isComponentTask(context)) {
 			this.releaseComponentInstance(id);
 			this.releaseDomElement(id);
 		}
@@ -226,7 +246,8 @@ export class TaskContext {
 		for (const id of ids) {
 			this.releaseListener(id);
 
-			if (this.contextMap.get(id)?.componentName) {
+			const context = this.contextMap.get(id);
+			if (context && isComponentTask(context)) {
 				this.releaseComponentInstance(id);
 				this.releaseDomElement(id);
 			}
@@ -250,7 +271,7 @@ export class TaskContext {
 	 */
 	public releaseComponentInstance(id: string): void {
 		const context: Task | undefined = this.contextMap.get(id);
-		if (context?.app) {
+		if (context && isComponentTask(context) && context.app) {
 			try {
 				context.app.unmount();
 				context.app = undefined;
@@ -275,7 +296,7 @@ export class TaskContext {
 	 */
 	public releaseDomElement(id: string): void {
 		const context: Task | undefined = this.contextMap.get(id);
-		if (!context) {
+		if (!context || !isComponentTask(context)) {
 			this.logger.warn(`Task "${id}" context not found, unable to remove root element`);
 			return;
 		}
@@ -299,25 +320,27 @@ export class TaskContext {
 	public releaseListener(id: string): void {
 		const context = this.contextMap.get(id);
 		if (!context) return;
+		const listener = getTaskListener(context);
 
-		if (context.controller) {
+		if (listener?.controller) {
 			try {
-				context.controller.abort();
+				listener.controller.abort();
 			} catch (error) {
 				this.logger.error(`Failed to abort listener for task "${id}":`, error);
 			}
 		}
 
-		context.controller = undefined;
-		context.listenerName = undefined;
-		context.listenAt = undefined;
-		context.event = undefined;
-		context.callback = undefined;
+		if (listener) {
+			listener.controller = undefined;
+		}
+
+		if (isComponentTask(context)) {
+			context.listener = undefined;
+		}
 		context.withEvent = false;
-		context.activitySignal = undefined;
 		this.emit('resource:listenerReleased', {
 			taskId: id,
-			injectAt: context.componentInjectAt,
+			injectAt: getTaskInjectAt(context),
 			status: context.taskStatus
 		});
 	}
@@ -331,12 +354,11 @@ export class TaskContext {
 		const context = this.contextMap.get(id);
 		if (context?.watcher) {
 			try {
-				context.watcher();
+				context.watcher.watcher();
 				context.watcher = undefined;
-				context.watchSource = undefined;
 				this.emit('resource:watcherReleased', {
 					taskId: id,
-					injectAt: context.componentInjectAt,
+					injectAt: getTaskInjectAt(context),
 					status: context.taskStatus
 				});
 			} catch (error) {
@@ -355,7 +377,7 @@ export class TaskContext {
 		if (!context) return;
 
 		// unmount the subapp instance, to prevent memory leaks
-		if (context.app) {
+		if (isComponentTask(context) && context.app) {
 			context.app.unmount();
 		}
 
@@ -363,24 +385,26 @@ export class TaskContext {
 
 		// reset context of id to initial state
 		// but keep the record in contextMap for future reuse
-		context.app = undefined;
-		context.instance = undefined;
+		if (isComponentTask(context)) {
+			context.app = undefined;
+			context.instance = undefined;
 
-		context.appRoot?.remove();
-		context.appRoot = undefined;
+			context.appRoot?.remove();
+			context.appRoot = undefined;
 
-		context.isObserver = false;
+			context.isObserver = false;
+		}
 
 		if (context.watcher) {
-			context.watcher();
+			context.watcher.watcher();
 			context.watcher = undefined;
-			context.watchSource = undefined;
 		}
 
 		//reset task listener
-		if (context.controller) {
-			context.controller.abort();
-			context.controller = undefined;
+		const listener = getTaskListener(context);
+		if (listener?.controller) {
+			listener.controller.abort();
+			listener.controller = undefined;
 		}
 	}
 

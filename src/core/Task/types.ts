@@ -14,42 +14,59 @@ export type TaskErrorMessage = {
 export type TaskStatus = 'idle' | 'pending' | 'active';
 export type TaskKind = 'component' | 'listener';
 
-export type Task = {
+export interface BaseTask {
 	taskId: string;
 	kind: TaskKind;
-	taskStatus?: TaskStatus;
+	taskStatus: TaskStatus;
+	timeout: number;
+	withEvent: boolean;
+	hooks?: LifecycleHookMap;
+}
 
-	// component info
+export interface ComponentTask extends BaseTask {
+	kind: 'component';
+	componentName: string;
+	componentInjectAt: string;
+	component: Component;
+	alive: boolean;
+	scope: 'local' | 'global';
+
 	app?: App<Element>;
 	appRoot?: HTMLElement;
-	componentName?: string;
-	componentInjectAt?: string;
-	component?: Component;
 	instance?: ComponentPublicInstance;
 
-	// listener info
-	listenerName?: string;
-	withEvent?: boolean;
-	listenAt?: string;
-	event?: string;
-	callback?: EventListener;
+	aliveEpoch?: number;
+	isObserver?: boolean;
+	disableAlive?: () => void;
+
+	listener?: TaskListenerFeature;
+	watcher?: TaskWatcherFeature;
+}
+
+export interface ListenerTask extends BaseTask {
+	kind: 'listener';
+	listenAt: string;
+	event: string;
+	callback: EventListener;
 	controller?: AbortController;
 	activitySignal?: () => Ref<boolean>;
 
-	// watcher info
-	watcher?: WatchHandle;
-	watchSource?: WatchSource<boolean>;
+	watcher?: TaskWatcherFeature;
+}
 
-	// task info
-	isObserver?: boolean;
-	alive?: boolean;
-	aliveEpoch?: number;
-	scope?: 'local' | 'global';
-	timeout?: number;
-	hooks?: LifecycleHookMap;
-
-	disableAlive?: () => void;
+export type TaskListenerFeature = {
+	listenAt: string;
+	event: string;
+	callback: EventListener;
+	controller?: AbortController;
+	activitySignal?: () => Ref<boolean>;
 };
+export type TaskWatcherFeature = {
+	watcher: WatchHandle;
+	watchSource: WatchSource<boolean>;
+};
+
+export type Task = ComponentTask | ListenerTask;
 
 export type ListenerRegisterResult = {
 	taskId: string;

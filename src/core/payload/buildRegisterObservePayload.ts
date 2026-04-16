@@ -1,5 +1,6 @@
-import type { ObserveEvent } from '../core/hooks/type';
-import type { TaskKind, TaskStatus } from '../core/Task/types';
+import type { ObserveEvent } from '../hooks/type';
+import type { TaskKind, TaskStatus } from '../Task/types';
+import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
 type RegisterObserveEventName =
 	| 'register:start'
@@ -43,52 +44,57 @@ type RegisterObservePayloadByName = {
 	};
 };
 
-export function buildRegisterObservePayload<T extends RegisterObserveEventName>(
-	name: T,
-	input: RegisterObserveInputByName[T]
-): RegisterObservePayloadByName[T] {
-	const base = {
+const registerObservePayloadBuilders = {
+	'register:start': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
-		status: input.status
-	};
-
-	if (name === 'register:start' || name === 'register:success') {
-		const typedInput = input as
-			| RegisterObserveInputByName['register:start']
-			| RegisterObserveInputByName['register:success'];
-
-		return {
-			...base,
-			meta: {
-				componentName: typedInput.componentName,
-				listenerEvent: typedInput.listenerEvent,
-				listenAt: typedInput.listenAt,
-				alive: typedInput.alive,
-				scope: typedInput.scope,
-				timeout: typedInput.timeout,
-				withEvent: typedInput.withEvent
-			}
-		} as RegisterObservePayloadByName[T];
-	}
-
-	if (name === 'register:duplicate') {
-		const typedInput = input as RegisterObserveInputByName['register:duplicate'];
-		return {
-			...base,
-			meta: buildIdentityMeta(typedInput)
-		} as RegisterObservePayloadByName[T];
-	}
-
-	const typedInput = input as RegisterObserveInputByName['register:error'];
-
-	return {
-		...base,
-		error: typedInput.error,
-		meta: buildIdentityMeta(typedInput)
-	} as RegisterObservePayloadByName[T];
-}
+		status: input.status,
+		meta: {
+			componentName: input.componentName,
+			listenerEvent: input.listenerEvent,
+			listenAt: input.listenAt,
+			alive: input.alive,
+			scope: input.scope,
+			timeout: input.timeout,
+			withEvent: input.withEvent
+		}
+	}),
+	'register:success': (input) => ({
+		taskId: input.taskId,
+		kind: input.kind,
+		injectAt: input.injectAt,
+		status: input.status,
+		meta: {
+			componentName: input.componentName,
+			listenerEvent: input.listenerEvent,
+			listenAt: input.listenAt,
+			alive: input.alive,
+			scope: input.scope,
+			timeout: input.timeout,
+			withEvent: input.withEvent
+		}
+	}),
+	'register:duplicate': (input) => ({
+		taskId: input.taskId,
+		kind: input.kind,
+		injectAt: input.injectAt,
+		status: input.status,
+		meta: buildIdentityMeta(input)
+	}),
+	'register:error': (input) => ({
+		taskId: input.taskId,
+		kind: input.kind,
+		injectAt: input.injectAt,
+		status: input.status,
+		error: input.error,
+		meta: buildIdentityMeta(input)
+	})
+} satisfies ObservePayloadBuilderMap<
+	RegisterObserveEventName,
+	RegisterObserveInputByName,
+	RegisterObservePayloadByName
+>;
 
 function buildIdentityMeta(input: RegisterObserveIdentityMeta): RegisterObserveIdentityMeta {
 	if (input.componentName !== undefined) {
@@ -100,4 +106,11 @@ function buildIdentityMeta(input: RegisterObserveIdentityMeta): RegisterObserveI
 	}
 
 	return {};
+}
+
+export function buildRegisterObservePayload<T extends RegisterObserveEventName>(
+	name: T,
+	input: RegisterObserveInputByName[T]
+): RegisterObservePayloadByName[T] {
+	return buildObservePayload(name, input, registerObservePayloadBuilders);
 }

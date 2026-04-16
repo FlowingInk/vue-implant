@@ -24,10 +24,10 @@ export type ComponentOptions = {
 };
 
 export type InjectionConfig = {
-	alive?: boolean;
-	scope?: 'local' | 'global';
-	timeout?: number;
-	logger?: ILogger;
+	alive: boolean;
+	scope: 'local' | 'global';
+	timeout: number;
+	logger: ILogger;
 	observer?: ObserverHub;
 	hooks?: LifecycleHookMap;
 };

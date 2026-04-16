@@ -7,7 +7,8 @@ import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
-import type { Task } from './types';
+import type { Task, TaskListenerFeature } from './types';
+import { getTaskInjectAt, getTaskListener, isComponentTask } from './util';
 
 export class TaskRunner {
 	private readonly taskContext: TaskContext;
@@ -90,9 +91,10 @@ export class TaskRunner {
 		if (context.taskStatus === 'active') {
 			return;
 		}
+		const injectAt: string = getTaskInjectAt(context);
 
 		// Mount component
-		if (context.component) {
+		if (isComponentTask(context)) {
 			this.emit('inject:start', {
 				taskId,
 				injectAt: context.componentInjectAt
@@ -117,8 +119,9 @@ export class TaskRunner {
 		// If event binding is configured, bind the event
 		if (context.withEvent) {
 			let result: boolean | null = null;
-			if (context.activitySignal) {
-				result = this.bindListenerSignal(taskId, context.activitySignal());
+			const listener: TaskListenerFeature | undefined = getTaskListener(context);
+			if (listener?.activitySignal) {
+				result = this.bindListenerSignal(taskId, listener.activitySignal());
 			} else {
 				result = this.controlListener(taskId, Action.OPEN);
 			}
@@ -128,7 +131,7 @@ export class TaskRunner {
 				context.taskStatus = 'idle';
 				this.emit('listener:attachFail', {
 					taskId,
-					injectAt: context.componentInjectAt,
+					injectAt,
 					status: 'idle'
 				});
 				return;
@@ -138,7 +141,7 @@ export class TaskRunner {
 		context.taskStatus = 'active';
 		this.emit('task:active', {
 			taskId,
-			injectAt: context.componentInjectAt ?? context.listenAt,
+			injectAt,
 			status: 'active'
 		});
 	}
@@ -154,7 +157,7 @@ export class TaskRunner {
 		// Stop the previous watcher before creating a new one
 		// to avoid both firing simultaneously during the immediate callback
 		if (context.watcher) {
-			context.watcher();
+			context.watcher.watcher();
 			context.watcher = undefined;
 		}
 
@@ -167,8 +170,10 @@ export class TaskRunner {
 				{ immediate: true }
 			);
 
-			context.watcher = unWatch;
-			context.watchSource = source;
+			context.watcher = {
+				watcher: unWatch,
+				watchSource: source
+			};
 			return true;
 		} catch (e) {
 			this.logger.error(`Failed to bind activity signal for task "${taskId}":`, e);
@@ -181,9 +186,10 @@ export class TaskRunner {
 			this.logger.error(`Task "${taskId}" not found, unable to manage listener state`);
 			return false;
 		}
+		const listener = getTaskListener(context);
 
 		// Check if event binding is configured
-		if (!context.withEvent || !context.listenAt || !context.event || !context.callback) {
+		if (!listener) {
 			this.logger.warn(`Task "${taskId}" has no event binding configured`);
 			return false;
 		}
@@ -191,48 +197,48 @@ export class TaskRunner {
 		switch (event) {
 			case Action.OPEN: {
 				// If controller already exists, event is already bound
-				if (context.controller) {
+				if (listener.controller) {
 					return false;
 				}
 
 				const newController = this.attachEvent(
 					taskId,
-					context.listenAt,
-					context.event,
-					context.callback
+					listener.listenAt,
+					listener.event,
+					listener.callback
 				);
 
 				if (newController) {
-					context.controller = newController;
+					listener.controller = newController;
 					this.emit('listener:open', {
 						taskId,
-						injectAt: context.listenAt,
+						injectAt: listener.listenAt,
 						status: context.taskStatus
 					});
 				} else {
 					this.logger.error(
-						`Failed to attach event "${context.event}" for task "${taskId}"`
+						`Failed to attach event "${listener.event}" for task "${taskId}"`
 					);
 					this.emit('listener:attachFail', {
 						taskId,
-						injectAt: context.listenAt,
-						error: `Failed to attach event "${context.event}"`
+						injectAt: listener.listenAt,
+						error: `Failed to attach event "${listener.event}"`
 					});
 					return false;
 				}
 				break;
 			}
 			case Action.CLOSE: {
-				if (!context.controller) {
+				if (!listener.controller) {
 					return false;
 				}
 
-				context.controller.abort(); // Abort event listener
-				context.controller = undefined;
-				this.logger.info(`Event "${context.event}" detached from task "${taskId}"`);
+				listener.controller.abort(); // Abort event listener
+				listener.controller = undefined;
+				this.logger.info(`Event "${listener.event}" detached from task "${taskId}"`);
 				this.emit('listener:close', {
 					taskId,
-					injectAt: context.listenAt,
+					injectAt: listener.listenAt,
 					status: context.taskStatus
 				});
 				break;
@@ -283,8 +289,13 @@ export class TaskRunner {
 	}
 	private injectComponent(matchedElement: HTMLElement, taskId: string): boolean {
 		const context: Task | undefined = this.taskContext.get(taskId);
-		if (!context || !context.componentInjectAt) {
+		if (!context || !isComponentTask(context)) {
 			this.logger.error(`Task "${taskId}" context missing, injection aborted`);
+			return false;
+		}
+
+		if (!context.taskId) {
+			this.logger.error(`No component found for task "${taskId}", injection aborted`);
 			return false;
 		}
 
@@ -295,11 +306,6 @@ export class TaskRunner {
 
 		const injectAt: string = context.componentInjectAt;
 		const plugins: Plugin[] = this.taskContext.getPlugins();
-
-		if (!context?.component || !context.taskId) {
-			this.logger.error(`No component found for task "${taskId}", injection aborted`);
-			return false;
-		}
 		const currentDocument = matchedElement.ownerDocument || document;
 
 		const appRoot = currentDocument.createElement('div');

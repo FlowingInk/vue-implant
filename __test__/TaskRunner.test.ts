@@ -1,12 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
+import { createObserveEmitter } from '../src/core/hooks/util';
 import { Action } from '../src/core/Injector/types';
+import { Logger } from '../src/core/logger/Logger';
 import { TaskContext } from '../src/core/Task/TaskContext';
 import { TaskRunner } from '../src/core/Task/TaskRunner';
-import type { Task } from '../src/core/Task/types';
+import type { ComponentTask, ListenerTask } from '../src/core/Task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
-import { createObserveEmitter } from '../src/util/createObserveEmitter';
+import { createComponentTask, createListenerTask } from './factory/TaskFactor';
 
 describe('TaskRunner', () => {
 	let taskContext: TaskContext;
@@ -20,12 +22,13 @@ describe('TaskRunner', () => {
 			{
 				alive: false,
 				scope: 'local',
-				timeout: 5000
+				timeout: 5000,
+				logger: new Logger()
 			},
 			createObserveEmitter(observer)
 		);
 		document.body.innerHTML = '';
-		vi.spyOn(console, 'info').mockImplementation(() => { });
+		vi.spyOn(console, 'info').mockImplementation(() => {});
 	});
 
 	afterEach(() => {
@@ -38,10 +41,16 @@ describe('TaskRunner', () => {
 	});
 
 	it('should schedule onDomReady and mark task pending on run', () => {
-		taskContext.set('task-a', { taskId: 'task-a', kind: 'component', taskStatus: 'idle' });
+		taskContext.set(
+			'task-a',
+			createComponentTask({
+				taskId: 'task-a',
+				taskStatus: 'idle'
+			})
+		);
 		taskContext.taskRecords.push({ taskId: 'task-a', injectAt: '#app' });
 
-		const spy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => { });
+		const spy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 		taskRunner.run();
 
@@ -61,20 +70,24 @@ describe('TaskRunner', () => {
 	});
 
 	it('should skip task that is active or pending on run', () => {
-		taskContext.set('active-task', {
-			taskId: 'active-task',
-			kind: 'component',
-			taskStatus: 'active'
-		});
-		taskContext.set('pending-task', {
-			taskId: 'pending-task',
-			kind: 'component',
-			taskStatus: 'pending'
-		});
+		taskContext.set(
+			'active-task',
+			createComponentTask({
+				taskId: 'active-task',
+				taskStatus: 'active'
+			})
+		);
+		taskContext.set(
+			'pending-task',
+			createComponentTask({
+				taskId: 'pending-task',
+				taskStatus: 'pending'
+			})
+		);
 		taskContext.taskRecords.push({ taskId: 'active-task', injectAt: '#a' });
 		taskContext.taskRecords.push({ taskId: 'pending-task', injectAt: '#b' });
 
-		const spy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => { });
+		const spy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
 
 		taskRunner.run();
 
@@ -86,14 +99,13 @@ describe('TaskRunner', () => {
 		host.id = 'host';
 		document.body.appendChild(host);
 
-		const task: Task = {
+		const task = createComponentTask({
 			taskId: 'mount-task',
-			kind: 'component',
 			taskStatus: 'idle',
 			componentName: 'MountComp',
 			componentInjectAt: '#host',
 			component: { name: 'MountComp', render: () => null }
-		};
+		});
 
 		taskContext.set(task.taskId, task);
 		taskRunner.onTargetReady(host, task.taskId);
@@ -112,6 +124,7 @@ describe('TaskRunner', () => {
 				alive: false,
 				scope: 'local',
 				timeout: 5000,
+				logger: new Logger(),
 				observer
 			},
 			createObserveEmitter(observer)
@@ -124,14 +137,16 @@ describe('TaskRunner', () => {
 		host.id = 'active-event-host';
 		document.body.appendChild(host);
 
-		taskContext.set('active-event-task', {
-			taskId: 'active-event-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'ActiveEventComp',
-			componentInjectAt: '#active-event-host',
-			component: { name: 'ActiveEventComp', render: () => null }
-		});
+		taskContext.set(
+			'active-event-task',
+			createComponentTask({
+				taskId: 'active-event-task',
+				taskStatus: 'idle',
+				componentName: 'ActiveEventComp',
+				componentInjectAt: '#active-event-host',
+				component: { name: 'ActiveEventComp', render: () => null }
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'active-event-task');
 
@@ -146,14 +161,16 @@ describe('TaskRunner', () => {
 		const pluginB = { install: vi.fn() };
 
 		taskContext.usePlugins(pluginA, pluginB);
-		taskContext.set('plugin-task', {
-			taskId: 'plugin-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'PluginComp',
-			componentInjectAt: '#plugin-host',
-			component: { name: 'PluginComp', render: () => null }
-		});
+		taskContext.set(
+			'plugin-task',
+			createComponentTask({
+				taskId: 'plugin-task',
+				taskStatus: 'idle',
+				componentName: 'PluginComp',
+				componentInjectAt: '#plugin-host',
+				component: { name: 'PluginComp', render: () => null }
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'plugin-task');
 
@@ -170,19 +187,18 @@ describe('TaskRunner', () => {
 		const controlSpy = vi.spyOn(taskRunner, 'controlListener').mockReturnValue(true);
 		const signal = ref(true);
 
-		taskContext.set('route-task', {
-			taskId: 'route-task',
-			kind: 'listener',
-			taskStatus: 'idle',
-			componentName: 'RouteComp',
-			componentInjectAt: '#route-signal',
-			component: { name: 'RouteComp', render: () => null },
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn(),
-			activitySignal: () => signal
-		});
+		taskContext.set(
+			'route-task',
+			createListenerTask({
+				taskId: 'route-task',
+				taskStatus: 'idle',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn(),
+				activitySignal: () => signal
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'route-task');
 
@@ -197,18 +213,22 @@ describe('TaskRunner', () => {
 
 		const controlSpy = vi.spyOn(taskRunner, 'controlListener').mockReturnValue(true);
 
-		taskContext.set('open-task', {
-			taskId: 'open-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'OpenComp',
-			componentInjectAt: '#route-open',
-			component: { name: 'OpenComp', render: () => null },
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'open-task',
+			createComponentTask({
+				taskId: 'open-task',
+				taskStatus: 'idle',
+				componentName: 'OpenComp',
+				componentInjectAt: '#route-open',
+				component: { name: 'OpenComp', render: () => null },
+				withEvent: true,
+				listener: {
+					listenAt: '#btn',
+					event: 'click',
+					callback: vi.fn()
+				}
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'open-task');
 
@@ -220,15 +240,20 @@ describe('TaskRunner', () => {
 		const source = ref(false);
 		const controlSpy = vi.spyOn(taskRunner, 'controlListener').mockReturnValue(true);
 
-		taskContext.set('signal-task', {
-			taskId: 'signal-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn(),
-			watcher: oldWatcher
-		});
+		taskContext.set(
+			'signal-task',
+			createListenerTask({
+				taskId: 'signal-task',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn(),
+				watcher: {
+					watcher: oldWatcher,
+					watchSource: source
+				}
+			})
+		);
 
 		taskRunner.bindListenerSignal('signal-task', source);
 		expect(oldWatcher).toHaveBeenCalledOnce();
@@ -245,14 +270,16 @@ describe('TaskRunner', () => {
 		document.body.appendChild(btn);
 
 		const callback = vi.fn();
-		taskContext.set('listener-task', {
-			taskId: 'listener-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#listener-btn',
-			event: 'click',
-			callback
-		});
+		taskContext.set(
+			'listener-task',
+			createListenerTask({
+				taskId: 'listener-task',
+				withEvent: true,
+				listenAt: '#listener-btn',
+				event: 'click',
+				callback
+			})
+		);
 
 		expect(taskRunner.controlListener('listener-task', Action.OPEN)).toBe(true);
 		btn.click();
@@ -264,21 +291,23 @@ describe('TaskRunner', () => {
 	});
 
 	it('should warn and return false when attachEvent fails', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const attachEventSpy = vi
 			.spyOn(
 				taskRunner as unknown as { attachEvent: (taskId: string) => void },
 				'attachEvent'
 			)
 			.mockImplementation(() => null);
-		taskContext.set('invalid-event', {
-			taskId: 'invalid-event',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#listener-btn',
-			event: 'invalid-event',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'invalid-event',
+			createListenerTask({
+				taskId: 'invalid-event',
+				withEvent: true,
+				listenAt: '#listener-btn',
+				event: 'invalid-event',
+				callback: vi.fn()
+			})
+		);
 
 		const result = taskRunner.controlListener('invalid-event', Action.OPEN);
 		expect(result).toBe(false);
@@ -290,15 +319,17 @@ describe('TaskRunner', () => {
 	});
 
 	it('should warn on invalid action in controlListener', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-		taskContext.set('invalid-action', {
-			taskId: 'invalid-action',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#x',
-			event: 'click',
-			callback: vi.fn()
-		});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		taskContext.set(
+			'invalid-action',
+			createListenerTask({
+				taskId: 'invalid-action',
+				withEvent: true,
+				listenAt: '#x',
+				event: 'click',
+				callback: vi.fn()
+			})
+		);
 
 		const result = taskRunner.controlListener('invalid-action', 'UNKNOWN' as Action);
 		expect(result).toBe(false);
@@ -310,39 +341,43 @@ describe('TaskRunner', () => {
 		host.id = 'alive-host';
 		document.body.appendChild(host);
 
-		const onDomAliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
-		taskContext.set('alive-task', {
-			taskId: 'alive-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'AliveComp',
-			componentInjectAt: '#alive-host',
-			component: { name: 'AliveComp', render: () => null },
-			alive: true,
-			isObserver: false,
-			aliveEpoch: 0,
-			scope: 'local'
-		});
+		const onDomAliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		taskContext.set(
+			'alive-task',
+			createComponentTask({
+				taskId: 'alive-task',
+				taskStatus: 'idle',
+				componentName: 'AliveComp',
+				componentInjectAt: '#alive-host',
+				component: { name: 'AliveComp', render: () => null },
+				alive: true,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'local'
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'alive-task');
 		await nextTick();
 
 		expect(onDomAliveSpy).toHaveBeenCalledOnce();
-		expect(taskContext.get('alive-task')?.isObserver).toBe(true);
+		expect(taskContext.get<ComponentTask>('alive-task')?.isObserver).toBe(true);
 	});
 
 	it('should keep task idle when target is detached on onTargetReady', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const detached = document.createElement('div');
 
-		taskContext.set('detached-task', {
-			taskId: 'detached-task',
-			kind: 'component',
-			taskStatus: 'pending',
-			componentName: 'DetachedComp',
-			componentInjectAt: '#detached',
-			component: { name: 'DetachedComp', render: () => null }
-		});
+		taskContext.set(
+			'detached-task',
+			createComponentTask({
+				taskId: 'detached-task',
+				taskStatus: 'pending',
+				componentName: 'DetachedComp',
+				componentInjectAt: '#detached',
+				component: { name: 'DetachedComp', render: () => null }
+			})
+		);
 
 		taskRunner.onTargetReady(detached, 'detached-task');
 
@@ -351,7 +386,7 @@ describe('TaskRunner', () => {
 	});
 
 	it('should warn and return when task is missing on onTargetReady', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		taskRunner.onTargetReady(document.createElement('div'), 'missing-task');
 		expect(errorSpy).toHaveBeenCalledWith(
 			expect.stringContaining('Task "missing-task" not found')
@@ -361,14 +396,16 @@ describe('TaskRunner', () => {
 	it('should return early when task is already active on onTargetReady', () => {
 		const host = document.createElement('div');
 		document.body.appendChild(host);
-		taskContext.set('active-short-circuit', {
-			taskId: 'active-short-circuit',
-			kind: 'component',
-			taskStatus: 'active',
-			componentName: 'AlreadyActiveComp',
-			componentInjectAt: '#x',
-			component: { name: 'AlreadyActiveComp', render: () => null }
-		});
+		taskContext.set(
+			'active-short-circuit',
+			createComponentTask({
+				taskId: 'active-short-circuit',
+				taskStatus: 'active',
+				componentName: 'AlreadyActiveComp',
+				componentInjectAt: '#x',
+				component: { name: 'AlreadyActiveComp', render: () => null }
+			})
+		);
 
 		const controlSpy = vi.spyOn(taskRunner, 'controlListener');
 		taskRunner.onTargetReady(host, 'active-short-circuit');
@@ -381,25 +418,24 @@ describe('TaskRunner', () => {
 		document.body.appendChild(host);
 		vi.spyOn(taskRunner, 'controlListener').mockReturnValue(false);
 
-		taskContext.set('event-fail-task', {
-			taskId: 'event-fail-task',
-			kind: 'listener',
-			taskStatus: 'pending',
-			componentName: 'EventFailComp',
-			componentInjectAt: '#host',
-			component: { name: 'EventFailComp', render: () => null },
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'event-fail-task',
+			createListenerTask({
+				taskId: 'event-fail-task',
+				taskStatus: 'pending',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn()
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'event-fail-task');
 		expect(taskContext.get('event-fail-task')?.taskStatus).toBe('idle');
 	});
 
 	it('should return false when bindListenerSignal task is missing', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const result = taskRunner.bindListenerSignal('missing-signal-task', ref(true));
 		expect(result).toBe(false);
 		expect(errorSpy).toHaveBeenCalledWith(
@@ -408,19 +444,21 @@ describe('TaskRunner', () => {
 	});
 
 	it('should return false when watch throws in bindListenerSignal', () => {
-		taskContext.set('watch-error-task', {
-			taskId: 'watch-error-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'watch-error-task',
+			createListenerTask({
+				taskId: 'watch-error-task',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn()
+			})
+		);
 
 		vi.spyOn(taskRunner, 'controlListener').mockImplementation(() => {
 			throw new Error('watch failed');
 		});
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		const result = taskRunner.bindListenerSignal('watch-error-task', ref(true));
 
@@ -432,7 +470,7 @@ describe('TaskRunner', () => {
 	});
 
 	it('should return false when task is missing in controlListener', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 		const result = taskRunner.controlListener('missing-listener-task', Action.OPEN);
 		expect(result).toBe(false);
 		expect(errorSpy).toHaveBeenCalledWith(
@@ -441,12 +479,17 @@ describe('TaskRunner', () => {
 	});
 
 	it('should return false when event binding config is incomplete in controlListener', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
-		taskContext.set('incomplete-listener-task', {
-			taskId: 'incomplete-listener-task',
-			kind: 'listener',
-			withEvent: true
-		});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		taskContext.set(
+			'incomplete-listener-task',
+			createListenerTask({
+				taskId: 'incomplete-listener-task',
+				withEvent: true,
+				listenAt: '',
+				event: '',
+				callback: undefined
+			})
+		);
 
 		const result = taskRunner.controlListener('incomplete-listener-task', Action.OPEN);
 		expect(result).toBe(false);
@@ -457,15 +500,17 @@ describe('TaskRunner', () => {
 
 	it('should skip OPEN when controller already exists in controlListener', () => {
 		const addEventSpy = vi.spyOn(Element.prototype, 'addEventListener');
-		taskContext.set('opened-task', {
-			taskId: 'opened-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn(),
-			controller: new AbortController()
-		});
+		taskContext.set(
+			'opened-task',
+			createListenerTask({
+				taskId: 'opened-task',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn(),
+				controller: new AbortController()
+			})
+		);
 
 		const result = taskRunner.controlListener('opened-task', Action.OPEN);
 		expect(result).toBe(false);
@@ -473,14 +518,16 @@ describe('TaskRunner', () => {
 	});
 
 	it('should keep returning false when CLOSE is called without controller', () => {
-		taskContext.set('closed-task', {
-			taskId: 'closed-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#btn',
-			event: 'click',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'closed-task',
+			createListenerTask({
+				taskId: 'closed-task',
+				withEvent: true,
+				listenAt: '#btn',
+				event: 'click',
+				callback: vi.fn()
+			})
+		);
 
 		const result = taskRunner.controlListener('closed-task', Action.CLOSE);
 		expect(result).toBe(false);
@@ -490,36 +537,42 @@ describe('TaskRunner', () => {
 		const readySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_, cb) => {
 			const el = document.createElement('button');
 			cb(el);
-			return () => { };
+			return () => {};
 		});
-		taskContext.set('fallback-open-task', {
-			taskId: 'fallback-open-task',
-			kind: 'listener',
-			withEvent: true,
-			listenAt: '#non-existing-btn',
-			event: 'click',
-			callback: vi.fn()
-		});
+		taskContext.set(
+			'fallback-open-task',
+			createListenerTask({
+				taskId: 'fallback-open-task',
+				withEvent: true,
+				listenAt: '#non-existing-btn',
+				event: 'click',
+				callback: vi.fn()
+			})
+		);
 
 		const result = taskRunner.controlListener('fallback-open-task', Action.OPEN);
 		expect(result).toBe(true);
 		expect(readySpy).toHaveBeenCalledOnce();
-		expect(taskContext.get('fallback-open-task')?.controller).toBeInstanceOf(AbortController);
+		expect(taskContext.get<ListenerTask>('fallback-open-task')?.controller).toBeInstanceOf(
+			AbortController
+		);
 	});
 
 	it('should set task idle when component taskId field is empty in onTargetReady', () => {
 		const host = document.createElement('div');
 		document.body.appendChild(host);
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		taskContext.set('broken-task-key', {
-			taskId: '',
-			kind: 'component',
-			taskStatus: 'pending',
-			componentName: 'BrokenComp',
-			componentInjectAt: '#host',
-			component: { name: 'BrokenComp', render: () => null }
-		});
+		taskContext.set(
+			'broken-task-key',
+			createComponentTask({
+				taskId: '',
+				taskStatus: 'pending',
+				componentName: 'BrokenComp',
+				componentInjectAt: '#host',
+				component: { name: 'BrokenComp', render: () => null }
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'broken-task-key');
 		expect(taskContext.get('broken-task-key')?.taskStatus).toBe('idle');
@@ -531,21 +584,23 @@ describe('TaskRunner', () => {
 	it('should set task idle when component mount throws in onTargetReady', () => {
 		const host = document.createElement('div');
 		document.body.appendChild(host);
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		taskContext.set('mount-error-task', {
-			taskId: 'mount-error-task',
-			kind: 'component',
-			taskStatus: 'pending',
-			componentName: 'MountErrorComp',
-			componentInjectAt: '#host',
-			component: {
-				name: 'MountErrorComp',
-				render: () => {
-					throw new Error('mount failed');
+		taskContext.set(
+			'mount-error-task',
+			createComponentTask({
+				taskId: 'mount-error-task',
+				taskStatus: 'pending',
+				componentName: 'MountErrorComp',
+				componentInjectAt: '#host',
+				component: {
+					name: 'MountErrorComp',
+					render: () => {
+						throw new Error('mount failed');
+					}
 				}
-			}
-		});
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'mount-error-task');
 		expect(taskContext.get('mount-error-task')?.taskStatus).toBe('idle');
@@ -560,19 +615,21 @@ describe('TaskRunner', () => {
 		host.id = 'global-alive-host';
 		document.body.appendChild(host);
 
-		const aliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
-		taskContext.set('global-alive-task', {
-			taskId: 'global-alive-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'GlobalAliveComp',
-			componentInjectAt: '#global-alive-host',
-			component: { name: 'GlobalAliveComp', render: () => null },
-			alive: true,
-			isObserver: false,
-			aliveEpoch: 0,
-			scope: 'global'
-		});
+		const aliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		taskContext.set(
+			'global-alive-task',
+			createComponentTask({
+				taskId: 'global-alive-task',
+				taskStatus: 'idle',
+				componentName: 'GlobalAliveComp',
+				componentInjectAt: '#global-alive-host',
+				component: { name: 'GlobalAliveComp', render: () => null },
+				alive: true,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'global'
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'global-alive-task');
 		await nextTick();
@@ -586,22 +643,24 @@ describe('TaskRunner', () => {
 		host.id = 'stale-alive-host';
 		document.body.appendChild(host);
 
-		taskContext.set('stale-alive-task', {
-			taskId: 'stale-alive-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'StaleAliveComp',
-			componentInjectAt: '#stale-alive-host',
-			component: { name: 'StaleAliveComp', render: () => null },
-			alive: true,
-			isObserver: false,
-			aliveEpoch: 0,
-			scope: 'local'
-		});
+		taskContext.set(
+			'stale-alive-task',
+			createComponentTask({
+				taskId: 'stale-alive-task',
+				taskStatus: 'idle',
+				componentName: 'StaleAliveComp',
+				componentInjectAt: '#stale-alive-host',
+				component: { name: 'StaleAliveComp', render: () => null },
+				alive: true,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'local'
+			})
+		);
 
 		const stopHandler = vi.fn();
 		vi.spyOn(DOMWatcher, 'onDomAlive').mockImplementation(() => {
-			const ctx = taskContext.get('stale-alive-task');
+			const ctx = taskContext.get<ComponentTask>('stale-alive-task');
 			if (ctx) {
 				ctx.aliveEpoch = (ctx.aliveEpoch ?? 0) + 1;
 			}
@@ -612,7 +671,7 @@ describe('TaskRunner', () => {
 		await nextTick();
 
 		expect(stopHandler).toHaveBeenCalledOnce();
-		expect(taskContext.get('stale-alive-task')?.isObserver).toBe(false);
+		expect(taskContext.get<ComponentTask>('stale-alive-task')?.isObserver).toBe(false);
 	});
 
 	it('should short-circuit alive setup when alive is cancelled before nextTick', async () => {
@@ -620,29 +679,31 @@ describe('TaskRunner', () => {
 		host.id = 'cancel-alive-host';
 		document.body.appendChild(host);
 
-		const onDomAliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
-		taskContext.set('cancel-alive-task', {
-			taskId: 'cancel-alive-task',
-			taskStatus: 'idle',
-			kind: 'component',
-			componentName: 'CancelAliveComp',
-			componentInjectAt: '#cancel-alive-host',
-			component: { name: 'CancelAliveComp', render: () => null },
-			alive: true,
-			isObserver: false,
-			aliveEpoch: 0,
-			scope: 'local'
-		});
+		const onDomAliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		taskContext.set(
+			'cancel-alive-task',
+			createComponentTask({
+				taskId: 'cancel-alive-task',
+				taskStatus: 'idle',
+				componentName: 'CancelAliveComp',
+				componentInjectAt: '#cancel-alive-host',
+				component: { name: 'CancelAliveComp', render: () => null },
+				alive: true,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'local'
+			})
+		);
 
 		taskRunner.onTargetReady(host, 'cancel-alive-task');
-		const context = taskContext.get('cancel-alive-task');
+		const context = taskContext.get<ComponentTask>('cancel-alive-task');
 		if (context) {
 			context.alive = false;
 		}
 		await nextTick();
 
 		expect(onDomAliveSpy).not.toHaveBeenCalled();
-		expect(taskContext.get('cancel-alive-task')?.isObserver).toBe(false);
+		expect(taskContext.get<ComponentTask>('cancel-alive-task')?.isObserver).toBe(false);
 	});
 
 	it('should call reset and onTargetReady from onDomAlive callbacks', async () => {
@@ -650,29 +711,31 @@ describe('TaskRunner', () => {
 		host.id = 'alive-callback-host';
 		document.body.appendChild(host);
 
-		taskContext.set('alive-callback-task', {
-			taskId: 'alive-callback-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			componentName: 'AliveCallbackComp',
-			componentInjectAt: '#alive-callback-host',
-			component: { name: 'AliveCallbackComp', render: () => null },
-			alive: true,
-			isObserver: false,
-			aliveEpoch: 0,
-			scope: 'local'
-		});
+		taskContext.set(
+			'alive-callback-task',
+			createComponentTask({
+				taskId: 'alive-callback-task',
+				taskStatus: 'idle',
+				componentName: 'AliveCallbackComp',
+				componentInjectAt: '#alive-callback-host',
+				component: { name: 'AliveCallbackComp', render: () => null },
+				alive: true,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'local'
+			})
+		);
 
 		const resetSpy = vi.spyOn(taskContext, 'reset');
 		vi.spyOn(DOMWatcher, 'onDomAlive').mockImplementation(
 			(_matchedElement, _injectAt, onRemove, onRestore) => {
 				onRemove();
-				const ctx = taskContext.get('alive-callback-task');
+				const ctx = taskContext.get<ComponentTask>('alive-callback-task');
 				if (ctx) {
 					ctx.alive = false;
 				}
 				onRestore(document.createElement('div'));
-				return () => { };
+				return () => {};
 			}
 		);
 
@@ -684,12 +747,14 @@ describe('TaskRunner', () => {
 	});
 	it('should set Task`s timeout config correctly', async () => {
 		const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady');
-		taskContext.set('timeout-task', {
-			taskId: 'timeout-task',
-			kind: 'component',
-			taskStatus: 'idle',
-			timeout: 5000
-		});
+		taskContext.set(
+			'timeout-task',
+			createComponentTask({
+				taskId: 'timeout-task',
+				taskStatus: 'idle',
+				timeout: 5000
+			})
+		);
 		taskContext.taskRecords.push({ taskId: 'timeout-task', injectAt: '#app' });
 
 		taskRunner.run();

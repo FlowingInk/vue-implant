@@ -1,6 +1,21 @@
-import type { ObserverHub } from '../core/hooks/ObserverHub';
-import type { LifecycleHookMap, ObserveEventName, ObserveHook } from '../core/hooks/type';
+import type { ObserverHub } from './ObserverHub';
+import type { LifecycleHookMap, ObserveEmitter, ObserveEventName, ObserveHook } from './type';
 
+export const noopObserveEmitter: ObserveEmitter = () => {};
+
+export function createObserveEmitter(observer?: ObserverHub): ObserveEmitter {
+	if (!observer) {
+		return noopObserveEmitter;
+	}
+
+	return (name, payload = {}) => {
+		observer.emit({
+			name,
+			ts: Date.now(),
+			...payload
+		});
+	};
+}
 export function registerHooks(
 	observer: ObserverHub,
 	hooks?: LifecycleHookMap,

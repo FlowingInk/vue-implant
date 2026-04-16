@@ -1,8 +1,7 @@
 import type { Component, Plugin, Ref, WatchSource } from 'vue';
-import { createObserveEmitter } from '../../util/createObserveEmitter';
-import { registerHooks } from '../../util/registerHooks';
 import { ObserverHub } from '../hooks/ObserverHub';
 import type { ObserveEmitter, ObserveEventName, ObserveHook } from '../hooks/type';
+import { createObserveEmitter, registerHooks } from '../hooks/util';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import { TaskContext } from '../Task/TaskContext';
@@ -20,14 +19,16 @@ export class Injector {
 	private readonly taskLifeCycle: TaskLifeCycle;
 	private readonly logger: ILogger;
 	private readonly observer: ObserverHub;
+	//default configuration
 	private readonly injectConfig: InjectionConfig = {
 		alive: false,
 		scope: 'local',
-		timeout: 5000
+		timeout: 5000,
+		logger: new Logger()
 	};
 
 	constructor(config: Partial<InjectionConfig> = {}) {
-		this.logger = config.logger ?? new Logger();
+		this.logger = config.logger ?? this.injectConfig.logger;
 		this.observer = config.observer ?? new ObserverHub(this.logger);
 
 		const emitObserve: ObserveEmitter = createObserveEmitter(this.observer);

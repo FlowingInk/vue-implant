@@ -1,14 +1,14 @@
 import type { Component, Ref } from 'vue';
-import { buildRegisterObservePayload } from '../../util/buildRegisterObservePayload';
 import { getComponentName } from '../../util/getComponentName';
 import { markRawComponent } from '../../util/markRawComponent';
-import { registerHooks } from '../../util/registerHooks';
 import type { ObserveEmitter } from '../hooks/type';
+import { registerHooks } from '../hooks/util';
 import type { ComponentOptions, InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
+import { buildRegisterObservePayload } from '../payload/buildRegisterObservePayload';
 import type { TaskContext } from './TaskContext';
-import type { _RegisterResult, ListenerRegisterResult, Task } from './types';
+import type { _RegisterResult, ListenerRegisterResult, Task, TaskListenerFeature } from './types';
 
 export class TaskRegister {
 	private readonly taskContext: TaskContext;
@@ -76,7 +76,7 @@ export class TaskRegister {
 				taskId: id,
 				kind: 'listener',
 				taskStatus: 'idle',
-				listenerName: id,
+				timeout: this.injectConfig.timeout,
 				withEvent: true,
 				listenAt,
 				event,
@@ -137,7 +137,6 @@ export class TaskRegister {
 		const alive = option?.alive ?? this.injectConfig.alive;
 		const scope = option?.scope ?? this.injectConfig.scope;
 		const timeout = option?.timeout ?? this.injectConfig.timeout;
-
 		this.emit(
 			'register:start',
 			buildRegisterObservePayload('register:start', {
@@ -195,17 +194,19 @@ export class TaskRegister {
 			};
 
 			if (option?.on) {
-				// If event options are provided, add event-related info
-				context.listenerName = `listener-${option.on.listenAt}-${option.on.type}`;
+				const listener: TaskListenerFeature = {
+					listenAt: option.on.listenAt,
+					event: option.on.type,
+					callback: option.on.callback
+				};
 				context.withEvent = true;
-				context.listenAt = option.on.listenAt;
-				context.event = option.on.type;
-				context.callback = option.on.callback;
 
 				// Extract activity signal
 				if (option.on.activitySignal) {
-					context.activitySignal = option.on.activitySignal;
+					listener.activitySignal = option.on.activitySignal;
 				}
+
+				context.listener = listener;
 			}
 
 			// register task level hook
