@@ -32,6 +32,7 @@ jobs:
         with:
           node-version: 24
           cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
           registry-url: https://registry.npmjs.org
 
       - name: Check version rule (patch only)
@@ -107,15 +108,15 @@ jobs:
 
       - name: Install dependencies
         if: steps.versions.outputs.should_release == 'true'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests
         if: steps.versions.outputs.should_release == 'true'
-        run: npm run test
+        run: pnpm test
 
       - name: Build project
         if: steps.versions.outputs.should_release == 'true'
-        run: npm run build
+        run: pnpm build
 
       - name: Create and push tag
         if: steps.versions.outputs.should_release == 'true'
@@ -150,4 +151,4 @@ jobs:
         if: steps.versions.outputs.should_release == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: pnpm publish --no-git-checks --access public
