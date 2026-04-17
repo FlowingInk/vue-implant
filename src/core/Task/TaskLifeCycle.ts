@@ -3,6 +3,7 @@ import type { ObserveEmitter } from '../hooks/type';
 import type { InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
+import { buildAliveObservePayload } from '../payload/buildAliveObservePayload';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
 import type { Task } from './types';
@@ -52,11 +53,17 @@ export class TaskLifeCycle {
 		context.aliveEpoch = aliveEpoch;
 		context.alive = true;
 		context.isObserver = false;
-		this.emit('alive:enable', {
-			taskId,
-			injectAt: context.componentInjectAt,
-			status: context.taskStatus
-		});
+		this.emit(
+			'alive:enable',
+			buildAliveObservePayload('alive:enable', {
+				taskId,
+				kind: 'component',
+				injectAt: context.componentInjectAt,
+				status: context.taskStatus,
+				scope: context.scope,
+				aliveEpoch
+			})
+		);
 		// placeholder stop handler for pending async setup
 		context.disableAlive = () => {};
 
@@ -100,11 +107,18 @@ export class TaskLifeCycle {
 				}
 				context.disableAlive = stopHandler;
 				context.isObserver = true;
-				this.emit('alive:observeStart', {
-					taskId,
-					injectAt,
-					status: context.taskStatus
-				});
+				this.emit(
+					'alive:observeStart',
+					buildAliveObservePayload('alive:observeStart', {
+						taskId,
+						kind: 'component',
+						injectAt,
+						status: context.taskStatus,
+						scope: context.scope,
+						aliveEpoch,
+						observerMode: 'mounted'
+					})
+				);
 				this.logger.info(`Task "${taskId}" alive observer activated`);
 			});
 			return;
@@ -142,19 +156,33 @@ export class TaskLifeCycle {
 			context.disableAlive = () => {
 				if (cancelled) return;
 				cancelled = true;
-				this.emit('alive:observeStop', {
-					taskId,
-					injectAt: context.componentInjectAt,
-					status: context.taskStatus
-				});
+				this.emit(
+					'alive:observeStop',
+					buildAliveObservePayload('alive:observeStop', {
+						taskId,
+						kind: 'component',
+						injectAt: context.componentInjectAt,
+						status: context.taskStatus,
+						scope: context.scope,
+						aliveEpoch,
+						observerMode: 'await-target'
+					})
+				);
 				stopReadyObserver();
 			};
 			context.isObserver = true;
-			this.emit('alive:observeStart', {
-				taskId,
-				injectAt: context.componentInjectAt,
-				status: context.taskStatus
-			});
+			this.emit(
+				'alive:observeStart',
+				buildAliveObservePayload('alive:observeStart', {
+					taskId,
+					kind: 'component',
+					injectAt: context.componentInjectAt,
+					status: context.taskStatus,
+					scope: context.scope,
+					aliveEpoch,
+					observerMode: 'await-target'
+				})
+			);
 			this.logger.info(`Task "${taskId}" awaiting target element for re-injection`);
 		}
 	}
@@ -179,21 +207,35 @@ export class TaskLifeCycle {
 		}
 
 		context.aliveEpoch = (context.aliveEpoch ?? 0) + 1;
+		const aliveEpoch = context.aliveEpoch;
 		const stopHandler = context.disableAlive;
 		context.alive = false;
 		context.isObserver = false;
 		context.disableAlive = undefined;
 		stopHandler?.();
-		this.emit('alive:disable', {
-			taskId,
-			injectAt: context.componentInjectAt,
-			status: context.taskStatus
-		});
-		this.emit('alive:observeStop', {
-			taskId,
-			injectAt: context.componentInjectAt,
-			status: context.taskStatus
-		});
+		this.emit(
+			'alive:disable',
+			buildAliveObservePayload('alive:disable', {
+				taskId,
+				kind: 'component',
+				injectAt: context.componentInjectAt,
+				status: context.taskStatus,
+				scope: context.scope,
+				aliveEpoch
+			})
+		);
+		this.emit(
+			'alive:observeStop',
+			buildAliveObservePayload('alive:observeStop', {
+				taskId,
+				kind: 'component',
+				injectAt: context.componentInjectAt,
+				status: context.taskStatus,
+				scope: context.scope,
+				aliveEpoch,
+				observerMode: context.app ? 'mounted' : 'await-target'
+			})
+		);
 	}
 
 	public destroy(taskId: string): void {

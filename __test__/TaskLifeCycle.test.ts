@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { type App, nextTick } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
+import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
 import { Logger } from '../src/core/logger/Logger';
 import { TaskContext } from '../src/core/Task/TaskContext';
@@ -637,5 +638,207 @@ describe('TaskLifeCycle', () => {
 		expect(events).toContain('task:beforeDestroy');
 		expect(events).toContain('task:destroy');
 		expect(events).toContain('task:afterDestroy');
+	});
+
+	it('should emit normalized alive payloads for mounted observer mode', async () => {
+		const observer = new ObserverHub();
+		const lifecycleWithObserver = new TaskLifeCycle(
+			taskContext,
+			onTargetReady,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				logger: new Logger()
+			},
+			createObserveEmitter(observer)
+		);
+
+		const host = document.createElement('div');
+		host.id = 'alive-mounted-host';
+		document.body.appendChild(host);
+		const appRoot = document.createElement('div');
+		host.appendChild(appRoot);
+
+		taskContext.set(
+			'alive-mounted-task',
+			createComponentTask({
+				taskId: 'alive-mounted-task',
+				taskStatus: 'idle',
+				componentName: 'AliveMountedComp',
+				componentInjectAt: '#alive-mounted-host',
+				component: { name: 'AliveMountedComp' },
+				app: { unmount: vi.fn() } as unknown as App<Element>,
+				appRoot,
+				alive: false,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'global'
+			})
+		);
+
+		vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+
+		const aliveEvents: ObserveEvent[] = [];
+		observer.onAny((event) => {
+			if (event.name.startsWith('alive:')) {
+				aliveEvents.push(event);
+			}
+		});
+
+		lifecycleWithObserver.enableAlive('alive-mounted-task');
+		await nextTick();
+		lifecycleWithObserver.disableAlive('alive-mounted-task');
+
+		expect(aliveEvents.find((event) => event.name === 'alive:enable')).toMatchObject({
+			name: 'alive:enable',
+			taskId: 'alive-mounted-task',
+			kind: 'component',
+			injectAt: '#alive-mounted-host',
+			status: 'idle',
+			meta: {
+				scope: 'global',
+				aliveEpoch: 1
+			}
+		});
+
+		expect(
+			aliveEvents.find(
+				(event) =>
+					event.name === 'alive:observeStart' && event.meta?.observerMode === 'mounted'
+			)
+		).toMatchObject({
+			name: 'alive:observeStart',
+			taskId: 'alive-mounted-task',
+			kind: 'component',
+			injectAt: '#alive-mounted-host',
+			status: 'idle',
+			meta: {
+				scope: 'global',
+				aliveEpoch: 1,
+				observerMode: 'mounted'
+			}
+		});
+
+		expect(aliveEvents.find((event) => event.name === 'alive:disable')).toMatchObject({
+			name: 'alive:disable',
+			taskId: 'alive-mounted-task',
+			kind: 'component',
+			injectAt: '#alive-mounted-host',
+			status: 'idle',
+			meta: {
+				scope: 'global',
+				aliveEpoch: 2
+			}
+		});
+
+		expect(
+			aliveEvents.find(
+				(event) =>
+					event.name === 'alive:observeStop' && event.meta?.observerMode === 'mounted'
+			)
+		).toMatchObject({
+			name: 'alive:observeStop',
+			taskId: 'alive-mounted-task',
+			kind: 'component',
+			injectAt: '#alive-mounted-host',
+			status: 'idle',
+			meta: {
+				scope: 'global',
+				aliveEpoch: 2,
+				observerMode: 'mounted'
+			}
+		});
+	});
+
+	it('should emit normalized alive payloads for await-target observer mode', () => {
+		const observer = new ObserverHub();
+		const lifecycleWithObserver = new TaskLifeCycle(
+			taskContext,
+			onTargetReady,
+			{
+				alive: false,
+				scope: 'local',
+				timeout: 5000,
+				logger: new Logger()
+			},
+			createObserveEmitter(observer)
+		);
+
+		taskContext.set(
+			'alive-await-task',
+			createComponentTask({
+				taskId: 'alive-await-task',
+				taskStatus: 'idle',
+				componentName: 'AliveAwaitComp',
+				componentInjectAt: '#alive-await-host',
+				component: { name: 'AliveAwaitComp' },
+				alive: false,
+				isObserver: false,
+				aliveEpoch: 0,
+				scope: 'local'
+			})
+		);
+
+		vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
+
+		const aliveEvents: ObserveEvent[] = [];
+		observer.onAny((event) => {
+			if (event.name.startsWith('alive:')) {
+				aliveEvents.push(event);
+			}
+		});
+
+		lifecycleWithObserver.enableAlive('alive-await-task');
+		lifecycleWithObserver.disableAlive('alive-await-task');
+
+		expect(
+			aliveEvents.find(
+				(event) =>
+					event.name === 'alive:observeStart' &&
+					event.meta?.observerMode === 'await-target'
+			)
+		).toMatchObject({
+			name: 'alive:observeStart',
+			taskId: 'alive-await-task',
+			kind: 'component',
+			injectAt: '#alive-await-host',
+			status: 'idle',
+			meta: {
+				scope: 'local',
+				aliveEpoch: 1,
+				observerMode: 'await-target'
+			}
+		});
+
+		expect(aliveEvents.find((event) => event.name === 'alive:disable')).toMatchObject({
+			name: 'alive:disable',
+			taskId: 'alive-await-task',
+			kind: 'component',
+			injectAt: '#alive-await-host',
+			status: 'idle',
+			meta: {
+				scope: 'local',
+				aliveEpoch: 2
+			}
+		});
+
+		expect(
+			aliveEvents.find(
+				(event) =>
+					event.name === 'alive:observeStop' &&
+					event.meta?.observerMode === 'await-target'
+			)
+		).toMatchObject({
+			name: 'alive:observeStop',
+			taskId: 'alive-await-task',
+			kind: 'component',
+			injectAt: '#alive-await-host',
+			status: 'idle',
+			meta: {
+				scope: 'local',
+				observerMode: 'await-target'
+			}
+		});
 	});
 });
