@@ -5,6 +5,7 @@ import type { ObserveEmitter } from '../hooks/type';
 import { Action, type ActionEvent, type InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
+import { createDomObserveEmitFactory } from '../payload/createDomObserveEmitFactory';
 import { buildInjectObservePayload } from '../payload/buildInjectObservePayload';
 import { buildListenerObservePayload } from '../payload/buildListenerObservePayload';
 import { buildRunObservePayload } from '../payload/buildRunObservePayload';
@@ -83,7 +84,13 @@ export class TaskRunner {
 				},
 				{
 					logger: this.logger,
-					emit: this.emit
+					emit: createDomObserveEmitFactory({
+						emit: this.emit,
+						taskId: id,
+						kind: task.kind,
+						injectAt,
+						root: document
+					})
 				}
 			);
 			if (this.taskContext.getTaskStatus(id) !== 'active') {
@@ -264,6 +271,7 @@ export class TaskRunner {
 
 				const newController = this.attachEvent(
 					taskId,
+					context.kind,
 					listener.listenAt,
 					listener.event,
 					listener.callback
@@ -334,6 +342,7 @@ export class TaskRunner {
 	}
 	private attachEvent(
 		id: string,
+		kind: Task['kind'],
 		listenAt: string,
 		event: string,
 		callback: EventListener
@@ -362,7 +371,13 @@ export class TaskRunner {
 			{ once: true, timeout: this.injectConfig.timeout },
 			{
 				logger: this.logger,
-				emit: this.emit
+				emit: createDomObserveEmitFactory({
+					emit: this.emit,
+					taskId: id,
+					kind,
+					injectAt: listenAt,
+					root: document
+				})
 			}
 		);
 
@@ -463,7 +478,13 @@ export class TaskRunner {
 						},
 						{
 							logger: this.logger,
-							emit: this.emit
+							emit: createDomObserveEmitFactory({
+								emit: this.emit,
+								taskId,
+								kind: context.kind,
+								injectAt,
+								root: context.scope === 'global' ? currentDocument : matchedElement
+							})
 						}
 					);
 

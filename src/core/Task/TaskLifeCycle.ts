@@ -4,6 +4,7 @@ import type { InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import { buildAliveObservePayload } from '../payload/buildAliveObservePayload';
+import { createDomObserveEmitFactory } from '../payload/createDomObserveEmitFactory';
 import { buildTaskObservePayload } from '../payload/buildTaskObservePayload';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
@@ -98,7 +99,13 @@ export class TaskLifeCycle {
 					},
 					{
 						logger: this.logger,
-						emit: this.emit
+						emit: createDomObserveEmitFactory({
+							emit: this.emit,
+							taskId,
+							kind: 'component',
+							injectAt,
+							root: context.scope === 'global' ? currentDocument : matchedElement
+						})
 					}
 				);
 
@@ -151,7 +158,13 @@ export class TaskLifeCycle {
 				{ once: true, timeout: this.injectConfig.timeout },
 				{
 					logger: this.logger,
-					emit: this.emit
+					emit: createDomObserveEmitFactory({
+						emit: this.emit,
+						taskId,
+						kind: 'component',
+						injectAt: context.componentInjectAt,
+						root: document
+					})
 				}
 			);
 			context.disableAlive = () => {
