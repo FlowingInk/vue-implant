@@ -121,13 +121,20 @@ jobs:
       - name: Create and push tag
         if: steps.versions.outputs.should_release == 'true'
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
           TAG="${{ steps.release_meta.outputs.new_tag }}"
           BODY="${{ steps.release_meta.outputs.release_body }}"
 
           if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
             echo "Tag ${TAG} already exists on remote, skip creating tag."
           else
+            echo "Creating tag ${TAG}..."
             git tag -a "$TAG" -m "$BODY"
             git push origin "$TAG"
           fi
