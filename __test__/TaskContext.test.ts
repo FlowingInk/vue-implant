@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { App, ComponentPublicInstance, Ref, WatchHandle } from 'vue';
+import type { Ref, WatchHandle } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { TaskContext } from '../src/core/Task/TaskContext';
@@ -280,20 +280,20 @@ describe('TaskContext', () => {
 				taskId: 'test',
 				componentName: 'TestComponent',
 				componentInjectAt: '#app',
-				app: {
+				mountHandle: {
 					unmount: mockUnmount
-				} as unknown as App<Element>,
+				},
 				appRoot: {
 					remove: mockRemove
 				} as unknown as HTMLElement,
-				instance: {} as ComponentPublicInstance
+				instance: {}
 			});
 
 			taskContext.set('test', context);
 			taskContext.destroy('test');
 
 			expect(mockUnmount).toHaveBeenCalled();
-			expect(context.app).toBeUndefined();
+			expect(context.mountHandle).toBeUndefined();
 			expect(context.instance).toBeUndefined();
 
 			expect(mockRemove).toHaveBeenCalled();
@@ -439,15 +439,16 @@ describe('TaskContext', () => {
 				taskId: 'test',
 				componentName: 'TestComponent',
 				componentInjectAt: '#app',
-				app: { unmount: mockUnmount } as unknown as App<Element>,
-				instance: {} as ComponentPublicInstance
+				mountHandle: { unmount: mockUnmount },
+				appRoot: document.createElement('div'),
+				instance: {}
 			});
 
 			taskContext.set('test', context);
 			taskContext.releaseComponentInstance('test');
 
 			expect(mockUnmount).toHaveBeenCalled();
-			expect(context.app).toBeUndefined();
+			expect(context.mountHandle).toBeUndefined();
 			expect(context.instance).toBeUndefined();
 		});
 		it('should throw error when unmounting fails', () => {
@@ -458,9 +459,9 @@ describe('TaskContext', () => {
 				taskId: 'test',
 				componentName: 'TestComponent',
 				componentInjectAt: '#app',
-				app: { unmount: mockUnmount } as unknown as App<Element>,
+				mountHandle: { unmount: mockUnmount },
 				appRoot: {} as unknown as HTMLElement,
-				instance: {} as ComponentPublicInstance
+				instance: {}
 			});
 
 			taskContext.set('test', context);
@@ -681,9 +682,9 @@ describe('TaskContext', () => {
 				component: { name: 'TestComponent', render: () => null },
 				alive: false,
 				scope: 'local',
-				app: { unmount: mockUnmount } as unknown as App<Element>,
+				mountHandle: { unmount: mockUnmount },
 				appRoot: { remove: mockRemove } as unknown as HTMLElement,
-				instance: {} as ComponentPublicInstance,
+				instance: {},
 				isObserver: true,
 				disableAlive: mockStopAlive
 			});
@@ -697,7 +698,7 @@ describe('TaskContext', () => {
 
 			expect(context.watcher).toBeUndefined();
 
-			expect(context.app).toBeUndefined();
+			expect(context.mountHandle).toBeUndefined();
 			expect(context.appRoot).toBeUndefined();
 			expect(context.instance).toBeUndefined();
 
@@ -724,7 +725,7 @@ describe('TaskContext', () => {
 				taskId: 'test',
 				kind: 'component',
 				taskStatus: 'idle',
-				app: undefined,
+				mountHandle: undefined,
 				appRoot: undefined,
 				instance: undefined,
 				isObserver: false
@@ -761,7 +762,7 @@ describe('TaskContext', () => {
 						callback: () => undefined,
 						controller: { abort: abortA } as unknown as AbortController
 					},
-					app: { unmount: unmountA } as unknown as App<Element>,
+					mountHandle: { unmount: unmountA },
 					appRoot: { remove: removeA } as unknown as HTMLElement,
 					watcher: {
 						watcher: watcherA,
@@ -789,7 +790,7 @@ describe('TaskContext', () => {
 						callback: () => undefined,
 						controller: { abort: abortB } as unknown as AbortController
 					},
-					app: { unmount: unmountB } as unknown as App<Element>,
+					mountHandle: { unmount: unmountB },
 					appRoot: { remove: removeB } as unknown as HTMLElement,
 					watcher: {
 						watcher: watcherB,
@@ -812,8 +813,8 @@ describe('TaskContext', () => {
 
 			expect(taskContext.has('a')).toBe(true);
 			expect(taskContext.has('b')).toBe(true);
-			expect(taskContext.get<ComponentTask>('a')?.app).toBeUndefined();
-			expect(taskContext.get<ComponentTask>('b')?.app).toBeUndefined();
+			expect(taskContext.get<ComponentTask>('a')?.mountHandle).toBeUndefined();
+			expect(taskContext.get<ComponentTask>('b')?.mountHandle).toBeUndefined();
 			expect(taskContext.get<ComponentTask>('a')?.isObserver).toBe(false);
 			expect(taskContext.get<ComponentTask>('b')?.isObserver).toBe(false);
 		});
@@ -863,7 +864,8 @@ describe('TaskContext', () => {
 						callback: vi.fn(),
 						controller: { abort } as unknown as AbortController
 					},
-					app: { unmount } as unknown as App<Element>
+					mountHandle: { unmount },
+					appRoot: document.createElement('div')
 				})
 			);
 
@@ -918,7 +920,8 @@ describe('TaskContext', () => {
 						callback: vi.fn(),
 						controller: { abort } as unknown as AbortController
 					},
-					app: { unmount } as unknown as App<Element>
+					mountHandle: { unmount },
+					appRoot: document.createElement('div')
 				})
 			);
 

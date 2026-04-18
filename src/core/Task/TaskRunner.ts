@@ -1,14 +1,14 @@
-import type { App, ComponentPublicInstance, Plugin, WatchHandle, WatchSource } from 'vue';
-import { createApp, watch } from 'vue';
+import type { WatchHandle, WatchSource } from 'vue';
+import { watch } from 'vue';
 import { UUID } from '../../util/uuid';
 import type { ObserveEmitter } from '../hooks/type';
 import { Action, type ActionEvent, type InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
-import { createDomObserveEmitFactory } from '../payload/createDomObserveEmitFactory';
 import { buildInjectObservePayload } from '../payload/buildInjectObservePayload';
 import { buildListenerObservePayload } from '../payload/buildListenerObservePayload';
 import { buildRunObservePayload } from '../payload/buildRunObservePayload';
+import { createDomObserveEmitFactory } from '../payload/createDomObserveEmitFactory';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
 import type { _InjectResult, Task, TaskListenerFeature } from './types';
@@ -403,7 +403,7 @@ export class TaskRunner {
 			};
 		}
 
-		if (context?.app) {
+		if (context.mountHandle) {
 			const error = new Error(`Task "${taskId}" is already mounted, skipping`);
 			this.logger.warn(error.message);
 			return {
@@ -413,7 +413,6 @@ export class TaskRunner {
 		}
 
 		const injectAt: string = context.componentInjectAt;
-		const plugins: Plugin[] = this.taskContext.getPlugins();
 		const currentDocument = matchedElement.ownerDocument || document;
 
 		const appRoot = currentDocument.createElement('div');
@@ -437,15 +436,18 @@ export class TaskRunner {
 
 		try {
 			// Create a Vue app instance and mount it to the newly created DOM node
-			const subApp: App<Element> = createApp(context.component);
-			for (const plugin of plugins) {
-				subApp.use(plugin);
-			}
-			const vm: ComponentPublicInstance = subApp.mount(appRoot);
+			const mountResult = context.adapter.mount({
+				host: matchedElement,
+				mountPoint: appRoot,
+				artifact: context.component,
+				taskId,
+				injectAt
+			});
 
 			// Save to context
-			context.app = subApp;
-			context.instance = vm;
+			context.mountHandle = mountResult.handle;
+			context.hostElement = matchedElement;
+			context.instance = mountResult.instance;
 			context.appRoot = appRoot;
 
 			this.logger.info(`Component "${context.componentName}" injected at "${injectAt}"`);
@@ -478,7 +480,7 @@ export class TaskRunner {
 					}
 				);
 
-				if (!context.alive || context.app !== subApp) {
+				if (!context.alive || context.mountHandle !== mountResult.handle) {
 					stopHandler();
 				} else {
 					context.disableAlive = stopHandler;

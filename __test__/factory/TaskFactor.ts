@@ -1,4 +1,5 @@
-import type { App, Component, ComponentPublicInstance, Ref } from 'vue';
+import type { Component, Ref } from 'vue';
+import { createVueAdapter } from '../../src/core/adapter/VueAdapter';
 import type {
 	ComponentTask,
 	ListenerTask,
@@ -22,12 +23,14 @@ export type CreateComponentTaskInput = TaskBaseInput & {
 	componentName?: string;
 	componentInjectAt?: string;
 	component?: Component;
+	adapter?: ComponentTask['adapter'];
 	alive?: boolean;
 	scope?: 'local' | 'global';
 	listener?: TaskListenerFeature;
-	app?: App<Element>;
+	mountHandle?: unknown;
+	hostElement?: HTMLElement;
 	appRoot?: HTMLElement;
-	instance?: ComponentPublicInstance;
+	instance?: unknown;
 	isObserver?: boolean;
 	disableAlive?: () => void;
 };
@@ -56,12 +59,14 @@ export function createTask(input: CreateComponentTaskInput | CreateListenerTaskI
 			componentName: input.componentName ?? 'TestComponent',
 			componentInjectAt: input.componentInjectAt ?? '#app',
 			component: input.component ?? { name: 'TestComponent', render: () => null },
+			adapter: input.adapter ?? createVueAdapter(),
 			alive: input.alive ?? false,
 			scope: input.scope ?? 'local',
 			...(input.listener ? { listener: input.listener } : {}),
-			...(input.app ? { app: input.app } : {}),
+			...(input.mountHandle !== undefined ? { mountHandle: input.mountHandle } : {}),
+			...(input.hostElement !== undefined ? { hostElement: input.hostElement } : {}),
 			...(input.appRoot ? { appRoot: input.appRoot } : {}),
-			...(input.instance ? { instance: input.instance } : {}),
+			...(input.instance !== undefined ? { instance: input.instance } : {}),
 			...(input.isObserver !== undefined ? { isObserver: input.isObserver } : {}),
 			...(input.disableAlive ? { disableAlive: input.disableAlive } : {})
 		};

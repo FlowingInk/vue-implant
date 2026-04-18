@@ -35,17 +35,20 @@ describe('TaskRegister', () => {
 		const context = taskContext.get(result.taskId);
 
 		expect(result).toEqual({ taskId: 'CompA@#app', isSuccess: true });
-		expect(context).toMatchObject(
-			createTask({
-				kind: 'component',
-				taskId: 'CompA@#app',
-				componentName: 'CompA',
-				componentInjectAt: '#app',
-				component,
-				timeout: 5000,
-				isObserver: false
-			})
-		);
+		expect(context).toMatchObject({
+			kind: 'component',
+			taskId: 'CompA@#app',
+			componentName: 'CompA',
+			componentInjectAt: '#app',
+			component,
+			timeout: 5000,
+			isObserver: false,
+			adapter: {
+				name: 'vue',
+				mount: expect.any(Function),
+				unmount: expect.any(Function)
+			}
+		});
 		expect(taskContext.taskRecords).toEqual([{ taskId: 'CompA@#app', injectAt: '#app' }]);
 	});
 
@@ -54,19 +57,22 @@ describe('TaskRegister', () => {
 		const result = taskRegister.register('#root', component, { alive: true, scope: 'global' });
 		const context = taskContext.get(result.taskId);
 
-		expect(context).toMatchObject(
-			createTask({
-				kind: 'component',
-				taskId: 'CompB@#root',
-				componentName: 'CompB',
-				componentInjectAt: '#root',
-				component,
-				alive: true,
-				scope: 'global',
-				timeout: 5000,
-				isObserver: false
-			})
-		);
+		expect(context).toMatchObject({
+			kind: 'component',
+			taskId: 'CompB@#root',
+			componentName: 'CompB',
+			componentInjectAt: '#root',
+			component,
+			alive: true,
+			scope: 'global',
+			timeout: 5000,
+			isObserver: false,
+			adapter: {
+				name: 'vue',
+				mount: expect.any(Function),
+				unmount: expect.any(Function)
+			}
+		});
 	});
 
 	it('should store event config and activity signal when provided', () => {
@@ -85,24 +91,27 @@ describe('TaskRegister', () => {
 		});
 
 		const context = taskContext.get(result.taskId);
-		expect(context).toMatchObject(
-			createTask({
-				kind: 'component',
-				taskId: 'CompC@#event-host',
-				componentName: 'CompC',
-				componentInjectAt: '#event-host',
-				component,
-				withEvent: true,
-				timeout: 5000,
-				isObserver: false,
-				listener: {
-					listenAt: '#btn',
-					event: 'click',
-					callback,
-					activitySignal
-				}
-			})
-		);
+		expect(context).toMatchObject({
+			kind: 'component',
+			taskId: 'CompC@#event-host',
+			componentName: 'CompC',
+			componentInjectAt: '#event-host',
+			component,
+			withEvent: true,
+			timeout: 5000,
+			isObserver: false,
+			adapter: {
+				name: 'vue',
+				mount: expect.any(Function),
+				unmount: expect.any(Function)
+			},
+			listener: {
+				listenAt: '#btn',
+				event: 'click',
+				callback,
+				activitySignal
+			}
+		});
 	});
 
 	it('should return existing result for duplicate component registration', () => {

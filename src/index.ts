@@ -3,7 +3,14 @@ import { Injector } from './core/Injector/Injector';
 import { Action } from './core/Injector/types';
 import { DOMWatcher } from './core/watcher/DomWatcher';
 
-export { Injector, DOMWatcher, Action, ObserverHub };
+export { Action, DOMWatcher, Injector, ObserverHub };
+export type {
+	AdapterMountInput,
+	AdapterMountResult,
+	AdapterUnmountInput,
+	AdapterUnmountReason,
+	MountAdapter
+} from './core/adapter/types';
 export type {
 	LifecycleHookMap,
 	ObserveEvent,

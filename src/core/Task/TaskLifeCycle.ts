@@ -66,8 +66,8 @@ export class TaskLifeCycle {
 		context.disableAlive = () => {};
 
 		// Case 1: Component is already mounted and connected - set up the alive observer directly
-		if (context.app && context.appRoot?.isConnected) {
-			const matchedElement = context.appRoot.parentElement;
+		if (context.mountHandle && context.appRoot?.isConnected) {
+			const matchedElement = context.hostElement ?? context.appRoot.parentElement;
 			if (!matchedElement) {
 				this.logger.warn(
 					`Task "${taskId}": host element not found, unable to activate alive observer`
@@ -126,13 +126,13 @@ export class TaskLifeCycle {
 		// Case 2: Component app exists but appRoot is disconnected from DOM
 		// This happens when disableAlive was called after the node was removed but before cleanup.
 		// We need to reset the state and re-trigger onDomReady for re-injection.
-		if (context.app && !context.appRoot?.isConnected) {
+		if (context.mountHandle && !context.appRoot?.isConnected) {
 			this.taskContext.reset(taskId);
 		}
 
 		// Case 3: Component is not mounted (e.g., removed from DOM after disableAlive was called)
 		// Re-trigger onDomReady to wait for the target element and re-inject
-		if (!context.app) {
+		if (!context.mountHandle) {
 			let cancelled = false;
 			const stopReadyObserver = DOMWatcher.onDomReady(
 				context.componentInjectAt,
@@ -232,7 +232,7 @@ export class TaskLifeCycle {
 				injectAt: context.componentInjectAt,
 				status: context.taskStatus,
 				scope: context.scope,
-				observerMode: context.app ? 'mounted' : 'await-target'
+				observerMode: context.mountHandle ? 'mounted' : 'await-target'
 			})
 		);
 	}

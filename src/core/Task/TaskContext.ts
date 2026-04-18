@@ -296,10 +296,17 @@ export class TaskContext {
 	 */
 	public releaseComponentInstance(id: string): void {
 		const context: Task | undefined = this.contextMap.get(id);
-		if (context && isComponentTask(context) && context.app) {
+		if (context && isComponentTask(context) && context.mountHandle && context.appRoot) {
 			try {
-				context.app.unmount();
-				context.app = undefined;
+				context.adapter.unmount({
+					host: context.hostElement,
+					mountPoint: context.appRoot,
+					handle: context.mountHandle,
+					taskId: id,
+					injectAt: context.componentInjectAt,
+					reason: 'destroy'
+				});
+				context.mountHandle = undefined;
 				context.instance = undefined;
 				this.emit(
 					'resource:componentUnmounted',
@@ -337,6 +344,7 @@ export class TaskContext {
 		try {
 			context.appRoot.remove();
 			context.appRoot = undefined;
+			context.hostElement = undefined;
 		} catch (error) {
 			this.logger.error(`Failed to remove root element for task "${id}":`, error);
 		}
@@ -422,8 +430,15 @@ export class TaskContext {
 		if (!context) return;
 
 		// unmount the subapp instance, to prevent memory leaks
-		if (isComponentTask(context) && context.app) {
-			context.app.unmount();
+		if (isComponentTask(context) && context.mountHandle && context.appRoot) {
+			context.adapter.unmount({
+				host: context.hostElement,
+				mountPoint: context.appRoot,
+				handle: context.mountHandle,
+				taskId: id,
+				injectAt: context.componentInjectAt,
+				reason: 'reset'
+			});
 		}
 
 		this.setTaskStatus(id, 'idle');
@@ -431,8 +446,9 @@ export class TaskContext {
 		// reset context of id to initial state
 		// but keep the record in contextMap for future reuse
 		if (isComponentTask(context)) {
-			context.app = undefined;
+			context.mountHandle = undefined;
 			context.instance = undefined;
+			context.hostElement = undefined;
 
 			context.appRoot?.remove();
 			context.appRoot = undefined;

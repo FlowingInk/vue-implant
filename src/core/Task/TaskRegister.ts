@@ -1,6 +1,7 @@
 import type { Component, Ref } from 'vue';
 import { getComponentName } from '../../util/getComponentName';
 import { markRawComponent } from '../../util/markRawComponent';
+import { createVueAdapter } from '../adapter/VueAdapter';
 import type { ObserveEmitter } from '../hooks/type';
 import { registerHooks } from '../hooks/util';
 import type { ComponentOptions, InjectionConfig } from '../Injector/types';
@@ -182,6 +183,9 @@ export class TaskRegister {
 				componentName,
 				componentInjectAt: injectAt,
 				component: markRawComponent(component),
+				adapter: createVueAdapter({
+					getPlugins: () => this.taskContext.getPlugins()
+				}),
 				withEvent: false,
 
 				alive,

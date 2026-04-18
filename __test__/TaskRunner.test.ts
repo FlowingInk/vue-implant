@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick, ref, type WatchHandle } from 'vue';
+import { createVueAdapter } from '../src/core/adapter/VueAdapter';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
@@ -226,7 +227,7 @@ describe('TaskRunner', () => {
 		taskContext.set(task.taskId, task);
 		taskRunner.onTargetReady(host, task.taskId);
 
-		expect(task.app).toBeDefined();
+		expect(task.mountHandle).toBeDefined();
 		expect(task.appRoot?.parentElement).toBe(host);
 		expect(task.taskStatus).toBe('active');
 	});
@@ -478,7 +479,10 @@ describe('TaskRunner', () => {
 				taskStatus: 'idle',
 				componentName: 'PluginComp',
 				componentInjectAt: '#plugin-host',
-				component: { name: 'PluginComp', render: () => null }
+				component: { name: 'PluginComp', render: () => null },
+				adapter: createVueAdapter({
+					getPlugins: () => taskContext.getPlugins()
+				})
 			})
 		);
 

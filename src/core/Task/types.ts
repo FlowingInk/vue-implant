@@ -1,4 +1,5 @@
-import type { App, Component, ComponentPublicInstance, Ref, WatchHandle, WatchSource } from 'vue';
+import type { Component, Ref, WatchHandle, WatchSource } from 'vue';
+import type { MountAdapter } from '../adapter/types';
 import type { LifecycleHookMap } from '../hooks/type';
 
 export type TaskRecord = {
@@ -28,12 +29,14 @@ export interface ComponentTask extends BaseTask {
 	componentName: string;
 	componentInjectAt: string;
 	component: Component;
+	adapter: MountAdapter<Component>;
 	alive: boolean;
 	scope: 'local' | 'global';
 
-	app?: App<Element>;
+	mountHandle?: unknown;
+	hostElement?: HTMLElement;
 	appRoot?: HTMLElement;
-	instance?: ComponentPublicInstance;
+	instance?: unknown;
 
 	isObserver?: boolean;
 	disableAlive?: () => void;

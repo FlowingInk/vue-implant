@@ -9,6 +9,7 @@ import { TaskContext } from '../src/core/Task/TaskContext';
 import type { TaskLifeCycle } from '../src/core/Task/TaskLifeCycle';
 import type { TaskRegister } from '../src/core/Task/TaskRegister';
 import type { TaskRunner } from '../src/core/Task/TaskRunner';
+import type { ComponentTask } from '../src/core/Task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 
 describe('Injector', () => {
@@ -200,9 +201,9 @@ describe('Injector', () => {
 		const { taskId } = injector.register('#smoke', { name: 'SmokeComp', render: () => null });
 		injector.run();
 
-		const context = taskContext.get(taskId);
+		const context = taskContext.get<ComponentTask>(taskId);
 		expect(context?.taskStatus).toBe('active');
-		expect(context?.app).toBeDefined();
+		expect(context?.mountHandle).toBeDefined();
 		expect(context?.appRoot?.parentElement).toBe(host);
 	});
 

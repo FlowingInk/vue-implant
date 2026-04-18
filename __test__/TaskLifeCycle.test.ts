@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type App } from 'vue';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
@@ -96,8 +95,9 @@ describe('TaskLifeCycle', () => {
 				componentName: 'MountedComp',
 				componentInjectAt: '#mounted-host',
 				component: { name: 'MountedComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
+				hostElement: host,
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -129,8 +129,9 @@ describe('TaskLifeCycle', () => {
 				componentName: 'MountedCallbackComp',
 				componentInjectAt: '#mounted-host-callback',
 				component: { name: 'MountedCallbackComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
+				hostElement: host,
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -172,7 +173,7 @@ describe('TaskLifeCycle', () => {
 				componentName: 'ShadowComp',
 				componentInjectAt: '#shadow-host',
 				component: { name: 'ShadowComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				alive: false,
 				isObserver: false,
@@ -205,10 +206,11 @@ describe('TaskLifeCycle', () => {
 				taskId: 'alive-task',
 				alive: true,
 				appRoot,
+				hostElement: appRoot,
 				componentName: 'AliveComp',
 				componentInjectAt: '#app',
 				component: { name: 'AliveComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				scope: 'local'
 			})
 		);
@@ -232,10 +234,11 @@ describe('TaskLifeCycle', () => {
 				taskId: 'alive-task',
 				alive: true,
 				appRoot,
+				hostElement: appRoot,
 				componentName: 'AliveComp',
 				componentInjectAt: '#app',
 				component: { name: 'AliveComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				scope: 'local'
 			})
 		);
@@ -264,7 +267,7 @@ describe('TaskLifeCycle', () => {
 				componentName: 'DetachedComp',
 				componentInjectAt: '#detached-host',
 				component: { name: 'DetachedComp' },
-				app: { unmount: vi.fn() } as unknown as App,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				alive: false,
 				isObserver: false,
@@ -582,8 +585,9 @@ describe('TaskLifeCycle', () => {
 				componentName: 'ObsLifeComp',
 				componentInjectAt: '#obs-life-host',
 				component: { name: 'ObsLifeComp' },
-				app: { unmount: vi.fn() } as unknown as App<Element>,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
+				hostElement: host,
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -637,8 +641,9 @@ describe('TaskLifeCycle', () => {
 				componentName: 'AliveMountedComp',
 				componentInjectAt: '#alive-mounted-host',
 				component: { name: 'AliveMountedComp' },
-				app: { unmount: vi.fn() } as unknown as App<Element>,
+				mountHandle: { unmount: vi.fn() },
 				appRoot,
+				hostElement: host,
 				alive: false,
 				isObserver: false,
 				scope: 'global'
