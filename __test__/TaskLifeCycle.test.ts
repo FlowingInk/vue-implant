@@ -36,13 +36,13 @@ describe('TaskLifeCycle', () => {
 	});
 
 	it('should warn for non-existent task on enableAlive', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 		lifeCycle.enableAlive('missing');
 		expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Task "missing" not found'));
 	});
 
 	it('should warn for listener-only task on enableAlive', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 		taskContext.set(
 			'listener-task',
 			createListenerTask({
@@ -61,14 +61,14 @@ describe('TaskLifeCycle', () => {
 	});
 
 	it('should warn when already observing on enableAlive', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 		taskContext.set(
 			'already-alive',
 			createArtifactTask({
 				taskId: 'already-alive',
-				componentName: 'Comp',
-				componentInjectAt: '#app',
-				component: createVueComponent('Comp'),
+				artifactName: 'Comp',
+				injectAt: '#app',
+				artifact: createVueComponent('Comp'),
 				alive: true,
 				isObserver: true
 			})
@@ -92,9 +92,9 @@ describe('TaskLifeCycle', () => {
 			'mounted-task',
 			createArtifactTask({
 				taskId: 'mounted-task',
-				componentName: 'MountedComp',
-				componentInjectAt: '#mounted-host',
-				component: createVueComponent('MountedComp'),
+				artifactName: 'MountedComp',
+				injectAt: '#mounted-host',
+				artifact: createVueComponent('MountedComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				hostElement: host,
@@ -126,9 +126,9 @@ describe('TaskLifeCycle', () => {
 			'mounted-callback-task',
 			createArtifactTask({
 				taskId: 'mounted-callback-task',
-				componentName: 'MountedCallbackComp',
-				componentInjectAt: '#mounted-host-callback',
-				component: createVueComponent('MountedCallbackComp'),
+				artifactName: 'MountedCallbackComp',
+				injectAt: '#mounted-host-callback',
+				artifact: createVueComponent('MountedCallbackComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				hostElement: host,
@@ -144,7 +144,7 @@ describe('TaskLifeCycle', () => {
 			.mockImplementation((_matchedElement, _injectAt, onRemove, onRestore) => {
 				onRemove();
 				onRestore(document.createElement('div'));
-				return () => {};
+				return () => { };
 			});
 
 		lifeCycle.enableAlive('mounted-callback-task');
@@ -170,9 +170,9 @@ describe('TaskLifeCycle', () => {
 			'shadow-task',
 			createArtifactTask({
 				taskId: 'shadow-task',
-				componentName: 'ShadowComp',
-				componentInjectAt: '#shadow-host',
-				component: createVueComponent('ShadowComp'),
+				artifactName: 'ShadowComp',
+				injectAt: '#shadow-host',
+				artifact: createVueComponent('ShadowComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				alive: false,
@@ -181,8 +181,8 @@ describe('TaskLifeCycle', () => {
 			})
 		);
 
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-		const aliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const aliveSpy = vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
 
 		lifeCycle.enableAlive('shadow-task');
 
@@ -207,9 +207,9 @@ describe('TaskLifeCycle', () => {
 				alive: true,
 				appRoot,
 				hostElement: appRoot,
-				componentName: 'AliveComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('AliveComp'),
+				artifactName: 'AliveComp',
+				injectAt: '#app',
+				artifact: createVueComponent('AliveComp'),
 				mountHandle: { unmount: vi.fn() },
 				scope: 'local'
 			})
@@ -235,9 +235,9 @@ describe('TaskLifeCycle', () => {
 				alive: true,
 				appRoot,
 				hostElement: appRoot,
-				componentName: 'AliveComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('AliveComp'),
+				artifactName: 'AliveComp',
+				injectAt: '#app',
+				artifact: createVueComponent('AliveComp'),
 				mountHandle: { unmount: vi.fn() },
 				scope: 'local'
 			})
@@ -264,9 +264,9 @@ describe('TaskLifeCycle', () => {
 			'detached-task',
 			createArtifactTask({
 				taskId: 'detached-task',
-				componentName: 'DetachedComp',
-				componentInjectAt: '#detached-host',
-				component: createVueComponent('DetachedComp'),
+				artifactName: 'DetachedComp',
+				injectAt: '#detached-host',
+				artifact: createVueComponent('DetachedComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				alive: false,
@@ -276,7 +276,7 @@ describe('TaskLifeCycle', () => {
 		);
 
 		const resetSpy = vi.spyOn(taskContext, 'reset');
-		const readySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
+		const readySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => { });
 
 		lifeCycle.enableAlive('detached-task');
 
@@ -290,9 +290,9 @@ describe('TaskLifeCycle', () => {
 			'case3-task',
 			createArtifactTask({
 				taskId: 'case3-task',
-				componentName: 'Case3Comp',
-				componentInjectAt: '#app',
-				component: createVueComponent('Case3Comp'),
+				artifactName: 'Case3Comp',
+				injectAt: '#app',
+				artifact: createVueComponent('Case3Comp'),
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -302,7 +302,7 @@ describe('TaskLifeCycle', () => {
 		const readySpy = vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_, cb) => {
 			const el = document.createElement('div');
 			cb(el);
-			return () => {};
+			return () => { };
 		});
 
 		lifeCycle.enableAlive('case3-task');
@@ -317,9 +317,9 @@ describe('TaskLifeCycle', () => {
 			'case3-cancelled-task',
 			createArtifactTask({
 				taskId: 'case3-cancelled-task',
-				componentName: 'Case3CancelledComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('Case3CancelledComp'),
+				artifactName: 'Case3CancelledComp',
+				injectAt: '#app',
+				artifact: createVueComponent('Case3CancelledComp'),
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -329,9 +329,9 @@ describe('TaskLifeCycle', () => {
 		let readyCallback: ((el: HTMLElement) => void) | undefined;
 		vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_selector, cb) => {
 			readyCallback = cb;
-			return () => {};
+			return () => { };
 		});
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		lifeCycle.enableAlive('case3-cancelled-task');
 		taskContext.get<ArtifactTask>('case3-cancelled-task')?.disableAlive?.();
@@ -348,9 +348,9 @@ describe('TaskLifeCycle', () => {
 			'case3-stale-task',
 			createArtifactTask({
 				taskId: 'case3-stale-task',
-				componentName: 'Case3StaleComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('Case3StaleComp'),
+				artifactName: 'Case3StaleComp',
+				injectAt: '#app',
+				artifact: createVueComponent('Case3StaleComp'),
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -360,9 +360,9 @@ describe('TaskLifeCycle', () => {
 		let readyCallback: ((el: HTMLElement) => void) | undefined;
 		vi.spyOn(DOMWatcher, 'onDomReady').mockImplementation((_selector, cb) => {
 			readyCallback = cb;
-			return () => {};
+			return () => { };
 		});
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		lifeCycle.enableAlive('case3-stale-task');
 		const context = taskContext.get<ArtifactTask>('case3-stale-task');
@@ -385,9 +385,9 @@ describe('TaskLifeCycle', () => {
 			'cancel-task',
 			createArtifactTask({
 				taskId: 'cancel-task',
-				componentName: 'CancelComp',
-				componentInjectAt: '#cancel',
-				component: createVueComponent('CancelComp'),
+				artifactName: 'CancelComp',
+				injectAt: '#cancel',
+				artifact: createVueComponent('CancelComp'),
 				alive: false,
 				isObserver: false,
 				scope: 'local'
@@ -407,9 +407,9 @@ describe('TaskLifeCycle', () => {
 			'disable-task',
 			createArtifactTask({
 				taskId: 'disable-task',
-				componentName: 'DisableComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('DisableComp'),
+				artifactName: 'DisableComp',
+				injectAt: '#app',
+				artifact: createVueComponent('DisableComp'),
 				alive: true,
 				isObserver: true,
 				disableAlive: stop
@@ -426,7 +426,7 @@ describe('TaskLifeCycle', () => {
 	});
 
 	it('should warn when disableAlive task is missing', () => {
-		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 		lifeCycle.disableAlive('missing-disable-task');
 		expect(errorSpy).toHaveBeenCalledWith(
 			expect.stringContaining('Task "missing-disable-task" not found')
@@ -434,14 +434,14 @@ describe('TaskLifeCycle', () => {
 	});
 
 	it('should warn when disableAlive is called for task with alive=false', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 		taskContext.set(
 			'not-alive-task',
 			createArtifactTask({
 				taskId: 'not-alive-task',
-				componentName: 'NotAliveComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('NotAliveComp'),
+				artifactName: 'NotAliveComp',
+				injectAt: '#app',
+				artifact: createVueComponent('NotAliveComp'),
 				alive: false
 			})
 		);
@@ -457,9 +457,9 @@ describe('TaskLifeCycle', () => {
 			'life-task',
 			createArtifactTask({
 				taskId: 'life-task',
-				componentName: 'LifeComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('LifeComp'),
+				artifactName: 'LifeComp',
+				injectAt: '#app',
+				artifact: createVueComponent('LifeComp'),
 				alive: true,
 				disableAlive: vi.fn()
 			})
@@ -475,9 +475,9 @@ describe('TaskLifeCycle', () => {
 			'life-task',
 			createArtifactTask({
 				taskId: 'life-task',
-				componentName: 'LifeComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('LifeComp'),
+				artifactName: 'LifeComp',
+				injectAt: '#app',
+				artifact: createVueComponent('LifeComp'),
 				alive: true,
 				disableAlive: vi.fn()
 			})
@@ -492,9 +492,9 @@ describe('TaskLifeCycle', () => {
 			'alive-destroy-all',
 			createArtifactTask({
 				taskId: 'alive-destroy-all',
-				componentName: 'AliveDestroyAllComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('AliveDestroyAllComp'),
+				artifactName: 'AliveDestroyAllComp',
+				injectAt: '#app',
+				artifact: createVueComponent('AliveDestroyAllComp'),
 				alive: true,
 				disableAlive: vi.fn()
 			})
@@ -503,9 +503,9 @@ describe('TaskLifeCycle', () => {
 			'idle-destroy-all',
 			createArtifactTask({
 				taskId: 'idle-destroy-all',
-				componentName: 'IdleDestroyAllComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('IdleDestroyAllComp'),
+				artifactName: 'IdleDestroyAllComp',
+				injectAt: '#app',
+				artifact: createVueComponent('IdleDestroyAllComp'),
 				alive: false
 			})
 		);
@@ -525,9 +525,9 @@ describe('TaskLifeCycle', () => {
 			'alive-reset-all',
 			createArtifactTask({
 				taskId: 'alive-reset-all',
-				componentName: 'AliveResetAllComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('AliveResetAllComp'),
+				artifactName: 'AliveResetAllComp',
+				injectAt: '#app',
+				artifact: createVueComponent('AliveResetAllComp'),
 				alive: true,
 				disableAlive: vi.fn()
 			})
@@ -536,9 +536,9 @@ describe('TaskLifeCycle', () => {
 			'idle-reset-all',
 			createArtifactTask({
 				taskId: 'idle-reset-all',
-				componentName: 'IdleResetAllComp',
-				componentInjectAt: '#app',
-				component: createVueComponent('IdleResetAllComp'),
+				artifactName: 'IdleResetAllComp',
+				injectAt: '#app',
+				artifact: createVueComponent('IdleResetAllComp'),
 				alive: false
 			})
 		);
@@ -582,9 +582,9 @@ describe('TaskLifeCycle', () => {
 			'obs-life-task',
 			createArtifactTask({
 				taskId: 'obs-life-task',
-				componentName: 'ObsLifeComp',
-				componentInjectAt: '#obs-life-host',
-				component: createVueComponent('ObsLifeComp'),
+				artifactName: 'ObsLifeComp',
+				injectAt: '#obs-life-host',
+				artifact: createVueComponent('ObsLifeComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				hostElement: host,
@@ -594,7 +594,7 @@ describe('TaskLifeCycle', () => {
 			})
 		);
 
-		vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
 
 		lifecycleWithObserver.enableAlive('obs-life-task');
 		lifecycleWithObserver.disableAlive('obs-life-task');
@@ -638,9 +638,9 @@ describe('TaskLifeCycle', () => {
 			createArtifactTask({
 				taskId: 'alive-mounted-task',
 				taskStatus: 'idle',
-				componentName: 'AliveMountedComp',
-				componentInjectAt: '#alive-mounted-host',
-				component: createVueComponent('AliveMountedComp'),
+				artifactName: 'AliveMountedComp',
+				injectAt: '#alive-mounted-host',
+				artifact: createVueComponent('AliveMountedComp'),
 				mountHandle: { unmount: vi.fn() },
 				appRoot,
 				hostElement: host,
@@ -650,7 +650,7 @@ describe('TaskLifeCycle', () => {
 			})
 		);
 
-		vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => {});
+		vi.spyOn(DOMWatcher, 'onDomAlive').mockReturnValue(() => { });
 
 		const aliveEvents: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -738,16 +738,16 @@ describe('TaskLifeCycle', () => {
 			createArtifactTask({
 				taskId: 'alive-await-task',
 				taskStatus: 'idle',
-				componentName: 'AliveAwaitComp',
-				componentInjectAt: '#alive-await-host',
-				component: createVueComponent('AliveAwaitComp'),
+				artifactName: 'AliveAwaitComp',
+				injectAt: '#alive-await-host',
+				artifact: createVueComponent('AliveAwaitComp'),
 				alive: false,
 				isObserver: false,
 				scope: 'local'
 			})
 		);
 
-		vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => {});
+		vi.spyOn(DOMWatcher, 'onDomReady').mockReturnValue(() => { });
 
 		const aliveEvents: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -826,9 +826,9 @@ describe('TaskLifeCycle', () => {
 			createArtifactTask({
 				taskId: 'task-life-observe',
 				taskStatus: 'pending',
-				componentName: 'TaskLifeObserveComp',
-				componentInjectAt: '#task-life-observe',
-				component: createVueComponent('TaskLifeObserveComp'),
+				artifactName: 'TaskLifeObserveComp',
+				injectAt: '#task-life-observe',
+				artifact: createVueComponent('TaskLifeObserveComp'),
 				alive: false,
 				scope: 'local'
 			})
@@ -885,9 +885,9 @@ describe('TaskLifeCycle', () => {
 			createArtifactTask({
 				taskId: 'task-life-observe',
 				taskStatus: 'active',
-				componentName: 'TaskLifeObserveComp',
-				componentInjectAt: '#task-life-observe',
-				component: createVueComponent('TaskLifeObserveComp'),
+				artifactName: 'TaskLifeObserveComp',
+				injectAt: '#task-life-observe',
+				artifact: createVueComponent('TaskLifeObserveComp'),
 				alive: false,
 				scope: 'local'
 			})

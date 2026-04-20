@@ -214,9 +214,9 @@ describe('TaskContext', () => {
 				timeout: 5000,
 				alive: false,
 				scope: 'local',
-				componentName: 'Comp',
-				componentInjectAt: '#app',
-				component,
+				artifactName: 'Comp',
+				injectAt: '#app',
+				artifact: component,
 				listener: {
 					listenAt: 'testListenAt',
 					event: 'click',
@@ -241,8 +241,8 @@ describe('TaskContext', () => {
 
 			const context: Task = createArtifactTask({
 				taskId: 'test',
-				componentName: 'TestComponent',
-				componentInjectAt: '#app',
+				artifactName: 'TestComponent',
+				injectAt: '#app',
 				mountHandle: {
 					unmount: mockUnmount
 				},
@@ -264,7 +264,7 @@ describe('TaskContext', () => {
 
 			expect(taskContext.get('test')).toBeUndefined();
 		});
-		it('should only release watchers and listeners when componentName is missing', () => {
+		it('should only release watchers and listeners when artifactName is missing', () => {
 			const mockWatcher = vi.fn() as unknown as WatchHandle;
 			const mockAbort = vi.fn();
 			const mockUnmount = vi.fn();
@@ -388,8 +388,8 @@ describe('TaskContext', () => {
 
 			const context: Task = createArtifactTask({
 				taskId: 'test',
-				componentName: 'TestComponent',
-				componentInjectAt: '#app',
+				artifactName: 'TestComponent',
+				injectAt: '#app',
 				mountHandle: { unmount: mockUnmount },
 				appRoot: document.createElement('div'),
 				instance: {}
@@ -408,8 +408,8 @@ describe('TaskContext', () => {
 			});
 			const context: Task = createArtifactTask({
 				taskId: 'test',
-				componentName: 'TestComponent',
-				componentInjectAt: '#app',
+				artifactName: 'TestComponent',
+				injectAt: '#app',
 				mountHandle: { unmount: mockUnmount },
 				appRoot: {} as unknown as HTMLElement,
 				instance: {}
@@ -429,8 +429,8 @@ describe('TaskContext', () => {
 		it('should warn if component is already unmounted', () => {
 			const context: Task = createArtifactTask({
 				taskId: 'test',
-				componentName: 'TestComponent',
-				componentInjectAt: '#app'
+				artifactName: 'TestComponent',
+				injectAt: '#app'
 			});
 
 			taskContext.set('test', context);
@@ -564,11 +564,13 @@ describe('TaskContext', () => {
 			const component = createVueComponent('TestComponent');
 			const context: Task = createArtifactTask({
 				taskId: 'test',
-				component,
+				artifact: component,
 				watcher: {
 					watcher: mockWatcher,
 					watchSource: { get: () => true, subscribe: () => () => { } }
-				}
+				},
+				artifactName: 'TestComponent',
+				injectAt: '#app'
 			});
 			taskContext.set('test', context);
 			taskContext.releaseWatcher('test');
@@ -632,9 +634,9 @@ describe('TaskContext', () => {
 					controller: { abort: mockAbort } as unknown as AbortController
 				},
 				withEvent: true,
-				componentName: 'TestComponent',
-				componentInjectAt: '#app',
-				component,
+				artifactName: 'TestComponent',
+				injectAt: '#app',
+				artifact: component,
 				alive: false,
 				scope: 'local',
 				mountHandle: { unmount: mockUnmount },
@@ -705,9 +707,9 @@ describe('TaskContext', () => {
 					taskId: 'a',
 					taskStatus: 'idle',
 					timeout: 5000,
-					componentName: 'AComp',
-					componentInjectAt: '#a',
-					component: createVueComponent('AComp'),
+					artifactName: 'AComp',
+					injectAt: '#a',
+					artifact: createVueComponent('AComp'),
 					alive: false,
 					scope: 'local',
 					withEvent: true,
@@ -733,9 +735,9 @@ describe('TaskContext', () => {
 					taskId: 'b',
 					taskStatus: 'idle',
 					timeout: 5000,
-					componentName: 'BComp',
-					componentInjectAt: '#b',
-					component: createVueComponent('BComp'),
+					artifactName: 'BComp',
+					injectAt: '#b',
+					artifact: createVueComponent('BComp'),
 					alive: false,
 					scope: 'local',
 					withEvent: true,
@@ -803,9 +805,9 @@ describe('TaskContext', () => {
 					taskId: 'obs-task',
 					taskStatus: 'idle',
 					timeout: 5000,
-					componentName: 'ObsComp',
-					componentInjectAt: '#obs',
-					component: createVueComponent('ObsComp'),
+					artifactName: 'ObsComp',
+					injectAt: '#obs',
+					artifact: createVueComponent('ObsComp'),
 					alive: false,
 					scope: 'local',
 					watcher: {
@@ -859,9 +861,9 @@ describe('TaskContext', () => {
 					taskId: 'obs-resource',
 					taskStatus: 'idle',
 					timeout: 5000,
-					componentName: 'ObsResourceComp',
-					componentInjectAt: '#obs-resource',
-					component: createVueComponent('ObsResourceComp'),
+					artifactName: 'ObsResourceComp',
+					injectAt: '#obs-resource',
+					artifact: createVueComponent('ObsResourceComp'),
 					alive: false,
 					scope: 'local',
 					watcher: {
@@ -916,7 +918,7 @@ describe('TaskContext', () => {
 				status: 'idle',
 				meta: {
 					resource: 'component',
-					componentName: 'ObsResourceComp'
+					artifactName: 'ObsResourceComp'
 				}
 			});
 		});

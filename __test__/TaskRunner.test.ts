@@ -67,7 +67,7 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'run-idle-task',
 				taskStatus: 'idle',
-				componentInjectAt: '#run-idle',
+				injectAt: '#run-idle',
 				timeout: 7000
 			})
 		);
@@ -87,7 +87,7 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'run-active-task',
 				taskStatus: 'active',
-				componentInjectAt: '#run-active'
+				injectAt: '#run-active'
 			})
 		);
 
@@ -225,9 +225,9 @@ describe('TaskRunner', () => {
 		const task = createArtifactTask({
 			taskId: 'mount-task',
 			taskStatus: 'idle',
-			componentName: 'MountComp',
-			componentInjectAt: '#host',
-			component: createVueComponent('MountComp')
+			artifactName: 'MountComp',
+			injectAt: '#host',
+			artifact: createVueComponent('MountComp')
 		});
 
 		taskContext.set(task.taskId, task);
@@ -309,9 +309,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'inject-observe-task',
 				taskStatus: 'idle',
-				componentName: 'InjectObserveComp',
-				componentInjectAt: '#inject-observe-host',
-				component: createVueComponent('InjectObserveComp'),
+				artifactName: 'InjectObserveComp',
+				injectAt: '#inject-observe-host',
+				artifact: createVueComponent('InjectObserveComp'),
 				alive: true,
 				scope: 'global',
 				withEvent: true,
@@ -339,7 +339,7 @@ describe('TaskRunner', () => {
 			injectAt: '#inject-observe-host',
 			status: 'idle',
 			meta: {
-				componentName: 'InjectObserveComp',
+				artifactName: 'InjectObserveComp',
 				alive: true,
 				scope: 'global',
 				withEvent: true
@@ -353,7 +353,7 @@ describe('TaskRunner', () => {
 			injectAt: '#inject-observe-host',
 			status: 'idle',
 			meta: {
-				componentName: 'InjectObserveComp',
+				artifactName: 'InjectObserveComp',
 				alive: true,
 				scope: 'global'
 			}
@@ -379,9 +379,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'inject-fail-task',
 				taskStatus: 'pending',
-				componentName: 'InjectFailComp',
-				componentInjectAt: '#inject-fail-host',
-				component: createVueComponent('InjectFailComp'),
+				artifactName: 'InjectFailComp',
+				injectAt: '#inject-fail-host',
+				artifact: createVueComponent('InjectFailComp'),
 				alive: false,
 				scope: 'local'
 			})
@@ -403,7 +403,7 @@ describe('TaskRunner', () => {
 			injectAt: '#inject-fail-host',
 			status: 'pending',
 			meta: {
-				componentName: 'InjectFailComp',
+				artifactName: 'InjectFailComp',
 				alive: false,
 				scope: 'local',
 				withEvent: false
@@ -417,7 +417,7 @@ describe('TaskRunner', () => {
 			injectAt: '#inject-fail-host',
 			status: 'idle',
 			meta: {
-				componentName: 'InjectFailComp'
+				artifactName: 'InjectFailComp'
 			}
 		});
 		expect(injectEvents[1].error).toBeDefined();
@@ -451,9 +451,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'active-event-task',
 				taskStatus: 'idle',
-				componentName: 'ActiveEventComp',
-				componentInjectAt: '#active-event-host',
-				component: createVueComponent('ActiveEventComp')
+				artifactName: 'ActiveEventComp',
+				injectAt: '#active-event-host',
+				artifact: createVueComponent('ActiveEventComp')
 			})
 		);
 
@@ -484,9 +484,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'plugin-task',
 				taskStatus: 'idle',
-				componentName: 'PluginComp',
-				componentInjectAt: '#plugin-host',
-				component: createVueComponent('PluginComp'),
+				artifactName: 'PluginComp',
+				injectAt: '#plugin-host',
+				artifact: createVueComponent('PluginComp'),
 				adapter: vueAdapter
 			})
 		);
@@ -537,9 +537,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'open-task',
 				taskStatus: 'idle',
-				componentName: 'OpenComp',
-				componentInjectAt: '#route-open',
-				component: createVueComponent('OpenComp'),
+				artifactName: 'OpenComp',
+				injectAt: '#route-open',
+				artifact: createVueComponent('OpenComp'),
 				withEvent: true,
 				listener: {
 					listenAt: '#btn',
@@ -805,9 +805,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'alive-task',
 				taskStatus: 'idle',
-				componentName: 'AliveComp',
-				componentInjectAt: '#alive-host',
-				component: createVueComponent('AliveComp'),
+				artifactName: 'AliveComp',
+				injectAt: '#alive-host',
+				artifact: createVueComponent('AliveComp'),
 				alive: true,
 				isObserver: false,
 				scope: 'local'
@@ -831,9 +831,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'detached-task',
 				taskStatus: 'pending',
-				componentName: 'DetachedComp',
-				componentInjectAt: '#detached',
-				component: createVueComponent('DetachedComp')
+				artifactName: 'DetachedComp',
+				injectAt: '#detached',
+				artifact: createVueComponent('DetachedComp')
 			})
 		);
 
@@ -859,9 +859,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'active-short-circuit',
 				taskStatus: 'active',
-				componentName: 'AlreadyActiveComp',
-				componentInjectAt: '#x',
-				component: createVueComponent('AlreadyActiveComp')
+				artifactName: 'AlreadyActiveComp',
+				injectAt: '#x',
+				artifact: createVueComponent('AlreadyActiveComp')
 			})
 		);
 
@@ -1026,9 +1026,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: '',
 				taskStatus: 'pending',
-				componentName: 'BrokenComp',
-				componentInjectAt: '#host',
-				component: createVueComponent('BrokenComp')
+				artifactName: 'BrokenComp',
+				injectAt: '#host',
+				artifact: createVueComponent('BrokenComp')
 			})
 		);
 
@@ -1049,9 +1049,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'mount-error-task',
 				taskStatus: 'pending',
-				componentName: 'MountErrorComp',
-				componentInjectAt: '#host',
-				component: {
+				artifactName: 'MountErrorComp',
+				injectAt: '#host',
+				artifact: {
 					name: 'MountErrorComp',
 					render: () => {
 						throw new Error('mount failed');
@@ -1079,9 +1079,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'global-alive-task',
 				taskStatus: 'idle',
-				componentName: 'GlobalAliveComp',
-				componentInjectAt: '#global-alive-host',
-				component: createVueComponent('GlobalAliveComp'),
+				artifactName: 'GlobalAliveComp',
+				injectAt: '#global-alive-host',
+				artifact: createVueComponent('GlobalAliveComp'),
 				alive: true,
 				isObserver: false,
 				scope: 'global'
@@ -1104,9 +1104,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'stale-alive-task',
 				taskStatus: 'idle',
-				componentName: 'StaleAliveComp',
-				componentInjectAt: '#stale-alive-host',
-				component: createVueComponent('StaleAliveComp'),
+				artifactName: 'StaleAliveComp',
+				injectAt: '#stale-alive-host',
+				artifact: createVueComponent('StaleAliveComp'),
 				alive: true,
 				isObserver: false,
 				scope: 'local'
@@ -1140,9 +1140,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'cancel-alive-task',
 				taskStatus: 'idle',
-				componentName: 'CancelAliveComp',
-				componentInjectAt: '#cancel-alive-host',
-				component: createVueComponent('CancelAliveComp'),
+				artifactName: 'CancelAliveComp',
+				injectAt: '#cancel-alive-host',
+				artifact: createVueComponent('CancelAliveComp'),
 				alive: true,
 				isObserver: false,
 				scope: 'local'
@@ -1167,9 +1167,9 @@ describe('TaskRunner', () => {
 			createArtifactTask({
 				taskId: 'alive-callback-task',
 				taskStatus: 'idle',
-				componentName: 'AliveCallbackComp',
-				componentInjectAt: '#alive-callback-host',
-				component: createVueComponent('AliveCallbackComp'),
+				artifactName: 'AliveCallbackComp',
+				injectAt: '#alive-callback-host',
+				artifact: createVueComponent('AliveCallbackComp'),
 				alive: true,
 				isObserver: false,
 				scope: 'local'

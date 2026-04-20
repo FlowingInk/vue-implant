@@ -25,9 +25,6 @@ export type CreateArtifactTaskInput = TaskBaseInput & {
 	artifactName?: string;
 	injectAt?: string;
 	artifact?: Component;
-	componentName?: string;
-	componentInjectAt?: string;
-	component?: Component;
 	adapter?: ArtifactTask['adapter'];
 	alive?: boolean;
 	scope?: 'local' | 'global';
@@ -53,9 +50,9 @@ export function createTask(input: CreateArtifactTaskInput): ArtifactTask;
 export function createTask(input: CreateListenerTaskInput): ListenerTask;
 export function createTask(input: CreateArtifactTaskInput | CreateListenerTaskInput): Task {
 	if (input.kind === 'component') {
-		const artifactName = input.artifactName ?? input.componentName ?? 'TestComponent';
-		const injectAt = input.injectAt ?? input.componentInjectAt ?? '#app';
-		const artifact = input.artifact ?? input.component ?? createVueComponent(artifactName);
+		const artifactName = input.artifactName ?? 'TestComponent';
+		const injectAt = input.injectAt ?? '#app';
+		const artifact = input.artifact ?? createVueComponent(artifactName);
 		const logger = new Logger();
 		return {
 			taskId: input.taskId,

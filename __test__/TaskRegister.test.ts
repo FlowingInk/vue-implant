@@ -233,7 +233,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[0].meta).toEqual({
-			componentName: 'ObsComp',
+			artifactName: 'ObsComp',
 			listenerEvent: undefined,
 			listenAt: undefined,
 			alive: false,
@@ -250,7 +250,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[1].meta).toEqual({
-			componentName: 'ObsComp',
+			artifactName: 'ObsComp',
 			listenerEvent: undefined,
 			listenAt: undefined,
 			alive: false,
@@ -267,7 +267,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[2].meta).toEqual({
-			componentName: 'ObsComp',
+			artifactName: 'ObsComp',
 			listenerEvent: undefined,
 			listenAt: undefined,
 			alive: false,
@@ -283,11 +283,11 @@ describe('TaskRegister', () => {
 			injectAt: '#obs',
 			status: 'idle',
 			meta: {
-				componentName: 'ObsComp'
+				artifactName: 'ObsComp'
 			}
 		});
 		expect(events[3].meta).toEqual({
-			componentName: 'ObsComp'
+			artifactName: 'ObsComp'
 		});
 	});
 
@@ -324,7 +324,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[0].meta).toEqual({
-			componentName: undefined,
+			artifactName: undefined,
 			listenerEvent: 'click',
 			listenAt: '#btn-obs',
 			alive: undefined,
@@ -341,7 +341,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[1].meta).toEqual({
-			componentName: undefined,
+			artifactName: undefined,
 			listenerEvent: 'click',
 			listenAt: '#btn-obs',
 			alive: undefined,
@@ -358,7 +358,7 @@ describe('TaskRegister', () => {
 			status: 'idle'
 		});
 		expect(events[2].meta).toEqual({
-			componentName: undefined,
+			artifactName: undefined,
 			listenerEvent: 'click',
 			listenAt: '#btn-obs',
 			alive: undefined,
@@ -418,7 +418,7 @@ describe('TaskRegister', () => {
 			injectAt: '#obs',
 			status: 'idle',
 			meta: {
-				componentName: 'ObsComp'
+				artifactName: 'ObsComp'
 			}
 		});
 		expect(errorEvent?.error).toBeInstanceOf(Error);

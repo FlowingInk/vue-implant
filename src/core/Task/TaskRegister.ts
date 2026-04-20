@@ -155,7 +155,7 @@ export class TaskRegister {
 				kind: 'component',
 				injectAt,
 				status: 'idle',
-				componentName: artifactName,
+				artifactName,
 				listenerEvent,
 				listenAt,
 				alive,
@@ -175,7 +175,7 @@ export class TaskRegister {
 						kind: 'component',
 						injectAt,
 						status: this.taskContext.getTaskStatus(taskId) ?? 'idle',
-						componentName: artifactName
+						artifactName
 					})
 				);
 				return {
@@ -234,7 +234,7 @@ export class TaskRegister {
 					kind: 'component',
 					injectAt,
 					status: 'idle',
-					componentName: artifactName,
+					artifactName,
 					listenerEvent,
 					listenAt,
 					alive,
@@ -257,7 +257,7 @@ export class TaskRegister {
 					injectAt,
 					status: this.taskContext.getTaskStatus(taskId) ?? 'idle',
 					error,
-					componentName: artifactName
+					artifactName
 				})
 			);
 			return {

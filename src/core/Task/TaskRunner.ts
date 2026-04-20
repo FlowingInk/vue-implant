@@ -142,7 +142,7 @@ export class TaskRunner {
 					kind: 'component',
 					injectAt: context.injectAt,
 					status: context.taskStatus,
-					componentName: context.artifactName,
+					artifactName: context.artifactName,
 					alive: context.alive,
 					scope: context.scope,
 					withEvent: context.withEvent
@@ -162,7 +162,7 @@ export class TaskRunner {
 						error:
 							result.error ??
 							new Error(`Component inject failed for task "${taskId}"`),
-						componentName: context.artifactName
+						artifactName: context.artifactName
 					})
 				);
 				return;
@@ -174,7 +174,7 @@ export class TaskRunner {
 					kind: 'component',
 					injectAt: context.injectAt,
 					status: context.taskStatus,
-					componentName: context.artifactName,
+					artifactName: context.artifactName,
 					alive: context.alive,
 					scope: context.scope
 				})

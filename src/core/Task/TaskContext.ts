@@ -235,7 +235,7 @@ export class TaskContext {
 						kind: 'component',
 						injectAt: context.injectAt,
 						status: context.taskStatus,
-						componentName: context.artifactName
+						artifactName: context.artifactName
 					})
 				);
 			} catch (error) {

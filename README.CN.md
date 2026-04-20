@@ -156,7 +156,7 @@ type InjectionConfig = {
 
 | Property | Type | Description | Default |
 | --- | --- | --- | --- |
-| `taskId` | `string` | 任务唯一标识。 | `[组件名]@[CSS选择器]` 或 `artifact-[CSS选择器]` |
+| `taskId` | `string` | 任务唯一标识。 | `[ArtifactName]@[CSS选择器]` 或 `artifact-[CSS选择器]` |
 | `isSuccess` | `boolean` | 注册是否成功。 | 成功 `true`，失败 `false` |
 | `enableAlive` | `() => void` | 手动开启重注入；注册失败时为空函数。 | 回调函数 |
 | `disableAlive` | `() => void` | 手动关闭重注入；注册失败时为空函数。 | 回调函数 |
@@ -361,17 +361,17 @@ injector.register('#app', App, {
 
 | Event | Payload fields |
 | --- | --- |
-| `register:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.componentName?`, `meta.listenerEvent?`, `meta.listenAt?`, `meta.alive?`, `meta.scope?`, `meta.timeout?`, `meta.withEvent?` |
-| `register:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.componentName?`, `meta.listenerEvent?`, `meta.listenAt?`, `meta.alive?`, `meta.scope?`, `meta.timeout?`, `meta.withEvent?` |
-| `register:duplicate` | `taskId`, `kind`, `injectAt`, `status`, `meta.componentName?`, `meta.listenerEvent?` |
-| `register:error` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.componentName?`, `meta.listenerEvent?` |
+| `register:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName?`, `meta.listenerEvent?`, `meta.listenAt?`, `meta.alive?`, `meta.scope?`, `meta.timeout?`, `meta.withEvent?` |
+| `register:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName?`, `meta.listenerEvent?`, `meta.listenAt?`, `meta.alive?`, `meta.scope?`, `meta.timeout?`, `meta.withEvent?` |
+| `register:duplicate` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName?`, `meta.listenerEvent?` |
+| `register:error` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName?`, `meta.listenerEvent?` |
 | `run:start` | `meta.totalTasks`, `meta.idleTasks`, `meta.pendingTasks`, `meta.activeTasks` |
 | `run:taskScheduled` | `taskId`, `kind`, `injectAt`, `status`, `preStatus`, `meta.timeout` |
 | `run:taskSkipped` | `taskId`, `kind`, `injectAt`, `status`, `meta.skipReason` |
 | `target:ready` | `taskId`, `kind`, `injectAt`, `status` |
-| `inject:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.componentName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
-| `inject:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.componentName`, `meta.alive`, `meta.scope` |
-| `inject:fail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.componentName` |
+| `inject:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
+| `inject:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope` |
+| `inject:fail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName` |
 | `listener:open` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
 | `listener:close` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
 | `listener:attachFail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.listenerEvent`, `meta.listenAt` |
@@ -389,7 +389,7 @@ injector.register('#app', App, {
 | `task:afterDestroy` | `taskId`, `kind`, `injectAt`, `preStatus` |
 | `resource:watcherReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource` |
 | `resource:listenerReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.listenerEvent?`, `meta.listenAt?` |
-| `resource:componentUnmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.componentName` |
+| `resource:componentUnmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.artifactName` |
 | `dom:readyFound` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
 | `dom:readyTimeout` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
 | `dom:removed` | `injectAt`, `taskId`, `kind`, `meta.phase` |
