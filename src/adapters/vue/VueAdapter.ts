@@ -1,8 +1,8 @@
 import type { ComponentPublicInstance, Plugin } from 'vue';
 import { createApp } from 'vue';
-import type { ILogger } from '../../logger/types';
-import { isVueComponent } from '../util';
+import type { ILogger } from '../../core/logger/types';
 import type { VueMountAdapter } from './type';
+import { isVueComponent } from './util';
 import { VuePlugin } from './VuePlugin';
 
 export function createVueAdapter(logger: ILogger): VueMountAdapter {

@@ -1,4 +1,4 @@
-import type { VueComponent } from './vue/type';
+import type { VueComponent } from './type';
 
 export function isVueComponent(artifact: unknown): artifact is VueComponent {
 	const isObjectLikeArtifact = typeof artifact === 'object' && artifact !== null;

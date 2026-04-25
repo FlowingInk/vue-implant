@@ -1,7 +1,5 @@
-import type { Plugin } from 'vue';
 import { registerAdapter } from '../adapter/Adapter';
-import { createVueAdapter } from '../adapter/vue/VueAdapter';
-import { VuePlugin } from '../adapter/vue/VuePlugin';
+import type { ResolvableMountAdapter } from '../adapter/types';
 import { ObserverHub } from '../hooks/ObserverHub';
 import type { ObserveEmitter, ObserveEventName, ObserveHook } from '../hooks/type';
 import { createObserveEmitter, registerHooks } from '../hooks/util';
@@ -20,7 +18,7 @@ import type {
 } from '../Task/types';
 import type { ActionEvent, ArtifactOptions, InjectionConfig } from './types';
 
-export class Injector {
+export class BaseInjector {
 	// Unified task context containing all component-related data
 	private readonly taskContext: TaskContext;
 	private readonly taskRegister: TaskRegister;
@@ -39,7 +37,6 @@ export class Injector {
 	constructor(config: Partial<InjectionConfig> = {}) {
 		this.logger = config.logger ?? this.injectConfig.logger;
 		this.observer = config.observer ?? new ObserverHub(this.logger);
-		registerAdapter(createVueAdapter(this.logger));
 		const emitObserve: ObserveEmitter = createObserveEmitter(this.observer);
 
 		this.injectConfig = {
@@ -74,6 +71,11 @@ export class Injector {
 			emitObserve,
 			this.logger
 		);
+	}
+
+	public useAdapter(adapter: ResolvableMountAdapter): this {
+		registerAdapter(adapter);
+		return this;
 	}
 
 	public run(): void {
@@ -154,28 +156,6 @@ export class Injector {
 
 	public getLogger(): ILogger {
 		return this.logger;
-	}
-
-	public use<T extends Plugin>(plugin: T): this {
-		VuePlugin.use(plugin);
-		return this;
-	}
-
-	public usePlugins(...plugins: Plugin[]): this {
-		VuePlugin.usePlugins(...plugins);
-		return this;
-	}
-
-	public getPlugins(): Plugin[] {
-		return VuePlugin.getPlugins();
-	}
-
-	public setPinia<T extends Plugin>(pinia: T): void {
-		VuePlugin.setPinia(pinia);
-	}
-
-	public getPinia(): Plugin | undefined {
-		return VuePlugin.getPinia();
 	}
 
 	public reset(taskId: string): void {

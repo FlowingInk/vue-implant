@@ -1,7 +1,7 @@
 import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Injector } from '../src/compat/Injector';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import { Injector } from '../src/core/Injector/Injector';
 import { Action } from '../src/core/Injector/types';
 import { Logger } from '../src/core/logger/Logger';
 import { createActivityStore } from '../src/core/signal/observeActivitySignal';

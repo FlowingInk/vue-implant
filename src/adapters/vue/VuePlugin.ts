@@ -1,6 +1,6 @@
 import type { Plugin } from 'vue';
-import { Logger } from '../../logger/Logger';
-import type { ILogger } from '../../logger/types';
+import { Logger } from '../../core/logger/Logger';
+import type { ILogger } from '../../core/logger/types';
 
 class _VuePlugin {
 	private plugins: Plugin[] = [];

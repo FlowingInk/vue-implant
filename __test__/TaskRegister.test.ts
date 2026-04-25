@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createVueAdapter } from '../src/adapters/vue/VueAdapter';
 import { registerAdapter } from '../src/core/adapter/Adapter';
-import { createVueAdapter } from '../src/core/adapter/vue/VueAdapter';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';

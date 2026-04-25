@@ -1,5 +1,5 @@
 import type { App, Component, ComponentPublicInstance, Plugin } from 'vue';
-import type { ResolvableMountAdapter } from '../types';
+import type { ResolvableMountAdapter } from '../../core/adapter/types';
 
 export type VueMountHandle = App<Element>;
 export type VueMountArtifact = Component;

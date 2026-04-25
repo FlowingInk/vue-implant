@@ -1,5 +1,5 @@
 import type { Component } from 'vue';
-import { createVueAdapter } from '../../src/core/adapter/vue/VueAdapter';
+import { createVueAdapter } from '../../src/adapters/vue/VueAdapter';
 import { Logger } from '../../src/core/logger/Logger';
 import type { ActivitySignalSource } from '../../src/core/signal/types';
 import type {

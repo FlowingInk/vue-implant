@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WatchHandle } from 'vue';
-import { createVueAdapter } from '../src/core/adapter/vue/VueAdapter';
-import { VuePlugin } from '../src/core/adapter/vue/VuePlugin';
+import { createVueAdapter } from '../src/adapters/vue/VueAdapter';
+import { VuePlugin } from '../src/adapters/vue/VuePlugin';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
