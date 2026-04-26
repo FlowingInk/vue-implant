@@ -4,7 +4,7 @@
 
 
 <h1 align="center">Vue-implant</h1>
-<p align="center">基于vue组件的轻量级注入框架</p>
+<p align="center">面向动态页面的轻量级组件注入框架</p>
 
 <div align="center">
   <a href="https://github.com/FlowingInk/vue-implant/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/vue-implant?style=flat-square">
@@ -24,7 +24,7 @@
 
 
 
-`vue-implant` 是一个主要面向油猴脚本开发场景的 Vue 组件注入框架。
+`vue-implant` 是一个主要面向油猴脚本开发场景的组件注入框架。它保留 Vue 作为默认兼容层，同时提供框架无关的注入核心与可插拔挂载适配器，方便更高级的集成场景。
 
 它能够在琐碎的油猴开发当中把**注入**这一操作统合起来，告别繁琐的底层**DOM**操作。同时还提供了一套声明式的注入机制，助力开发者构建高性能、易维护的脚本应用。
 
@@ -70,7 +70,7 @@ yarn add vue-implant
 在油猴项目中，推荐组合：`vite-plugin-monkey + vue-implant`。
 
 - `vite-plugin-monkey`：处理脚本构建、元信息、开发调试与发布流程。
-- `vue-implant`：处理复杂页面中的组件挂载、目标等待、重注入与任务生命周期。
+- `vue-implant`：处理复杂页面中的产物挂载、目标等待、重注入与任务生命周期。
 
 这个组合可以让你把工程化能力和页面注入能力解耦：前者专注“如何构建油猴脚本”，后者专注“如何稳定改造目标网页”。
 
@@ -92,8 +92,9 @@ injector.run();
 
 ## 兼容性 ✅
 
-- Vue：`3.x`
-- 运行环境：现代浏览器页面环境（如油猴脚本、浏览器扩展 content script）
+- Vue：`3.x`，通过默认兼容适配器支持
+- 可在每个 `Injector` 实例上按需应用额外挂载适配器。只有使用对应适配器时，才需要安装该适配器相关的 peer dependency。
+- 运行环境：现代浏览器页面环境（如油猴脚本）
 - iframe：当前不支持
 
 ## API 🧩
@@ -129,14 +130,14 @@ type InjectionConfig = {
 > [!NOTE]
 > `run()` 具备幂等性，可重复调用。重复调用只会激活未处于 active/pending 的任务。
 
-### `Injector.register(injectAt: string, component: Component, option?: ComponentOptions): RegisterResult`
+### `Injector.register<TArtifact>(injectAt: string, artifact: TArtifact, option?: ArtifactOptions): RegisterResult`
 
-注册组件注入任务。运行时会在内部解析匹配的挂载适配器，默认内置 Vue 组件支持。
+注册产物注入任务。运行时会在内部解析匹配的挂载适配器。默认 `Injector` 内置 Vue 组件支持，也可以显式应用额外适配器。
 
 参数说明：
 
-- `injectAt`：组件注入目标选择器。
-- `component`：要注入的 Vue 组件。
+- `injectAt`：产物注入目标选择器。
+- `artifact`：要注入的组件或可挂载产物。
 - `option`：可选配置。
 
 `option` 结构：
@@ -190,6 +191,35 @@ type InjectionConfig = {
 
 > [!NOTE]
 > 支持在 `run()` 后继续 `registerListener()`，新增监听任务会在下一次 `run()` 时激活。
+
+### `Injector.applyAdapter(adapter: ResolvableMountAdapter): this`
+
+在当前 `Injector` 实例上注册一个挂载适配器。适配器会按应用顺序解析，每个适配器通过 `matches()` 判断自己是否可以处理当前产物。
+
+适配器注册是实例级的。给某个 `Injector` 应用适配器，不会影响同一页面上的其他 `Injector` 实例。
+
+**最小示例：**
+
+```ts
+import { Injector, type ResolvableMountAdapter } from 'vue-implant';
+
+const elementAdapter: ResolvableMountAdapter<HTMLElement, HTMLElement> = {
+	name: 'element',
+	matches: (artifact): artifact is HTMLElement => artifact instanceof HTMLElement,
+	mount: ({ mountPoint, artifact }) => {
+		mountPoint.appendChild(artifact);
+		return { handle: artifact };
+	},
+	unmount: ({ handle }) => {
+		handle.remove();
+	}
+};
+
+const injector = new Injector().applyAdapter(elementAdapter);
+
+injector.register('#app', document.createElement('button'));
+injector.run();
+```
 
 ### `Injector.use(plugin: Plugin): this`
 
@@ -354,7 +384,8 @@ injector.register('#app', App, {
 钩子作用域：
 
 - 全局钩子：在 `new Injector({ hooks })` 中配置，或通过 `injector.on(...)` / `injector.onAny(...)` 注册。
-- 组件级钩子：在 `injector.register(injectAt, component, { hooks })` 或`injector.onTask(taskId, event, hook)`中配置。
+- 任务级钩子：通过 `injector.onTask(taskId, event, hook)` 注册。
+- 组件级钩子：在 `injector.register(injectAt, component, { hooks })` 中配置。
 - 当前组件级钩子仅支持 `register` 创建的组件任务，不支持 `registerListener`。
 
 ### 传播控制
@@ -649,6 +680,7 @@ injector.controlListener(taskId, Action.CLOSE);
 
 - 适配器相关：`MountAdapter`、`ResolvableMountAdapter`、`AdapterMountInput`、`AdapterMountResult`、`AdapterUnmountInput`、`AdapterUnmountReason`、`AdapterResolver`
 - Vue 挂载相关：`VueMountArtifact`、`VueMountHandle`、`VueMountInstance`
+- 对应适配器可用时，也会导出该适配器相关的挂载类型。
 - Signal 相关：`ActivitySignalSource`、`ActivitySignalSubscribable`、`SignalUnsubscribe`
 - Observer 相关：`PropagationCtrl`、`ObserveHook`、`ObserveEvent`、`ObserveEventName`
 
@@ -657,7 +689,7 @@ injector.controlListener(taskId, Action.CLOSE);
 ## 限制 ⚠️
 
 - 当前不支持 `iframe` 注入。在现有架构下，`iframe` 内样式和注入生命周期管理还不完善。
-- 性能方面，每个注入组件都会创建一个独立 Vue 实例。在大量注入场景下，响应式系统与虚拟 DOM 可能带来额外开销。
+- 性能方面，默认 Vue 适配器会为每个注入的 Vue 组件创建独立 Vue 实例。在大量注入场景下，响应式系统与虚拟 DOM 可能带来额外开销。
 
 ## 常见问题（FAQ）❓
 

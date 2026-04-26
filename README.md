@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Vue-implant</h1>
-<p align="center">A lightweight Vue component injection framework</p>
+<p align="center">A lightweight component injection framework for dynamic pages</p>
 
 <div align="center">
   <a href="https://github.com/FlowingInk/vue-implant/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/vue-implant?style=flat-square">
@@ -23,7 +23,7 @@
 
 
 
-`vue-implant` is a Vue component injection framework primarily designed for Greasemonkey script development scenarios.
+`vue-implant` is a component injection framework primarily designed for Greasemonkey script development scenarios. It keeps Vue support as the default compatibility layer while exposing a framework-agnostic injection core and pluggable mount adapters for advanced integrations.
 
 It streamlines component injection in Userscript development, eliminating tedious low-level DOM manipulations. By providing a declarative injection mechanism, it empowers developers to build high-performance, maintainable script applications with ease.
 
@@ -68,7 +68,7 @@ yarn add vue-implant
 For Greasemonkey/TemperMonkey projects, the recommended stack is: `vite-plugin-monkey + vue-implant`.
 
 - `vite-plugin-monkey`: handles userscript build pipeline, metadata, local development, and release flow.
-- `vue-implant`: handles component mounting, DOM target waiting, re-injection, and task lifecycle on dynamic pages.
+- `vue-implant`: handles artifact mounting, DOM target waiting, re-injection, and task lifecycle on dynamic pages.
 
 This pairing keeps responsibilities clear: one tool focuses on userscript engineering, the other focuses on reliable page enhancement.
 
@@ -90,8 +90,9 @@ injector.run();
 
 ## Compatibility ✅
 
-- Vue: `3.x`
-- Runtime environment: modern browser page environments (e.g., userscripts, browser extension content scripts)
+- Vue: `3.x` through the default compatibility adapter
+- Additional mount adapters can be applied per `Injector` instance. Adapter-specific peer dependencies are only needed when you use that adapter.
+- Runtime environment: modern browser page environments (e.g., userscripts)
 - iframe: currently not supported
 
 ## API 🧩
@@ -127,14 +128,14 @@ Starts the injection process and handles registered tasks.
 > [!NOTE]
 > `run()` is idempotent. Repeated calls are safe and only activate tasks that are not already active/pending.
 
-### `Injector.register(injectAt: string, component: Component, option?: ComponentOptions): RegisterResult`
+### `Injector.register<TArtifact>(injectAt: string, artifact: TArtifact, option?: ArtifactOptions): RegisterResult`
 
-Registers a component injection task. Internally, `vue-implant` resolves the matching mount adapter for the registered component.
+Registers an artifact injection task. Internally, `vue-implant` resolves the matching mount adapter for the registered artifact. The default `Injector` includes Vue component support, and additional adapters can be applied explicitly.
 
 Parameter description:
 
-- `injectAt`: selector of the target where the component should be injected.
-- `component`: Vue component to inject.
+- `injectAt`: selector of the target where the artifact should be injected.
+- `artifact`: component or mountable artifact to inject.
 - `option`: optional configuration.
 
 `option` structure:
@@ -188,6 +189,35 @@ Return value:
 
 > [!NOTE]
 > You can call `registerListener()` after `run()`. The new listener task will be activated on the next `run()` call.
+
+### `Injector.applyAdapter(adapter: ResolvableMountAdapter): this`
+
+Registers a mount adapter on the current `Injector` instance. Adapters are resolved in the order they are applied, and each adapter decides whether it can handle an artifact through `matches()`.
+
+Adapter registration is instance-level. Applying an adapter to one `Injector` does not affect other `Injector` instances on the same page.
+
+**Minimal example:**
+
+```ts
+import { Injector, type ResolvableMountAdapter } from 'vue-implant';
+
+const elementAdapter: ResolvableMountAdapter<HTMLElement, HTMLElement> = {
+	name: 'element',
+	matches: (artifact): artifact is HTMLElement => artifact instanceof HTMLElement,
+	mount: ({ mountPoint, artifact }) => {
+		mountPoint.appendChild(artifact);
+		return { handle: artifact };
+	},
+	unmount: ({ handle }) => {
+		handle.remove();
+	}
+};
+
+const injector = new Injector().applyAdapter(elementAdapter);
+
+injector.register('#app', document.createElement('button'));
+injector.run();
+```
 
 ### `Injector.use(plugin: Plugin): this`
 
@@ -648,13 +678,14 @@ The package also exposes advanced TypeScript types for integration and tooling:
 
 - Adapter-related: `MountAdapter`, `ResolvableMountAdapter`, `AdapterMountInput`, `AdapterMountResult`, `AdapterUnmountInput`, `AdapterUnmountReason`, `AdapterResolver`
 - Vue mount-related: `VueMountArtifact`, `VueMountHandle`, `VueMountInstance`
+- Adapter-specific mount types are also exported when the corresponding adapter is available.
 - Signal-related: `ActivitySignalSource`, `ActivitySignalSubscribable`, `SignalUnsubscribe`
 - Observer-related: `PropagationCtrl`, `ObserveHook`, `ObserveEvent`, `ObserveEventName`
 
 ## Limitations ⚠️
 
 - `iframe` injection is currently not supported. In the current architecture, style injection and lifecycle management inside `iframe` are not fully handled.
-- From a performance perspective, each injected component creates an independent Vue instance. In high-volume injection scenarios, the reactivity system and virtual DOM may introduce additional overhead.
+- From a performance perspective, the default Vue adapter creates an independent Vue instance for each injected Vue component. In high-volume injection scenarios, the reactivity system and virtual DOM may introduce additional overhead.
 
 ## FAQ ❓
 
