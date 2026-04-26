@@ -211,7 +211,7 @@ describe('Injector', () => {
 		const unmount = vi.fn();
 
 		const result = injector
-			.useAdapter({
+			.applyAdapter({
 				name: 'custom',
 				matches(candidate): candidate is typeof artifact {
 					return candidate === artifact;
@@ -236,7 +236,7 @@ describe('Injector', () => {
 		document.body.appendChild(host);
 		const artifact: ReactMountArtifact = createElement('span', null, 'Badge');
 		const result = injector
-			.useAdapter(createReactAdapter())
+			.applyAdapter(createReactAdapter())
 			.register('#react-adapter', artifact);
 
 		injector.run();

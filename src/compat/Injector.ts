@@ -7,7 +7,7 @@ import type { InjectionConfig } from '../core/Injector/types';
 export class Injector extends BaseInjector {
 	constructor(config: Partial<InjectionConfig> = {}) {
 		super(config);
-		this.useAdapter(createVueAdapter(this.getLogger()));
+		this.applyAdapter(createVueAdapter(this.getLogger()));
 	}
 
 	public use<T extends Plugin>(plugin: T): this {

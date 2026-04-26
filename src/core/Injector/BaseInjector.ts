@@ -76,7 +76,7 @@ export class BaseInjector {
 		);
 	}
 
-	public useAdapter(adapter: ResolvableMountAdapter): this {
+	public applyAdapter(adapter: ResolvableMountAdapter): this {
 		this.adapterRegistry.use(adapter);
 		return this;
 	}
