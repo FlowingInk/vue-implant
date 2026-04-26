@@ -1,5 +1,8 @@
 import { createPinia } from 'pinia';
+import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createReactAdapter } from '../src/adapters/react/ReactAdapter';
+import type { ReactMountArtifact } from '../src/adapters/react/type';
 import { Injector } from '../src/compat/Injector';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import { Action } from '../src/core/Injector/types';
@@ -12,6 +15,21 @@ import type { TaskRunner } from '../src/core/Task/TaskRunner';
 import type { ArtifactTask } from '../src/core/Task/types';
 import { DOMWatcher } from '../src/core/watcher/DomWatcher';
 import { createVueComponent } from './factory/TaskFactor';
+
+const reactDomClientMock = vi.hoisted(() => {
+	const root = {
+		render: vi.fn(),
+		unmount: vi.fn()
+	};
+	return {
+		root,
+		createRoot: vi.fn(() => root)
+	};
+});
+
+vi.mock('react-dom/client', () => ({
+	createRoot: reactDomClientMock.createRoot
+}));
 
 describe('Injector', () => {
 	let injector: Injector;
@@ -33,6 +51,9 @@ describe('Injector', () => {
 		taskRunner = internals.taskRunner;
 		taskLifeCycle = internals.taskLifeCycle;
 		document.body.innerHTML = '';
+		reactDomClientMock.createRoot.mockClear();
+		reactDomClientMock.root.render.mockClear();
+		reactDomClientMock.root.unmount.mockClear();
 		vi.restoreAllMocks();
 	});
 
@@ -42,8 +63,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
 		const component = createVueComponent('FacadeComp');
 
 		const result = injector.register('#app', component);
@@ -57,8 +78,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
 		const artifact = createVueComponent('artifact');
 		const adapter = {
 			name: 'plain',
@@ -85,14 +106,14 @@ describe('Injector', () => {
 	});
 
 	it('should forward run to TaskRunner', () => {
-		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => {});
+		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => { });
 		injector.run();
 		expect(runSpy).toHaveBeenCalledOnce();
 	});
 
 	it('should forward enableAlive and disableAlive to TaskLifeCycle', () => {
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
 
 		injector.enableAlive('task-a');
 		injector.disableAlive('task-a');
@@ -179,6 +200,56 @@ describe('Injector', () => {
 		injector.setPinia(pinia);
 		expect(injector.getPlugins()).toContain(pinia);
 		expect(injector.getPinia()).toBe(pinia);
+	});
+
+	it('should register custom adapters per injector instance', () => {
+		const host = document.createElement('div');
+		host.id = 'custom-adapter';
+		document.body.appendChild(host);
+		const artifact = { kind: 'custom-artifact', name: 'CustomArtifact' };
+		const mount = vi.fn(() => ({ handle: { mounted: true }, instance: artifact }));
+		const unmount = vi.fn();
+
+		const result = injector
+			.useAdapter({
+				name: 'custom',
+				matches(candidate): candidate is typeof artifact {
+					return candidate === artifact;
+				},
+				mount,
+				unmount
+			})
+			.register('#custom-adapter', artifact);
+
+		injector.run();
+
+		const context = taskContext.get<ArtifactTask>(result.taskId);
+		expect(context?.taskStatus).toBe('active');
+		expect(context?.adapter.name).toBe('custom');
+		expect(mount).toHaveBeenCalledOnce();
+		expect(context?.appRoot?.parentElement).toBe(host);
+	});
+
+	it('should mount and unmount React elements through React adapter', () => {
+		const host = document.createElement('div');
+		host.id = 'react-adapter';
+		document.body.appendChild(host);
+		const artifact: ReactMountArtifact = createElement('span', null, 'Badge');
+		const result = injector
+			.useAdapter(createReactAdapter())
+			.register('#react-adapter', artifact);
+
+		injector.run();
+
+		const context = taskContext.get<ArtifactTask>(result.taskId);
+		expect(context?.taskStatus).toBe('active');
+		expect(context?.adapter.name).toBe('react');
+		expect(reactDomClientMock.createRoot).toHaveBeenCalledWith(context?.appRoot);
+		expect(reactDomClientMock.root.render).toHaveBeenCalledWith(artifact);
+
+		injector.destroy(result.taskId);
+
+		expect(reactDomClientMock.root.unmount).toHaveBeenCalledOnce();
 	});
 
 	it('should reset task context', () => {

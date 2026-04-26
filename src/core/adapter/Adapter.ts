@@ -1,12 +1,15 @@
 import type { MountAdapter, ResolvableMountAdapter } from './types';
 
-const adapters: ResolvableMountAdapter[] = [];
-export function resolveAdapter(artifact: unknown): MountAdapter | undefined {
-	const resolvedAdapter = adapters.find((adapter) => adapter.matches(artifact));
-	return resolvedAdapter;
-}
+export class AdapterRegistry {
+	private readonly adapters: ResolvableMountAdapter[] = [];
 
-export function registerAdapter(adapter: ResolvableMountAdapter): void {
-	if (adapters.includes(adapter)) return;
-	adapters.push(adapter);
+	public resolve(artifact: unknown): MountAdapter | undefined {
+		const resolvedAdapter = this.adapters.find((adapter) => adapter.matches(artifact));
+		return resolvedAdapter;
+	}
+
+	public use(adapter: ResolvableMountAdapter): void {
+		if (this.adapters.includes(adapter)) return;
+		this.adapters.push(adapter);
+	}
 }

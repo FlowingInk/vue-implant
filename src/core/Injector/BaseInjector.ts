@@ -1,4 +1,4 @@
-import { registerAdapter } from '../adapter/Adapter';
+import { AdapterRegistry } from '../adapter/Adapter';
 import type { ResolvableMountAdapter } from '../adapter/types';
 import { ObserverHub } from '../hooks/ObserverHub';
 import type { ObserveEmitter, ObserveEventName, ObserveHook } from '../hooks/type';
@@ -26,6 +26,7 @@ export class BaseInjector {
 	private readonly taskLifeCycle: TaskLifeCycle;
 	private readonly logger: ILogger;
 	private readonly observer: ObserverHub;
+	private readonly adapterRegistry: AdapterRegistry;
 	//default configuration
 	private readonly injectConfig: InjectionConfig = {
 		alive: false,
@@ -37,6 +38,7 @@ export class BaseInjector {
 	constructor(config: Partial<InjectionConfig> = {}) {
 		this.logger = config.logger ?? this.injectConfig.logger;
 		this.observer = config.observer ?? new ObserverHub(this.logger);
+		this.adapterRegistry = new AdapterRegistry();
 		const emitObserve: ObserveEmitter = createObserveEmitter(this.observer);
 
 		this.injectConfig = {
@@ -54,6 +56,7 @@ export class BaseInjector {
 			this.taskContext,
 			this.injectConfig,
 			emitObserve,
+			(artifact) => this.adapterRegistry.resolve(artifact),
 			this.logger
 		);
 
@@ -74,7 +77,7 @@ export class BaseInjector {
 	}
 
 	public useAdapter(adapter: ResolvableMountAdapter): this {
-		registerAdapter(adapter);
+		this.adapterRegistry.use(adapter);
 		return this;
 	}
 

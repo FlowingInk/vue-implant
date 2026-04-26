@@ -1,4 +1,4 @@
-import type { App, Component, ComponentPublicInstance, Plugin } from 'vue';
+import type { App, Component, ComponentPublicInstance } from 'vue';
 import type { ResolvableMountAdapter } from '../../core/adapter/types';
 
 export type VueMountHandle = App<Element>;
@@ -9,14 +9,7 @@ export type VueMountAdapter = ResolvableMountAdapter<
 	VueMountArtifact,
 	VueMountHandle,
 	VueMountInstance
-> & {
-	use<T extends Plugin>(plugin: T): void;
-	usePlugins(...plugins: Plugin[]): void;
-	getPlugins(): Plugin[];
-	setPinia<T extends Plugin>(piniaInstance: T): void;
-	getPinia(): Plugin | undefined;
-	clear(): void;
-};
+>;
 
 export type VueComponent = {
 	setup?: () => void;

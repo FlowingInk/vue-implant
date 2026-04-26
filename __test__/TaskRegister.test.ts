@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createVueAdapter } from '../src/adapters/vue/VueAdapter';
-import { registerAdapter } from '../src/core/adapter/Adapter';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
@@ -21,7 +20,6 @@ describe('TaskRegister', () => {
 		taskContext = new TaskContext();
 		const logger = new Logger();
 		vueAdapter = createVueAdapter(logger);
-		registerAdapter(vueAdapter);
 		taskRegister = new TaskRegister(
 			taskContext,
 			{
@@ -30,7 +28,8 @@ describe('TaskRegister', () => {
 				timeout: 5000,
 				logger: new Logger()
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		document.body.innerHTML = '';
 		vi.restoreAllMocks();
@@ -222,7 +221,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -314,7 +314,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -405,7 +406,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 
 		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {
@@ -447,7 +449,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 
 		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {

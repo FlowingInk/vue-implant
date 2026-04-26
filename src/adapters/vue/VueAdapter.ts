@@ -1,4 +1,4 @@
-import type { ComponentPublicInstance, Plugin } from 'vue';
+import type { ComponentPublicInstance } from 'vue';
 import { createApp } from 'vue';
 import type { ILogger } from '../../core/logger/types';
 import type { VueMountAdapter } from './type';
@@ -24,47 +24,6 @@ export function createVueAdapter(logger: ILogger): VueMountAdapter {
 		},
 		unmount({ handle }) {
 			handle.unmount();
-		},
-		use<T extends Plugin>(plugin: T): void {
-			const plugins = VuePlugin.getPlugins();
-			if (plugins.includes(plugin)) {
-				logger.warn('Plugin already registered, skipping duplicate');
-				return;
-			}
-
-			VuePlugin.use(plugin);
-		},
-		usePlugins(...plugins: Plugin[]): void {
-			for (const plugin of plugins) {
-				VuePlugin.use(plugin);
-			}
-		},
-		getPlugins(): Plugin[] {
-			return VuePlugin.getPlugins();
-		},
-		setPinia<T extends Plugin>(piniaInstance: T): void {
-			const pinia = VuePlugin.getPinia();
-			const plugins = VuePlugin.getPlugins();
-			if (pinia && pinia !== piniaInstance) {
-				logger.warn('Pinia instance already set, overwriting');
-				const piniaIndex = plugins.indexOf(pinia);
-				if (piniaIndex !== -1) {
-					plugins.splice(piniaIndex, 1);
-				}
-			}
-
-			if (pinia === piniaInstance) {
-				return;
-			}
-
-			VuePlugin.setPinia(piniaInstance);
-			VuePlugin.use(piniaInstance);
-		},
-		getPinia(): Plugin | undefined {
-			return VuePlugin.getPinia();
-		},
-		clear(): void {
-			VuePlugin.clear();
 		}
 	};
 

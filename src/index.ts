@@ -6,6 +6,11 @@ import { createActivityStore } from './core/signal/observeActivitySignal';
 import { DOMWatcher } from './core/watcher/DomWatcher';
 
 export type {
+	ReactMountAdapter,
+	ReactMountArtifact,
+	ReactMountRoot
+} from './adapters/react/type';
+export type {
 	VueMountArtifact,
 	VueMountHandle,
 	VueMountInstance
