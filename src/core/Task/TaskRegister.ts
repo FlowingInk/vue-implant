@@ -1,5 +1,5 @@
 import { getArtifactName } from '../../util/getArtifactName';
-import { resolveAdapter } from '../adapter/Adapter';
+import type { AdapterResolver } from '../adapter/types';
 import type { ObserveEmitter } from '../hooks/type';
 import { registerHooks } from '../hooks/util';
 import type { ArtifactOptions, InjectionConfig } from '../Injector/types';
@@ -21,17 +21,20 @@ export class TaskRegister {
 	private readonly injectConfig: InjectionConfig;
 	private readonly logger: ILogger;
 	private readonly emit: ObserveEmitter;
+	private readonly resolveMountAdapter: AdapterResolver;
 
 	constructor(
 		taskContext: TaskContext,
 		injectConfig: InjectionConfig,
 		emitter: ObserveEmitter,
+		adapterResolver: AdapterResolver,
 		logger?: ILogger
 	) {
 		this.taskContext = taskContext;
 		this.injectConfig = injectConfig;
 		this.emit = emitter;
 		this.logger = logger ?? injectConfig.logger ?? new Logger();
+		this.resolveMountAdapter = adapterResolver;
 	}
 
 	private getTaskId(artifactName: string, selector: string): string {
@@ -143,7 +146,7 @@ export class TaskRegister {
 		const alive = option?.alive ?? this.injectConfig.alive;
 		const scope = option?.scope ?? this.injectConfig.scope;
 		const timeout = option?.timeout ?? this.injectConfig.timeout;
-		const mountAdapter = resolveAdapter(artifact);
+		const mountAdapter = this.resolveMountAdapter(artifact);
 		if (!mountAdapter) {
 			throw new Error(`No adapter found for artifact: ${artifactName}`);
 		}

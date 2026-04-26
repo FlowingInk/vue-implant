@@ -24,13 +24,15 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx"
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
     "demo/**/*.ts",
-    "demo/**/*.vue",
+    "demo/**/*.tsx",
+    "demo/**/*.vue"
   ]
 }

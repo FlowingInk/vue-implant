@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { registerAdapter } from '../src/core/adapter/Adapter';
-import { createVueAdapter } from '../src/core/adapter/vue/VueAdapter';
+import { createVueAdapter } from '../src/adapters/vue/VueAdapter';
 import { ObserverHub } from '../src/core/hooks/ObserverHub';
 import type { ObserveEvent } from '../src/core/hooks/type';
 import { createObserveEmitter } from '../src/core/hooks/util';
@@ -21,7 +20,6 @@ describe('TaskRegister', () => {
 		taskContext = new TaskContext();
 		const logger = new Logger();
 		vueAdapter = createVueAdapter(logger);
-		registerAdapter(vueAdapter);
 		taskRegister = new TaskRegister(
 			taskContext,
 			{
@@ -30,10 +28,23 @@ describe('TaskRegister', () => {
 				timeout: 5000,
 				logger: new Logger()
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		document.body.innerHTML = '';
 		vi.restoreAllMocks();
+	});
+
+	it('should match Vue component artifacts with explicit Vue features', () => {
+		expect(vueAdapter.matches(createVueComponent('MatchedVue'))).toBe(true);
+	});
+
+	it('should not match plain function artifacts reserved for other adapters', () => {
+		function ReactLikeBadge() {
+			return null;
+		}
+
+		expect(vueAdapter.matches(ReactLikeBadge)).toBe(false);
 	});
 
 	it('should register a component task with defaults', () => {
@@ -150,7 +161,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate component registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		const component = createVueComponent('CompDup');
 		const first = taskRegister.register('#dup', component);
@@ -189,7 +200,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate listener registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
 		const first = taskRegister.registerListener('#btn', 'click', vi.fn());
 		const second = taskRegister.registerListener('#btn', 'click', vi.fn());
@@ -210,7 +221,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -302,7 +314,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 		const events: ObserveEvent[] = [];
 		observer.onAny((event) => {
@@ -393,7 +406,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 
 		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {
@@ -435,7 +449,8 @@ describe('TaskRegister', () => {
 				logger: new Logger(),
 				observer
 			},
-			createObserveEmitter(observer)
+			createObserveEmitter(observer),
+			(artifact) => (vueAdapter.matches(artifact) ? vueAdapter : undefined)
 		);
 
 		vi.spyOn(taskContext, 'set').mockImplementation((_k, _v) => {

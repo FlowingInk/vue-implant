@@ -13,16 +13,19 @@ export default defineConfig({
       fileName: 'vue-implant'
     },
     rolldownOptions: {
-      external: ['vue'],
+      external: ['vue', 'react', 'react-dom', 'react-dom/client'],
       output: {
         globals: {
-          vue: 'Vue'
+          vue: 'Vue',
+          react: 'React',
+          'react-dom': 'ReactDOM',
+          'react-dom/client': 'ReactDOMClient'
         }
       }
     }
   },
   optimizeDeps: {
-    exclude: ['vue']
+    exclude: ['vue', 'react', 'react-dom', 'react-dom/client']
   },
   plugins: [vue(), dts({
     rollupTypes: true,

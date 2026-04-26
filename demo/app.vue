@@ -1,9 +1,11 @@
 <script setup lang="ts">
 defineOptions({ name: 'DemoPage' })
 
+import React from 'react'
 import { onMounted, onUnmounted, provide, ref } from 'vue'
 import { Injector } from '../src'
 import { InjectedBadge, InjectedCounter, InjectedTooltip } from './injectedWidgets'
+import { InjectedReactBadge } from './injectedWidgets/InjectedReactBadge'
 import HeroBlock from './components/layout/HeroBlock.vue'
 import ActionBar from './components/ui/ActionBar.vue'
 import DemoCard from './components/ui/DemoCard.vue'
@@ -13,8 +15,10 @@ import BasicInjectionCase from './scenarios/BasicInjectionCase.vue'
 import DelayedInjectionCase from './scenarios/DelayedInjectionCase.vue'
 import EventBindingCase from './scenarios/EventBindingCase.vue'
 import PureListenerCase from './scenarios/PureListenerCase.vue'
+import ReactInjectionCase from './scenarios/ReactInjectionCase.vue'
 import SignalListenerCase from './scenarios/SignalListenerCase.vue'
 import type { RegisterResult } from '../src/core/Task/types'
+import { createReactAdapter } from '../src/adapters/react/ReactAdapter'
 
 const activitySignal = ref(true)
 const reinjectActive = ref(false)
@@ -22,6 +26,8 @@ const { logs, addLog, patchConsoleForInjector } = useDemoLogger()
 
 const injector = new Injector({ alive: false, scope: 'local' })
 let restoreConsole: (() => void) | null = null
+
+injector.applyAdapter(createReactAdapter())
 
 injector.register('#case-basic-target', InjectedBadge, {
     alive: false,
@@ -52,10 +58,9 @@ injector.registerListener('#case-listener-button', 'click', () => {
     addLog('Case 5: pure listener fired (no component injection).')
 })
 
-// injector.register('#case-reinject-target', InjectedBadge, {
-//     alive: true,
-//     scope: 'local',
-// })
+
+injector.register('#case-react-target', React.createElement(InjectedReactBadge))
+
 
 provide<RegisterResult>('delayCase:result', result);
 
@@ -128,6 +133,10 @@ onUnmounted(() => {
 
                 <DemoCard title="📜Pure listener">
                     <PureListenerCase />
+                </DemoCard>
+
+                <DemoCard title="⚛️React component">
+                    <ReactInjectionCase />
                 </DemoCard>
 
                 <!-- <DemoCard title="Case 6: Reinject" subtitle="alive: true + node repeatedly unmounts/remounts">
