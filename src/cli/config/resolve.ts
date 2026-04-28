@@ -1,0 +1,414 @@
+import {
+	basename,
+	dirname,
+	extname,
+	isAbsolute,
+	normalize,
+	resolve as resolvePath
+} from 'node:path';
+import process from 'node:process';
+import {
+	DEFAULT_FILE_NAME_SUFFIX,
+	DEFAULT_GENERATED_ENTRY_DIR,
+	DEFAULT_GENERATED_ENTRY_FILE,
+	DEFAULT_INJECTOR_CONFIG,
+	DEFAULT_MONKEY_BUILD_CONFIG,
+	DEFAULT_MONKEY_CONFIG,
+	DEFAULT_MONKEY_SERVER_CONFIG,
+	DEFAULT_SOURCE_CONFIG
+} from './defaults';
+import type {
+	AppConfig,
+	CliConfig,
+	InjectionFramework,
+	InjectionManifest,
+	InjectionModuleConfig,
+	InjectorConfig,
+	MonkeyBuildConfig,
+	MonkeyConfig,
+	ResolvedConfig,
+	ResolvedInjectionFramework,
+	ResolvedInjectionManifest,
+	ResolvedInjectionModule,
+	ResolvedInjectorConfig,
+	ResolvedMonkeyBuildConfig,
+	ResolvedMonkeyConfig,
+	ResolvedMonkeyServerConfig,
+	ResolvedSourceConfig,
+	SourceConfig
+} from './type';
+
+export type ResolveConfigOptions = {
+	root?: string;
+};
+
+export type ResolveInjectionOptions = {
+	root?: string;
+	source?: ResolvedSourceConfig;
+	injector?: ResolvedInjectorConfig;
+	moduleId?: string;
+	moduleDir?: string;
+	componentPath?: string;
+	overridePath?: string;
+	fallbackName?: string;
+	index?: number;
+};
+
+const toStringArray = (value: string | string[] | undefined, fallback: string[]): string[] => {
+	if (Array.isArray(value)) {
+		return value;
+	}
+
+	if (typeof value === 'undefined') {
+		return fallback;
+	}
+
+	return [value];
+};
+
+const resolveFileSystemPath = (root: string, value: string): string => {
+	if (isAbsolute(value)) {
+		return normalize(value);
+	}
+
+	return normalize(resolvePath(root, value));
+};
+
+const resolveProjectRoot = (root?: string): string => {
+	return normalize(root ? resolvePath(root) : process.cwd());
+};
+
+const inferFrameworkFromPath = (componentPath: string): ResolvedInjectionFramework => {
+	const extension = extname(componentPath).toLowerCase();
+
+	if (extension === '.tsx' || extension === '.jsx') {
+		return 'react';
+	}
+
+	return 'vue';
+};
+
+const resolveFramework = (
+	framework: InjectionFramework | undefined,
+	componentPath: string
+): ResolvedInjectionFramework => {
+	if (framework && framework !== 'auto') {
+		return framework;
+	}
+
+	return inferFrameworkFromPath(componentPath);
+};
+
+const deriveInjectionName = (
+	config: InjectionModuleConfig,
+	moduleDir: string,
+	componentPath: string,
+	fallbackName?: string,
+	index?: number
+): string => {
+	if (config.name) {
+		return config.name;
+	}
+
+	const moduleName = basename(moduleDir);
+	if (moduleName) {
+		return moduleName;
+	}
+
+	const componentName = basename(componentPath, extname(componentPath));
+	if (componentName) {
+		return componentName;
+	}
+
+	if (fallbackName) {
+		return fallbackName;
+	}
+
+	return `injection-${typeof index === 'number' ? index + 1 : 1}`;
+};
+
+const deriveInjectionModuleId = (
+	config: InjectionModuleConfig,
+	moduleDir: string,
+	componentPath: string,
+	fallbackName?: string,
+	index?: number
+): string => {
+	if (config.name) {
+		return config.name;
+	}
+
+	if (fallbackName) {
+		return fallbackName;
+	}
+
+	const moduleName = basename(moduleDir);
+	if (moduleName) {
+		return moduleName;
+	}
+
+	const componentName = basename(componentPath, extname(componentPath));
+	if (componentName) {
+		return componentName;
+	}
+
+	return `injection-${typeof index === 'number' ? index + 1 : 1}`;
+};
+
+const resolveMetaFileName = (
+	fileName: string,
+	metaFileName: MonkeyBuildConfig['metaFileName']
+): string | false => {
+	if (metaFileName === false || typeof metaFileName === 'undefined') {
+		return false;
+	}
+
+	if (metaFileName === true) {
+		return fileName.replace(/\.user\.js$/, '.meta.js');
+	}
+
+	if (typeof metaFileName === 'function') {
+		return metaFileName(fileName);
+	}
+
+	return metaFileName;
+};
+
+export const normalizeInjectionManifest = (
+	injections: InjectionManifest | undefined
+): ResolvedInjectionManifest => {
+	if (!injections) {
+		return [];
+	}
+
+	if (Array.isArray(injections)) {
+		return injections;
+	}
+
+	return Object.entries(injections).map(([name, config]) => ({
+		name,
+		...config
+	}));
+};
+
+export const resolveAppConfig = (config: AppConfig): AppConfig => {
+	return {
+		name: config.name,
+		version: config.version,
+		description: config.description
+	};
+};
+
+export const resolveSourceConfig = (
+	config: SourceConfig | undefined,
+	root: string
+): ResolvedSourceConfig => {
+	const sourceRoot = resolveFileSystemPath(root, config?.root ?? root);
+
+	return {
+		root: sourceRoot,
+		dir: resolveFileSystemPath(sourceRoot, config?.dir ?? DEFAULT_SOURCE_CONFIG.dir),
+		include: toStringArray(config?.include, DEFAULT_SOURCE_CONFIG.include),
+		exclude: toStringArray(config?.exclude, DEFAULT_SOURCE_CONFIG.exclude),
+		manifest: resolveFileSystemPath(
+			resolveFileSystemPath(sourceRoot, config?.dir ?? DEFAULT_SOURCE_CONFIG.dir),
+			config?.manifest ?? DEFAULT_SOURCE_CONFIG.manifest
+		),
+		moduleEntry: toStringArray(config?.moduleEntry, DEFAULT_SOURCE_CONFIG.moduleEntry),
+		moduleOverride: toStringArray(config?.moduleOverride, DEFAULT_SOURCE_CONFIG.moduleOverride)
+	};
+};
+
+export const resolveInjectorConfig = (
+	config: InjectorConfig | undefined
+): ResolvedInjectorConfig => {
+	return {
+		alive: config?.alive ?? DEFAULT_INJECTOR_CONFIG.alive,
+		scope: config?.scope ?? DEFAULT_INJECTOR_CONFIG.scope,
+		timeout: config?.timeout ?? DEFAULT_INJECTOR_CONFIG.timeout
+	};
+};
+
+export const resolveMonkeyServerConfig = (
+	config: MonkeyConfig | undefined
+): ResolvedMonkeyServerConfig => {
+	return {
+		open: config?.server?.open ?? DEFAULT_MONKEY_SERVER_CONFIG.open,
+		prefix: config?.server?.prefix ?? DEFAULT_MONKEY_SERVER_CONFIG.prefix,
+		mountGmApi: config?.server?.mountGmApi ?? DEFAULT_MONKEY_SERVER_CONFIG.mountGmApi
+	};
+};
+
+export const resolveMonkeyBuildConfig = (
+	app: AppConfig,
+	config: MonkeyConfig | undefined
+): ResolvedMonkeyBuildConfig => {
+	const fileName = config?.build?.fileName ?? `${app.name}${DEFAULT_FILE_NAME_SUFFIX}`;
+
+	return {
+		fileName,
+		metaFileName: resolveMetaFileName(
+			fileName,
+			config?.build?.metaFileName ?? DEFAULT_MONKEY_BUILD_CONFIG.metaFileName
+		),
+		autoGrant: config?.build?.autoGrant ?? DEFAULT_MONKEY_BUILD_CONFIG.autoGrant,
+		systemjs: config?.build?.systemjs,
+		cssSideEffects: config?.build?.cssSideEffects
+	};
+};
+
+export const resolveMonkeyConfig = (
+	app: AppConfig,
+	config: MonkeyConfig | undefined,
+	root: string
+): ResolvedMonkeyConfig => {
+	const {
+		entry,
+		userscript,
+		align,
+		clientAlias,
+		styleImport,
+		server: _server,
+		build: _build,
+		...rest
+	} = config ?? {};
+	void _server;
+	void _build;
+
+	return {
+		...rest,
+		entry: resolveFileSystemPath(
+			root,
+			entry ?? resolvePath(DEFAULT_GENERATED_ENTRY_DIR, DEFAULT_GENERATED_ENTRY_FILE)
+		),
+		userscript: {
+			name: app.name,
+			version: app.version,
+			description: app.description,
+			...userscript
+		},
+		align: align ?? DEFAULT_MONKEY_CONFIG.align ?? 2,
+		clientAlias: clientAlias ?? DEFAULT_MONKEY_CONFIG.clientAlias ?? '$',
+		styleImport: styleImport ?? DEFAULT_MONKEY_CONFIG.styleImport ?? true,
+		server: resolveMonkeyServerConfig(config),
+		build: resolveMonkeyBuildConfig(app, config)
+	};
+};
+
+export const resolveInjection = (
+	config: InjectionModuleConfig,
+	options: ResolveInjectionOptions = {}
+): ResolvedInjectionModule => {
+	const root = resolveProjectRoot(options.root);
+	const source = options.source ?? resolveSourceConfig(undefined, root);
+	const injector = options.injector ?? resolveInjectorConfig(undefined);
+	const componentPath = options.componentPath
+		? resolveFileSystemPath(root, options.componentPath)
+		: config.component
+			? resolveFileSystemPath(source.dir, config.component)
+			: '';
+	const moduleDir = options.moduleDir
+		? resolveFileSystemPath(root, options.moduleDir)
+		: componentPath
+			? dirname(componentPath)
+			: source.dir;
+
+	if (!componentPath) {
+		throw new Error(`Injection "${config.name ?? config.injectAt}" is missing component path`);
+	}
+
+	const {
+		component,
+		framework: _framework,
+		enabled: _enabled,
+		order: _order,
+		alive: _alive,
+		scope: _scope,
+		timeout: _timeout,
+		...rest
+	} = config;
+	void component;
+	void _framework;
+	void _enabled;
+	void _order;
+	void _alive;
+	void _scope;
+	void _timeout;
+
+	const name = deriveInjectionName(
+		config,
+		moduleDir,
+		componentPath,
+		options.fallbackName,
+		options.index
+	);
+	const moduleId =
+		options.moduleId ??
+		deriveInjectionModuleId(
+			config,
+			moduleDir,
+			componentPath,
+			options.fallbackName,
+			options.index
+		);
+	const framework = resolveFramework(config.framework, componentPath);
+	const overridePath = options.overridePath
+		? resolveFileSystemPath(root, options.overridePath)
+		: undefined;
+
+	return {
+		...rest,
+		id: `${moduleId}@${config.injectAt}`,
+		moduleId,
+		name,
+		componentPath,
+		framework,
+		moduleDir,
+		overridePath,
+		enabled: config.enabled ?? true,
+		order: config.order ?? 0,
+		alive: config.alive ?? injector.alive,
+		scope: config.scope ?? injector.scope,
+		timeout: config.timeout ?? injector.timeout
+	};
+};
+
+export const resolveInjections = (
+	injections: InjectionManifest | undefined,
+	options: ResolveConfigOptions & {
+		source: ResolvedSourceConfig;
+		injector: ResolvedInjectorConfig;
+	} = {
+			source: resolveSourceConfig(undefined, resolveProjectRoot()),
+			injector: resolveInjectorConfig(undefined)
+		}
+): ResolvedInjectionModule[] => {
+	const root = resolveProjectRoot(options.root);
+	const normalizedInjections = normalizeInjectionManifest(injections);
+
+	return normalizedInjections.map((injection, index) =>
+		resolveInjection(injection, {
+			root,
+			source: options.source,
+			injector: options.injector,
+			// `index` was a name of element
+			index
+		})
+	);
+};
+
+export const resolveConfig = (config: CliConfig, root: string = process.cwd()): ResolvedConfig => {
+	const projectRoot = resolveProjectRoot(root);
+	const app = resolveAppConfig(config.app);
+	const source = resolveSourceConfig(config.source, root);
+	const injector = resolveInjectorConfig(config.injector);
+	const monkey = resolveMonkeyConfig(app, config.monkey, root);
+
+	return {
+		root: projectRoot,
+		app,
+		monkey,
+		source,
+		injector
+	};
+};

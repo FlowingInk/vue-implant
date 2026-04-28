@@ -56,6 +56,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vitest/coverage-v8": "^4.0.18",
+    "cac": "^7.0.0",
     "jsdom": "^28.1.0",
     "pinia": "^3.0.4",
     "react": "^19.2.5",
@@ -63,6 +64,7 @@
     "typescript": "~5.9.3",
     "vite": "^8.0.0-beta.13",
     "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-monkey": "^7.1.9",
     "vitest": "^4.0.18",
     "vue": "^3.5.29",
     "vue-tsc": "^3.1.5"
@@ -86,5 +88,8 @@
   },
   "overrides": {
     "vite": "^8.0.0-beta.13"
+  },
+  "dependencies": {
+    "jiti": "^2.6.1"
   }
 }
