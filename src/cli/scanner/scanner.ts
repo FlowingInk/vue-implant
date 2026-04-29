@@ -28,22 +28,27 @@ export async function scanner(): Promise<ScannerResult> {
 	const injectionsMeta: ResolvedInjectionModule[] = [];
 	for (const module of folder) {
 		const modulePath = path.join(_resolveConfig.source.dir, module);
+		//check module level config
 		const meta = await loadMeta(modulePath);
 		if (!meta) {
 			continue;
 		}
-		const resolveMeta = resolveInjection(meta, {
+		const resolveMeta = resolveInjection(meta.moduleConfig, {
 			root: _resolveConfig.root,
 			source: _resolveConfig.source,
 			injector: _resolveConfig.injector,
 			moduleDir: modulePath,
-			fallbackName: module
+			fallbackName: module,
+			overridePath: meta.overridePath
 		});
 		injectionsMeta.push(resolveMeta);
 	}
 
+	const injections = mergeMeta(resolveManifest, injectionsMeta);
+	injections.sort((a, b) => a.moduleId.localeCompare(b.moduleId));
+
 	return {
 		config: _resolveConfig,
-		injections: mergeMeta(resolveManifest, injectionsMeta)
+		injections
 	};
 }

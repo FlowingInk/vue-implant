@@ -1,4 +1,9 @@
-import type { CliConfig, ResolvedConfig, ResolvedInjectionModule } from '../config/type';
+import type {
+	CliConfig,
+	InjectionModuleConfig,
+	ResolvedConfig,
+	ResolvedInjectionModule
+} from '../config/type';
 
 export type LoadedConfig = {
 	config: CliConfig;
@@ -9,4 +14,9 @@ export type LoadedConfig = {
 export type ScannerResult = {
 	config: ResolvedConfig;
 	injections: ResolvedInjectionModule[];
+};
+
+export type LoadMetaResult = {
+	overridePath: string;
+	moduleConfig: InjectionModuleConfig;
 };

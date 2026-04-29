@@ -99,34 +99,6 @@ const resolveFramework = (
 	return inferFrameworkFromPath(componentPath);
 };
 
-const deriveInjectionName = (
-	config: InjectionModuleConfig,
-	moduleDir: string,
-	componentPath: string,
-	fallbackName?: string,
-	index?: number
-): string => {
-	if (config.name) {
-		return config.name;
-	}
-
-	const moduleName = basename(moduleDir);
-	if (moduleName) {
-		return moduleName;
-	}
-
-	const componentName = basename(componentPath, extname(componentPath));
-	if (componentName) {
-		return componentName;
-	}
-
-	if (fallbackName) {
-		return fallbackName;
-	}
-
-	return `injection-${typeof index === 'number' ? index + 1 : 1}`;
-};
-
 const deriveInjectionModuleId = (
 	config: InjectionModuleConfig,
 	moduleDir: string,
@@ -321,7 +293,6 @@ export const resolveInjection = (
 		component,
 		framework: _framework,
 		enabled: _enabled,
-		order: _order,
 		alive: _alive,
 		scope: _scope,
 		timeout: _timeout,
@@ -330,18 +301,10 @@ export const resolveInjection = (
 	void component;
 	void _framework;
 	void _enabled;
-	void _order;
 	void _alive;
 	void _scope;
 	void _timeout;
 
-	const name = deriveInjectionName(
-		config,
-		moduleDir,
-		componentPath,
-		options.fallbackName,
-		options.index
-	);
 	const moduleId =
 		options.moduleId ??
 		deriveInjectionModuleId(
@@ -358,15 +321,12 @@ export const resolveInjection = (
 
 	return {
 		...rest,
-		id: `${moduleId}@${config.injectAt}`,
 		moduleId,
-		name,
 		componentPath,
 		framework,
 		moduleDir,
 		overridePath,
 		enabled: config.enabled ?? true,
-		order: config.order ?? 0,
 		alive: config.alive ?? injector.alive,
 		scope: config.scope ?? injector.scope,
 		timeout: config.timeout ?? injector.timeout

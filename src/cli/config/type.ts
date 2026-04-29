@@ -1,5 +1,8 @@
 import type { MonkeyUserScript } from 'vite-plugin-monkey';
-import type { ArtifactOptions, InjectionConfig as RuntimeInjectionConfig } from '../../core/Injector/types';
+import type {
+	ArtifactOptions,
+	InjectionConfig as RuntimeInjectionConfig
+} from '../../core/Injector/types';
 
 export type Thenable<T> = T | Promise<T>;
 
@@ -21,13 +24,13 @@ export type MonkeyBuildConfig = {
 	metaFileName?: string | boolean | ((fileName: string) => string);
 	autoGrant?: boolean;
 	systemjs?:
-	| 'inline'
-	| ((
-		version: string,
-		packageName: string,
-		importName: string,
-		resolveName: string
-	) => string);
+		| 'inline'
+		| ((
+				version: string,
+				packageName: string,
+				importName: string,
+				resolveName: string
+		  ) => string);
 	cssSideEffects?: string | ((css: string) => void);
 };
 
@@ -74,14 +77,9 @@ export type ResolvedSourceConfig = {
 	moduleOverride: string[];
 };
 
-export type InjectorConfig = Partial<
-	Pick<RuntimeInjectionConfig, 'alive' | 'scope' | 'timeout'>
->;
+export type InjectorConfig = Partial<Pick<RuntimeInjectionConfig, 'alive' | 'scope' | 'timeout'>>;
 
-export type ResolvedInjectorConfig = Pick<
-	RuntimeInjectionConfig,
-	'alive' | 'scope' | 'timeout'
->;
+export type ResolvedInjectorConfig = Pick<RuntimeInjectionConfig, 'alive' | 'scope' | 'timeout'>;
 
 export type InjectionFramework = 'auto' | 'vue' | 'react';
 
@@ -93,7 +91,6 @@ export type InjectionModuleConfig = ArtifactOptions & {
 	component?: string;
 	framework?: InjectionFramework;
 	enabled?: boolean;
-	order?: number;
 	match?: string[];
 	include?: string[];
 	exclude?: string[];
@@ -108,17 +105,14 @@ export type ResolvedInjectionManifest = InjectionModuleConfig[];
 
 export type ResolvedInjectionModule = Omit<
 	InjectionModuleConfig,
-	'name' | 'component' | 'framework' | 'enabled' | 'order' | 'alive' | 'scope' | 'timeout'
+	'name' | 'component' | 'framework' | 'enabled' | 'alive' | 'scope' | 'timeout'
 > & {
-	id: string;
 	moduleId: string;
-	name: string;
 	componentPath: string;
 	framework: ResolvedInjectionFramework;
 	moduleDir: string;
 	overridePath?: string;
 	enabled: boolean;
-	order: number;
 	alive: ResolvedInjectorConfig['alive'];
 	scope: ResolvedInjectorConfig['scope'];
 	timeout: ResolvedInjectorConfig['timeout'];
