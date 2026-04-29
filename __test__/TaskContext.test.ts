@@ -153,10 +153,10 @@ describe('TaskContext', () => {
 			expect(
 				taskEvents.find(
 					(event) =>
-						event.name === 'task:active' && event.taskId === 'status-observe-task'
+						event.name === 'task:statusChange' && event.status === 'active' && event.taskId === 'status-observe-task'
 				)
 			).toMatchObject({
-				name: 'task:active',
+				name: 'task:statusChange',
 				taskId: 'status-observe-task',
 				kind: 'listener',
 				injectAt: '#status-observe',
@@ -830,9 +830,9 @@ describe('TaskContext', () => {
 			observed.releaseListener('obs-task');
 			observed.releaseComponentInstance('obs-task');
 
-			expect(events).toContain('resource:watcherReleased');
+			expect(events).toContain('signal:watcherReleased');
 			expect(events).toContain('resource:listenerReleased');
-			expect(events).toContain('resource:componentUnmounted');
+			expect(events).toContain('artifact:unmounted');
 		});
 
 		it('should emit normalized resource payload fields', () => {
@@ -847,7 +847,7 @@ describe('TaskContext', () => {
 
 			const released: Record<string, unknown> = {};
 			observer.onAny((event) => {
-				if (event.name.startsWith('resource:')) {
+				if (event.name.startsWith('signal:') || event.name.startsWith('resource:') || event.name.startsWith('artifact:')) {
 					released[event.name] = event;
 				}
 			});
@@ -886,8 +886,8 @@ describe('TaskContext', () => {
 			observed.releaseListener('obs-resource');
 			observed.releaseComponentInstance('obs-resource');
 
-			expect(released['resource:watcherReleased']).toMatchObject({
-				name: 'resource:watcherReleased',
+			expect(released['signal:watcherReleased']).toMatchObject({
+				name: 'signal:watcherReleased',
 				taskId: 'obs-resource',
 				kind: 'component',
 				injectAt: '#obs-resource',
@@ -910,8 +910,8 @@ describe('TaskContext', () => {
 				}
 			});
 
-			expect(released['resource:componentUnmounted']).toMatchObject({
-				name: 'resource:componentUnmounted',
+			expect(released['artifact:unmounted']).toMatchObject({
+				name: 'artifact:unmounted',
 				taskId: 'obs-resource',
 				kind: 'component',
 				injectAt: '#obs-resource',

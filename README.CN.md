@@ -340,7 +340,7 @@ const offAny = observer.onAny((event, ctrl) => {
 	console.log('[observe]', event.name, event.taskId, event.injectAt, event.status);
 });
 
-const offFail = observer.on('inject:fail', (event, ctrl) => {
+const offFail = observer.on('artifact:mountFail', (event, ctrl) => {
 	console.error('inject failed:', event.taskId, event.error);
 });
 
@@ -390,12 +390,12 @@ injector.register('#app', App, {
 单次 emit 的分发顺序：**任务作用域 → 事件作用域 → 全局（any）**
 
 ```ts
-observer.onTask('MyComp@#app', 'inject:success', (event, ctrl) => {
+observer.onTask('MyComp@#app', 'artifact:mountSuccess', (event, ctrl) => {
 	console.log('任务层处理完成');
 	ctrl.stopPropagation(); // 事件层与全局层不再触发
 });
 
-observer.on('inject:success', (event) => {
+observer.on('artifact:mountSuccess', (event) => {
 	// 上方任务层调用了 stopPropagation()，此处被跳过
 });
 
@@ -418,49 +418,46 @@ observer.onAny((event) => {
 | `run:start` | `meta.totalTasks`, `meta.idleTasks`, `meta.pendingTasks`, `meta.activeTasks` |
 | `run:taskScheduled` | `taskId`, `kind`, `injectAt`, `status`, `preStatus`, `meta.timeout` |
 | `run:taskSkipped` | `taskId`, `kind`, `injectAt`, `status`, `meta.skipReason` |
-| `target:ready` | `taskId`, `kind`, `injectAt`, `status` |
-| `inject:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
-| `inject:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope` |
-| `inject:fail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName` |
-| `listener:open` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
-| `listener:close` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
+| `task:targetReady` | `taskId`, `kind`, `injectAt`, `status` |
+| `artifact:mountStart` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
+| `artifact:mountSuccess` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope` |
+| `artifact:mountFail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName` |
+| `listener:attached` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
+| `listener:detached` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
 | `listener:attachFail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.listenerEvent`, `meta.listenAt` |
-| `alive:enable` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
-| `alive:disable` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
-| `alive:observeStart` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
-| `alive:observeStop` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
+| `alive:enabled` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
+| `alive:disabled` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
+| `alive:observerStarted` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
+| `alive:observerStopped` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
 | `task:statusChange` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
-| `task:active` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
 | `task:beforeReset` | `taskId`, `kind`, `injectAt`, `status` |
-| `task:reset` | `taskId`, `kind`, `injectAt`, `status` |
 | `task:afterReset` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
 | `task:beforeDestroy` | `taskId`, `kind`, `injectAt`, `status` |
-| `task:destroy` | `taskId`, `kind`, `injectAt`, `status` |
 | `task:afterDestroy` | `taskId`, `kind`, `injectAt`, `preStatus` |
-| `resource:watcherReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource` |
+| `signal:watcherReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource` |
 | `resource:listenerReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.listenerEvent?`, `meta.listenAt?` |
-| `resource:componentUnmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.artifactName` |
-| `dom:readyFound` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
-| `dom:readyTimeout` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
-| `dom:removed` | `injectAt`, `taskId`, `kind`, `meta.phase` |
-| `dom:restored` | `injectAt`, `taskId`, `kind`, `durationMs` |
+| `artifact:unmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.artifactName` |
+| `dom:targetFound` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
+| `dom:targetTimeout` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
+| `dom:targetRemoved` | `injectAt`, `taskId`, `kind`, `meta.phase` |
+| `dom:targetRestored` | `injectAt`, `taskId`, `kind`, `durationMs` |
 
 常用事件分组：
 
 - 注册：`register:start` / `register:success` / `register:duplicate` / `register:error`
-- 运行：`run:start` / `run:taskScheduled` / `run:taskSkipped` / `target:ready`
-- 注入：`inject:start` / `inject:success` / `inject:fail`
-- 监听器：`listener:open` / `listener:close` / `listener:attachFail`
-- alive：`alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop`
-- task：`task:statusChange` / `task:active` / `task:beforeReset` / `task:reset` / `task:afterReset` / `task:beforeDestroy` / `task:destroy` / `task:afterDestroy`
-- 资源释放：`resource:watcherReleased` / `resource:listenerReleased` / `resource:componentUnmounted`
-- DOM 观察：`dom:readyFound` / `dom:readyTimeout` / `dom:removed` / `dom:restored`
+- 运行：`run:start` / `run:taskScheduled` / `run:taskSkipped` / `task:targetReady`
+- 注入：`artifact:mountStart` / `artifact:mountSuccess` / `artifact:mountFail`
+- 监听器：`listener:attached` / `listener:detached` / `listener:attachFail`
+- alive：`alive:enabled` / `alive:disabled` / `alive:observerStarted` / `alive:observerStopped`
+- task：`task:statusChange` / `task:beforeReset` / `task:afterReset` / `task:beforeDestroy` / `task:afterDestroy`
+- 资源释放：`signal:watcherReleased` / `resource:listenerReleased` / `artifact:unmounted`
+- DOM 观察：`dom:targetFound` / `dom:targetTimeout` / `dom:targetRemoved` / `dom:targetRestored`
 
 事件载荷约定：
 
 - 大多数任务相关事件都提供规范化基础字段：`taskId`、`kind`、`injectAt`、`status`。
-- 状态迁移事件提供 `preStatus`（例如：`task:statusChange`、`task:active`、`task:afterReset`、`task:afterDestroy`）。
-- 耗时类事件提供 `durationMs`（例如：`dom:readyFound`、`dom:readyTimeout`、`dom:restored`）。
+- 状态迁移事件提供 `preStatus`（例如：`task:statusChange`、`task:afterReset`、`task:afterDestroy`）。
+- 耗时类事件提供 `durationMs`（例如：`dom:targetFound`、`dom:targetTimeout`、`dom:targetRestored`）。
 - 事件专属信息放入 `meta`（例如：`run:start` 统计、`listener:*` 绑定信息、`alive:*` scope/mode）。
 - DOM watcher 事件由运行时工厂注入任务上下文，`DOMWatcher` 本身保持业务无关。
 
@@ -699,7 +696,7 @@ injector.controlListener(taskId, Action.CLOSE);
 
 ### 5) `activitySignal` 或 `bindListenerSignal` 还能传 Vue `ref<boolean>` 吗？
 
-可以，`1.x` 里仍兼容，但这条兼容路径已经废弃，并计划在 `2.0` 移除。新代码建议优先使用 `createActivityStore(true)`。
+不能。请使用 `createActivityStore(true)` 或其他 `ActivitySignalStore`。
 
 ### 6) `use()` 注册的插件是每个 `Injector` 独立的吗？
 

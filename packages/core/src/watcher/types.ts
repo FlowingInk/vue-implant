@@ -3,10 +3,10 @@ import type { ILogger } from '../logger/types';
 export type InjectCallback = (el: HTMLElement, observer?: MutationObserver) => void;
 
 export type DomWatcherEventName =
-	| 'dom:readyFound'
-	| 'dom:readyTimeout'
-	| 'dom:removed'
-	| 'dom:restored';
+	| 'dom:targetFound'
+	| 'dom:targetTimeout'
+	| 'dom:targetRemoved'
+	| 'dom:targetRestored';
 
 export type DomWatcherEmit = (name: DomWatcherEventName) => void;
 

@@ -128,18 +128,6 @@ export class TaskContext {
 				preStatus
 			})
 		);
-		if (status === 'active') {
-			this.emit(
-				'task:active',
-				buildTaskObservePayload('task:active', {
-					taskId: id,
-					kind: task.kind,
-					injectAt,
-					status: 'active',
-					preStatus
-				})
-			);
-		}
 	}
 
 	/**
@@ -229,8 +217,8 @@ export class TaskContext {
 				context.mountHandle = undefined;
 				context.instance = undefined;
 				this.emit(
-					'resource:componentUnmounted',
-					buildResourceObservePayload('resource:componentUnmounted', {
+					'artifact:unmounted',
+					buildResourceObservePayload('artifact:unmounted', {
 						taskId: id,
 						kind: 'component',
 						injectAt: context.injectAt,
@@ -326,8 +314,8 @@ export class TaskContext {
 				stopActivitySignal(context.watcher.watcher);
 				context.watcher = undefined;
 				this.emit(
-					'resource:watcherReleased',
-					buildResourceObservePayload('resource:watcherReleased', {
+					'signal:watcherReleased',
+					buildResourceObservePayload('signal:watcherReleased', {
 						taskId: id,
 						kind: context.kind,
 						injectAt: getTaskInjectAt(context),

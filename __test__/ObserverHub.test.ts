@@ -34,7 +34,7 @@ describe('ObserverHub', () => {
 		hub.onAny(hook);
 
 		hub.emit(makeEvent('run:start'));
-		hub.emit(makeEvent('inject:success'));
+		hub.emit(makeEvent('artifact:mountSuccess'));
 
 		expect(hook).toHaveBeenCalledTimes(2);
 	});
@@ -158,11 +158,11 @@ describe('ObserverHub', () => {
 	it('should support unsubscribe from on()', () => {
 		const hub = new ObserverHub();
 		const hook = vi.fn();
-		const off = hub.on('inject:fail', hook);
+		const off = hub.on('artifact:mountFail', hook);
 
-		hub.emit(makeEvent('inject:fail'));
+		hub.emit(makeEvent('artifact:mountFail'));
 		off();
-		hub.emit(makeEvent('inject:fail'));
+		hub.emit(makeEvent('artifact:mountFail'));
 
 		expect(hook).toHaveBeenCalledTimes(1);
 	});
@@ -172,9 +172,9 @@ describe('ObserverHub', () => {
 		const hook = vi.fn();
 		const off = hub.onAny(hook);
 
-		hub.emit(makeEvent('target:ready'));
+		hub.emit(makeEvent('task:targetReady'));
 		off();
-		hub.emit(makeEvent('target:ready'));
+		hub.emit(makeEvent('task:targetReady'));
 
 		expect(hook).toHaveBeenCalledTimes(1);
 	});
@@ -184,28 +184,28 @@ describe('ObserverHub', () => {
 		const hookA = vi.fn();
 		const hookB = vi.fn();
 
-		const offA = hub.onTask('task-1', 'inject:success', hookA);
-		hub.onTask('task-1', 'inject:success', hookB);
+		const offA = hub.onTask('task-1', 'artifact:mountSuccess', hookA);
+		hub.onTask('task-1', 'artifact:mountSuccess', hookB);
 
 		offA();
 		hub.emitOnTask('task-1', {
-			name: 'inject:success',
+			name: 'artifact:mountSuccess',
 			ts: Date.now()
 		});
 		expect(hookA).not.toHaveBeenCalled();
 		expect(hookB).toHaveBeenCalledOnce();
 
-		hub.offTask('task-1', 'inject:success');
+		hub.offTask('task-1', 'artifact:mountSuccess');
 		hub.emitOnTask('task-1', {
-			name: 'inject:success',
+			name: 'artifact:mountSuccess',
 			ts: Date.now()
 		});
 		expect(hookB).toHaveBeenCalledOnce();
 
-		hub.onTask('task-1', 'inject:fail', hookA);
+		hub.onTask('task-1', 'artifact:mountFail', hookA);
 		hub.offTask('task-1');
 		hub.emitOnTask('task-1', {
-			name: 'inject:fail',
+			name: 'artifact:mountFail',
 			ts: Date.now()
 		});
 		expect(hookA).not.toHaveBeenCalled();
@@ -217,11 +217,11 @@ describe('ObserverHub', () => {
 		const injectHook = vi.fn();
 
 		hub.on('run:start', runHook);
-		hub.on('inject:success', injectHook);
+		hub.on('artifact:mountSuccess', injectHook);
 		hub.off('run:start');
 
 		hub.emit(makeEvent('run:start'));
-		hub.emit(makeEvent('inject:success'));
+		hub.emit(makeEvent('artifact:mountSuccess'));
 
 		expect(runHook).not.toHaveBeenCalled();
 		expect(injectHook).toHaveBeenCalledOnce();
@@ -232,11 +232,11 @@ describe('ObserverHub', () => {
 		const eventHook = vi.fn();
 		const anyHook = vi.fn();
 
-		hub.on('alive:enable', eventHook);
+		hub.on('alive:enabled', eventHook);
 		hub.onAny(anyHook);
 		hub.clear();
 
-		hub.emit(makeEvent('alive:enable'));
+		hub.emit(makeEvent('alive:enabled'));
 
 		expect(eventHook).not.toHaveBeenCalled();
 		expect(anyHook).not.toHaveBeenCalled();
@@ -245,12 +245,12 @@ describe('ObserverHub', () => {
 	it('should report hook existence with hasHooks()', () => {
 		const hub = new ObserverHub();
 		expect(hub.hasHooks()).toBe(false);
-		expect(hub.hasHooks('inject:success')).toBe(false);
+		expect(hub.hasHooks('artifact:mountSuccess')).toBe(false);
 
-		hub.on('inject:success', () => {});
+		hub.on('artifact:mountSuccess', () => {});
 		expect(hub.hasHooks()).toBe(true);
-		expect(hub.hasHooks('inject:success')).toBe(true);
-		expect(hub.hasHooks('inject:fail')).toBe(false);
+		expect(hub.hasHooks('artifact:mountSuccess')).toBe(true);
+		expect(hub.hasHooks('artifact:mountFail')).toBe(false);
 	});
 
 	it('should consider onAny in hasHooks(event)', () => {
@@ -263,9 +263,9 @@ describe('ObserverHub', () => {
 
 	it('should include task-scoped hooks in hasHooks()', () => {
 		const hub = new ObserverHub();
-		hub.onTask('task-1', 'inject:success', () => {});
+		hub.onTask('task-1', 'artifact:mountSuccess', () => {});
 
-		expect(hub.hasHooks('inject:success')).toBe(true);
+		expect(hub.hasHooks('artifact:mountSuccess')).toBe(true);
 		expect(hub.hasHooks()).toBe(true);
 	});
 

@@ -266,7 +266,7 @@ describe('TaskRunner', () => {
 
 		const targetEvents: ObserveEvent[] = [];
 		observer.onAny((event) => {
-			if (event.name === 'target:ready') {
+			if (event.name === 'task:targetReady') {
 				targetEvents.push(event);
 			}
 		});
@@ -274,7 +274,7 @@ describe('TaskRunner', () => {
 		taskRunner.onTargetReady(document.createElement('div'), 'target-ready-listener');
 
 		expect(targetEvents[0]).toMatchObject({
-			name: 'target:ready',
+			name: 'task:targetReady',
 			taskId: 'target-ready-listener',
 			kind: 'listener',
 			injectAt: '#target-ready',
@@ -325,7 +325,7 @@ describe('TaskRunner', () => {
 
 		const injectEvents: ObserveEvent[] = [];
 		observer.onAny((event) => {
-			if (event.name.startsWith('inject:')) {
+			if (event.name.startsWith('artifact:mount')) {
 				injectEvents.push(event);
 			}
 		});
@@ -333,7 +333,7 @@ describe('TaskRunner', () => {
 		taskRunner.onTargetReady(host, 'inject-observe-task');
 
 		expect(injectEvents[0]).toMatchObject({
-			name: 'inject:start',
+			name: 'artifact:mountStart',
 			taskId: 'inject-observe-task',
 			kind: 'component',
 			injectAt: '#inject-observe-host',
@@ -347,7 +347,7 @@ describe('TaskRunner', () => {
 		});
 
 		expect(injectEvents[1]).toMatchObject({
-			name: 'inject:success',
+			name: 'artifact:mountSuccess',
 			taskId: 'inject-observe-task',
 			kind: 'component',
 			injectAt: '#inject-observe-host',
@@ -389,7 +389,7 @@ describe('TaskRunner', () => {
 
 		const injectEvents: ObserveEvent[] = [];
 		observer.onAny((event) => {
-			if (event.name.startsWith('inject:')) {
+			if (event.name.startsWith('artifact:mount')) {
 				injectEvents.push(event);
 			}
 		});
@@ -397,7 +397,7 @@ describe('TaskRunner', () => {
 		taskRunner.onTargetReady(document.createElement('div'), 'inject-fail-task');
 
 		expect(injectEvents[0]).toMatchObject({
-			name: 'inject:start',
+			name: 'artifact:mountStart',
 			taskId: 'inject-fail-task',
 			kind: 'component',
 			injectAt: '#inject-fail-host',
@@ -411,7 +411,7 @@ describe('TaskRunner', () => {
 		});
 
 		expect(injectEvents[1]).toMatchObject({
-			name: 'inject:fail',
+			name: 'artifact:mountFail',
 			taskId: 'inject-fail-task',
 			kind: 'component',
 			injectAt: '#inject-fail-host',
@@ -423,9 +423,9 @@ describe('TaskRunner', () => {
 		expect(injectEvents[1].error).toBeDefined();
 	});
 
-	it('should emit task:active when a task becomes active', () => {
+	it('should emit task:statusChange with status active when a task becomes active', () => {
 		const observer = new ObserverHub();
-		const activeEvents: ObserveEvent[] = [];
+		const statusEvents: ObserveEvent[] = [];
 		taskContext = new TaskContext(createObserveEmitter(observer), new Logger());
 		taskRunner = new TaskRunner(
 			taskContext,
@@ -438,8 +438,8 @@ describe('TaskRunner', () => {
 			},
 			createObserveEmitter(observer)
 		);
-		observer.on('task:active', (event) => {
-			activeEvents.push(event);
+		observer.on('task:statusChange', (event) => {
+			statusEvents.push(event);
 		});
 
 		const host = document.createElement('div');
@@ -459,9 +459,8 @@ describe('TaskRunner', () => {
 
 		taskRunner.onTargetReady(host, 'active-event-task');
 
-		expect(activeEvents).toHaveLength(1);
-		expect(activeEvents[0]).toMatchObject({
-			name: 'task:active',
+		expect(statusEvents.find(e => e.status === 'active')).toMatchObject({
+			name: 'task:statusChange',
 			taskId: 'active-event-task',
 			kind: 'component',
 			injectAt: '#active-event-host',
@@ -651,10 +650,10 @@ describe('TaskRunner', () => {
 		expect(
 			listenerEvents.find(
 				(event) =>
-					event.name === 'listener:open' && event.taskId === 'listener-observe-task'
+					event.name === 'listener:attached' && event.taskId === 'listener-observe-task'
 			)
 		).toMatchObject({
-			name: 'listener:open',
+			name: 'listener:attached',
 			taskId: 'listener-observe-task',
 			kind: 'listener',
 			injectAt: '#listener-observe-btn',
@@ -668,10 +667,10 @@ describe('TaskRunner', () => {
 		expect(
 			listenerEvents.find(
 				(event) =>
-					event.name === 'listener:close' && event.taskId === 'listener-observe-task'
+					event.name === 'listener:detached' && event.taskId === 'listener-observe-task'
 			)
 		).toMatchObject({
-			name: 'listener:close',
+			name: 'listener:detached',
 			taskId: 'listener-observe-task',
 			kind: 'listener',
 			injectAt: '#listener-observe-btn',

@@ -601,15 +601,13 @@ describe('TaskLifeCycle', () => {
 		lifecycleWithObserver.reset('obs-life-task');
 		lifecycleWithObserver.destroy('obs-life-task');
 
-		expect(events).toContain('alive:enable');
-		expect(events).toContain('alive:observeStart');
-		expect(events).toContain('alive:disable');
-		expect(events).toContain('alive:observeStop');
+		expect(events).toContain('alive:enabled');
+		expect(events).toContain('alive:observerStarted');
+		expect(events).toContain('alive:disabled');
+		expect(events).toContain('alive:observerStopped');
 		expect(events).toContain('task:beforeReset');
-		expect(events).toContain('task:reset');
 		expect(events).toContain('task:afterReset');
 		expect(events).toContain('task:beforeDestroy');
-		expect(events).toContain('task:destroy');
 		expect(events).toContain('task:afterDestroy');
 	});
 
@@ -662,8 +660,8 @@ describe('TaskLifeCycle', () => {
 		lifecycleWithObserver.enableAlive('alive-mounted-task');
 		lifecycleWithObserver.disableAlive('alive-mounted-task');
 
-		expect(aliveEvents.find((event) => event.name === 'alive:enable')).toMatchObject({
-			name: 'alive:enable',
+		expect(aliveEvents.find((event) => event.name === 'alive:enabled')).toMatchObject({
+			name: 'alive:enabled',
 			taskId: 'alive-mounted-task',
 			kind: 'component',
 			injectAt: '#alive-mounted-host',
@@ -676,10 +674,10 @@ describe('TaskLifeCycle', () => {
 		expect(
 			aliveEvents.find(
 				(event) =>
-					event.name === 'alive:observeStart' && event.meta?.observerMode === 'mounted'
+					event.name === 'alive:observerStarted' && event.meta?.observerMode === 'mounted'
 			)
 		).toMatchObject({
-			name: 'alive:observeStart',
+			name: 'alive:observerStarted',
 			taskId: 'alive-mounted-task',
 			kind: 'component',
 			injectAt: '#alive-mounted-host',
@@ -690,8 +688,8 @@ describe('TaskLifeCycle', () => {
 			}
 		});
 
-		expect(aliveEvents.find((event) => event.name === 'alive:disable')).toMatchObject({
-			name: 'alive:disable',
+		expect(aliveEvents.find((event) => event.name === 'alive:disabled')).toMatchObject({
+			name: 'alive:disabled',
 			taskId: 'alive-mounted-task',
 			kind: 'component',
 			injectAt: '#alive-mounted-host',
@@ -704,10 +702,10 @@ describe('TaskLifeCycle', () => {
 		expect(
 			aliveEvents.find(
 				(event) =>
-					event.name === 'alive:observeStop' && event.meta?.observerMode === 'mounted'
+					event.name === 'alive:observerStopped' && event.meta?.observerMode === 'mounted'
 			)
 		).toMatchObject({
-			name: 'alive:observeStop',
+			name: 'alive:observerStopped',
 			taskId: 'alive-mounted-task',
 			kind: 'component',
 			injectAt: '#alive-mounted-host',
@@ -762,11 +760,11 @@ describe('TaskLifeCycle', () => {
 		expect(
 			aliveEvents.find(
 				(event) =>
-					event.name === 'alive:observeStart' &&
+					event.name === 'alive:observerStarted' &&
 					event.meta?.observerMode === 'await-target'
 			)
 		).toMatchObject({
-			name: 'alive:observeStart',
+			name: 'alive:observerStarted',
 			taskId: 'alive-await-task',
 			kind: 'component',
 			injectAt: '#alive-await-host',
@@ -777,8 +775,8 @@ describe('TaskLifeCycle', () => {
 			}
 		});
 
-		expect(aliveEvents.find((event) => event.name === 'alive:disable')).toMatchObject({
-			name: 'alive:disable',
+		expect(aliveEvents.find((event) => event.name === 'alive:disabled')).toMatchObject({
+			name: 'alive:disabled',
 			taskId: 'alive-await-task',
 			kind: 'component',
 			injectAt: '#alive-await-host',
@@ -791,11 +789,11 @@ describe('TaskLifeCycle', () => {
 		expect(
 			aliveEvents.find(
 				(event) =>
-					event.name === 'alive:observeStop' &&
+					event.name === 'alive:observerStopped' &&
 					event.meta?.observerMode === 'await-target'
 			)
 		).toMatchObject({
-			name: 'alive:observeStop',
+			name: 'alive:observerStopped',
 			taskId: 'alive-await-task',
 			kind: 'component',
 			injectAt: '#alive-await-host',
@@ -857,18 +855,6 @@ describe('TaskLifeCycle', () => {
 
 		expect(
 			taskEvents.find(
-				(event) => event.name === 'task:reset' && event.taskId === 'task-life-observe'
-			)
-		).toMatchObject({
-			name: 'task:reset',
-			taskId: 'task-life-observe',
-			kind: 'component',
-			injectAt: '#task-life-observe',
-			status: 'pending'
-		});
-
-		expect(
-			taskEvents.find(
 				(event) => event.name === 'task:afterReset' && event.taskId === 'task-life-observe'
 			)
 		).toMatchObject({
@@ -909,17 +895,6 @@ describe('TaskLifeCycle', () => {
 			status: 'active'
 		});
 
-		expect(
-			taskEvents.find(
-				(event) => event.name === 'task:destroy' && event.taskId === 'task-life-observe'
-			)
-		).toMatchObject({
-			name: 'task:destroy',
-			taskId: 'task-life-observe',
-			kind: 'component',
-			injectAt: '#task-life-observe',
-			status: 'active'
-		});
 
 		expect(
 			taskEvents.find(

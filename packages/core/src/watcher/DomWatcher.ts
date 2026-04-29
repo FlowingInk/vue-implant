@@ -30,7 +30,7 @@ export function onDomReady(
 	};
 
 	const wrappedCallback = (el: HTMLElement, observer?: MutationObserver) => {
-		dowWatcherRuntime.emit('dom:readyFound');
+		dowWatcherRuntime.emit('dom:targetFound');
 		callback(el, observer);
 
 		// In once mode, disconnect immediately after finding the element
@@ -53,7 +53,7 @@ export function onDomReady(
 		setTimeout(() => {
 			if (isDisconnected) return;
 			disconnect();
-			dowWatcherRuntime.emit('dom:readyTimeout');
+			dowWatcherRuntime.emit('dom:targetTimeout');
 			dowWatcherRuntime.logger.warn(
 				`Element "${selector}" not found within ${options.timeout}ms, observer disconnected`
 			);
@@ -84,14 +84,14 @@ export function onDomAlive(
 	const removalObserver = setupRemovalObserver(
 		target,
 		() => {
-			dowWatcherRuntime.emit('dom:removed');
+			dowWatcherRuntime.emit('dom:targetRemoved');
 			onRemove();
 			if (!isObserver) return;
 			stopReadyObserver = onDomReady(
 				selector,
 				(newTarget) => {
 					if (!isObserver) return;
-					dowWatcherRuntime.emit('dom:restored');
+					dowWatcherRuntime.emit('dom:targetRestored');
 					onRestore(newTarget);
 				},
 				document,

@@ -338,7 +338,7 @@ const offAny = observer.onAny((event, ctrl) => {
 	console.log('[observe]', event.name, event.taskId, event.injectAt, event.status);
 });
 
-const offFail = observer.on('inject:fail', (event, ctrl) => {
+const offFail = observer.on('artifact:mountFail', (event, ctrl) => {
 	console.error('inject failed:', event.taskId, event.error);
 });
 
@@ -388,12 +388,12 @@ Every hook receives a second argument `ctrl: PropagationCtrl`. Use it to stop fu
 Dispatch order per emit: **task-scoped → event-scoped → any**
 
 ```ts
-observer.onTask('MyComp@#app', 'inject:success', (event, ctrl) => {
+observer.onTask('MyComp@#app', 'artifact:mountSuccess', (event, ctrl) => {
 	console.log('handled in task scope');
 	ctrl.stopPropagation(); // event-scoped and any hooks will not fire
 });
 
-observer.on('inject:success', (event) => {
+observer.on('artifact:mountSuccess', (event) => {
 	// skipped when stopPropagation() was called by a task-scoped hook above
 });
 
@@ -416,49 +416,46 @@ Lifecycle event payloads:
 | `run:start` | `meta.totalTasks`, `meta.idleTasks`, `meta.pendingTasks`, `meta.activeTasks` |
 | `run:taskScheduled` | `taskId`, `kind`, `injectAt`, `status`, `preStatus`, `meta.timeout` |
 | `run:taskSkipped` | `taskId`, `kind`, `injectAt`, `status`, `meta.skipReason` |
-| `target:ready` | `taskId`, `kind`, `injectAt`, `status` |
-| `inject:start` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
-| `inject:success` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope` |
-| `inject:fail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName` |
-| `listener:open` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
-| `listener:close` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
+| `task:targetReady` | `taskId`, `kind`, `injectAt`, `status` |
+| `artifact:mountStart` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope`, `meta.withEvent` |
+| `artifact:mountSuccess` | `taskId`, `kind`, `injectAt`, `status`, `meta.artifactName`, `meta.alive`, `meta.scope` |
+| `artifact:mountFail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.artifactName` |
+| `listener:attached` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
+| `listener:detached` | `taskId`, `kind`, `injectAt`, `status`, `meta.listenerEvent`, `meta.listenAt` |
 | `listener:attachFail` | `taskId`, `kind`, `injectAt`, `status`, `error`, `meta.listenerEvent`, `meta.listenAt` |
-| `alive:enable` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
-| `alive:disable` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
-| `alive:observeStart` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
-| `alive:observeStop` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
+| `alive:enabled` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
+| `alive:disabled` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope` |
+| `alive:observerStarted` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
+| `alive:observerStopped` | `taskId`, `kind`, `injectAt`, `status`, `meta.scope`, `meta.observerMode` |
 | `task:statusChange` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
-| `task:active` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
 | `task:beforeReset` | `taskId`, `kind`, `injectAt`, `status` |
-| `task:reset` | `taskId`, `kind`, `injectAt`, `status` |
 | `task:afterReset` | `taskId`, `kind`, `injectAt`, `status`, `preStatus` |
 | `task:beforeDestroy` | `taskId`, `kind`, `injectAt`, `status` |
-| `task:destroy` | `taskId`, `kind`, `injectAt`, `status` |
 | `task:afterDestroy` | `taskId`, `kind`, `injectAt`, `preStatus` |
-| `resource:watcherReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource` |
+| `signal:watcherReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource` |
 | `resource:listenerReleased` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.listenerEvent?`, `meta.listenAt?` |
-| `resource:componentUnmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.artifactName` |
-| `dom:readyFound` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
-| `dom:readyTimeout` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
-| `dom:removed` | `injectAt`, `taskId`, `kind`, `meta.phase` |
-| `dom:restored` | `injectAt`, `taskId`, `kind`, `durationMs` |
+| `artifact:unmounted` | `taskId`, `kind`, `injectAt`, `status`, `meta.resource`, `meta.artifactName` |
+| `dom:targetFound` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
+| `dom:targetTimeout` | `injectAt`, `taskId`, `kind`, `durationMs`, `meta.root` |
+| `dom:targetRemoved` | `injectAt`, `taskId`, `kind`, `meta.phase` |
+| `dom:targetRestored` | `injectAt`, `taskId`, `kind`, `durationMs` |
 
 Common event groups:
 
 - register: `register:start` / `register:success` / `register:duplicate` / `register:error`
-- run: `run:start` / `run:taskScheduled` / `run:taskSkipped` / `target:ready`
-- injection: `inject:start` / `inject:success` / `inject:fail`
-- listener: `listener:open` / `listener:close` / `listener:attachFail`
-- alive: `alive:enable` / `alive:disable` / `alive:observeStart` / `alive:observeStop`
-- task: `task:statusChange` / `task:active` / `task:beforeReset` / `task:reset` / `task:afterReset` / `task:beforeDestroy` / `task:destroy` / `task:afterDestroy`
-- resources: `resource:watcherReleased` / `resource:listenerReleased` / `resource:componentUnmounted`
-- DOM watcher: `dom:readyFound` / `dom:readyTimeout` / `dom:removed` / `dom:restored`
+- run: `run:start` / `run:taskScheduled` / `run:taskSkipped` / `task:targetReady`
+- injection: `artifact:mountStart` / `artifact:mountSuccess` / `artifact:mountFail`
+- listener: `listener:attached` / `listener:detached` / `listener:attachFail`
+- alive: `alive:enabled` / `alive:disabled` / `alive:observerStarted` / `alive:observerStopped`
+- task: `task:statusChange` / `task:beforeReset` / `task:afterReset` / `task:beforeDestroy` / `task:afterDestroy`
+- resources: `signal:watcherReleased` / `resource:listenerReleased` / `artifact:unmounted`
+- DOM watcher: `dom:targetFound` / `dom:targetTimeout` / `dom:targetRemoved` / `dom:targetRestored`
 
 Payload conventions:
 
 - Most task-related events carry normalized base fields: `taskId`, `kind`, `injectAt`, `status`.
-- Transition events include `preStatus` (for example: `task:statusChange`, `task:active`, `task:afterReset`, `task:afterDestroy`).
-- Time-based events include `durationMs` (for example: `dom:readyFound`, `dom:readyTimeout`, `dom:restored`).
+- Transition events include `preStatus` (for example: `task:statusChange`, `task:afterReset`, `task:afterDestroy`).
+- Time-based events include `durationMs` (for example: `dom:targetFound`, `dom:targetTimeout`, `dom:targetRestored`).
 - Event-specific details are provided in `meta` (for example: `run:start` stats, `listener:*` binding info, `alive:*` scope/mode).
 - DOM watcher events are emitted with task context from runtime factories, while `DOMWatcher` itself remains business-agnostic.
 

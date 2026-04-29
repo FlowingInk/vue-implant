@@ -2,7 +2,7 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type InjectObserveEventName = 'inject:start' | 'inject:success' | 'inject:fail';
+type InjectObserveEventName = 'artifact:mountStart' | 'artifact:mountSuccess' | 'artifact:mountFail';
 
 type InjectObserveBase = {
 	taskId: string;
@@ -13,23 +13,23 @@ type InjectObserveBase = {
 };
 
 type InjectObserveInputByName = {
-	'inject:start': InjectObserveBase & {
+	'artifact:mountStart': InjectObserveBase & {
 		alive: boolean;
 		scope: 'local' | 'global';
 		withEvent: boolean;
 	};
-	'inject:success': InjectObserveBase & {
+	'artifact:mountSuccess': InjectObserveBase & {
 		alive: boolean;
 		scope: 'local' | 'global';
 	};
-	'inject:fail': Omit<InjectObserveBase, 'status'> & {
+	'artifact:mountFail': Omit<InjectObserveBase, 'status'> & {
 		status: 'idle';
 		error: unknown;
 	};
 };
 
 type InjectObservePayloadByName = {
-	'inject:start': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'artifact:mountStart': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			artifactName: string;
@@ -38,7 +38,7 @@ type InjectObservePayloadByName = {
 			withEvent: boolean;
 		};
 	};
-	'inject:success': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'artifact:mountSuccess': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			artifactName: string;
@@ -46,7 +46,7 @@ type InjectObservePayloadByName = {
 			scope: 'local' | 'global';
 		};
 	};
-	'inject:fail': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'artifact:mountFail': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		status: 'idle';
 		error: unknown;
@@ -57,7 +57,7 @@ type InjectObservePayloadByName = {
 };
 
 const injectObservePayloadBuilders = {
-	'inject:start': (input) => ({
+	'artifact:mountStart': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -69,7 +69,7 @@ const injectObservePayloadBuilders = {
 			withEvent: input.withEvent
 		}
 	}),
-	'inject:success': (input) => ({
+	'artifact:mountSuccess': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -80,7 +80,7 @@ const injectObservePayloadBuilders = {
 			scope: input.scope
 		}
 	}),
-	'inject:fail': (input) => ({
+	'artifact:mountFail': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,

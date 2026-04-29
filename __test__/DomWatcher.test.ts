@@ -331,10 +331,10 @@ describe('DOMWatcher', () => {
 			document.body.appendChild(restoredEl);
 			await new Promise((r) => setTimeout(r, 0));
 
-			expect(events).toContain('dom:readyFound');
-			expect(events).toContain('dom:readyTimeout');
-			expect(events).toContain('dom:removed');
-			expect(events).toContain('dom:restored');
+			expect(events).toContain('dom:targetFound');
+			expect(events).toContain('dom:targetTimeout');
+			expect(events).toContain('dom:targetRemoved');
+			expect(events).toContain('dom:targetRestored');
 		});
 	});
 });

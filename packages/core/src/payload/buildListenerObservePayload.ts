@@ -2,7 +2,7 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskKind, TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type ListenerObserveEventName = 'listener:open' | 'listener:close' | 'listener:attachFail';
+type ListenerObserveEventName = 'listener:attached' | 'listener:detached' | 'listener:attachFail';
 
 type ListenerObserveBase = {
 	taskId: string;
@@ -14,20 +14,20 @@ type ListenerObserveBase = {
 };
 
 type ListenerObserveInputByName = {
-	'listener:open': ListenerObserveBase;
-	'listener:close': ListenerObserveBase;
+	'listener:attached': ListenerObserveBase;
+	'listener:detached': ListenerObserveBase;
 	'listener:attachFail': ListenerObserveBase & { error: unknown };
 };
 
 type ListenerObservePayloadByName = {
-	'listener:open': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'listener:attached': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: TaskKind;
 		meta: {
 			listenerEvent?: string;
 			listenAt?: string;
 		};
 	};
-	'listener:close': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'listener:detached': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: TaskKind;
 		meta: {
 			listenerEvent?: string;
@@ -45,7 +45,7 @@ type ListenerObservePayloadByName = {
 };
 
 const listenerObservePayloadBuilders = {
-	'listener:open': (input) => ({
+	'listener:attached': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -55,7 +55,7 @@ const listenerObservePayloadBuilders = {
 			listenAt: input.listenAt
 		}
 	}),
-	'listener:close': (input) => ({
+	'listener:detached': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,

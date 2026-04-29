@@ -2,7 +2,7 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskKind } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type DomObserveEventName = 'dom:readyFound' | 'dom:readyTimeout' | 'dom:removed' | 'dom:restored';
+type DomObserveEventName = 'dom:targetFound' | 'dom:targetTimeout' | 'dom:targetRemoved' | 'dom:targetRestored';
 
 type DomObserveBase = {
 	injectAt: string;
@@ -11,45 +11,45 @@ type DomObserveBase = {
 };
 
 type DomObserveInputByName = {
-	'dom:readyFound': DomObserveBase & {
+	'dom:targetFound': DomObserveBase & {
 		durationMs: number;
 		root: 'document' | 'element';
 	};
-	'dom:readyTimeout': DomObserveBase & {
+	'dom:targetTimeout': DomObserveBase & {
 		durationMs: number;
 		root: 'document' | 'element';
 	};
-	'dom:removed': DomObserveBase;
-	'dom:restored': DomObserveBase & {
+	'dom:targetRemoved': DomObserveBase;
+	'dom:targetRestored': DomObserveBase & {
 		durationMs: number;
 	};
 };
 
 type DomObservePayloadByName = {
-	'dom:readyFound': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'dom:targetFound': Omit<ObserveEvent, 'name' | 'ts'> & {
 		durationMs: number;
 		meta: {
 			root: 'document' | 'element';
 		};
 	};
-	'dom:readyTimeout': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'dom:targetTimeout': Omit<ObserveEvent, 'name' | 'ts'> & {
 		durationMs: number;
 		meta: {
 			root: 'document' | 'element';
 		};
 	};
-	'dom:removed': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'dom:targetRemoved': Omit<ObserveEvent, 'name' | 'ts'> & {
 		meta: {
 			phase: 'removed';
 		};
 	};
-	'dom:restored': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'dom:targetRestored': Omit<ObserveEvent, 'name' | 'ts'> & {
 		durationMs: number;
 	};
 };
 
 const domObservePayloadBuilders = {
-	'dom:readyFound': (input) => ({
+	'dom:targetFound': (input) => ({
 		injectAt: input.injectAt,
 		taskId: input.taskId,
 		kind: input.kind,
@@ -58,7 +58,7 @@ const domObservePayloadBuilders = {
 			root: input.root
 		}
 	}),
-	'dom:readyTimeout': (input) => ({
+	'dom:targetTimeout': (input) => ({
 		injectAt: input.injectAt,
 		taskId: input.taskId,
 		kind: input.kind,
@@ -67,7 +67,7 @@ const domObservePayloadBuilders = {
 			root: input.root
 		}
 	}),
-	'dom:removed': (input) => ({
+	'dom:targetRemoved': (input) => ({
 		injectAt: input.injectAt,
 		taskId: input.taskId,
 		kind: input.kind,
@@ -75,7 +75,7 @@ const domObservePayloadBuilders = {
 			phase: 'removed'
 		}
 	}),
-	'dom:restored': (input) => ({
+	'dom:targetRestored': (input) => ({
 		injectAt: input.injectAt,
 		taskId: input.taskId,
 		kind: input.kind,

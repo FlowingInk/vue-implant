@@ -343,9 +343,8 @@ describe('Injector', () => {
 		expect(events).toContain('register:start');
 		expect(events).toContain('register:success');
 		expect(events).toContain('run:start');
-		expect(events).toContain('target:ready');
-		expect(events).toContain('inject:success');
-		expect(events).toContain('task:active');
+		expect(events).toContain('task:targetReady');
+		expect(events).toContain('artifact:mountSuccess');
 	});
 
 	it('should register hooks from config and expose observer facade methods', () => {
@@ -355,14 +354,14 @@ describe('Injector', () => {
 		const taskHook = vi.fn();
 		const hookedInjector = createInjector({
 			hooks: {
-				'inject:success': injectSuccessHook,
+				'artifact:mountSuccess': injectSuccessHook,
 				'task:afterDestroy': [afterDestroyHook]
 			}
 		});
 
 		const offAny = hookedInjector.onAny(anyHook);
-		const offFail = hookedInjector.on('inject:fail', vi.fn());
-		hookedInjector.onTask('hooked-host-task', 'inject:success', taskHook);
+		const offFail = hookedInjector.on('artifact:mountFail', vi.fn());
+		hookedInjector.onTask('hooked-host-task', 'artifact:mountSuccess', taskHook);
 
 		const host = document.createElement('div');
 		host.id = 'hooked-host';
@@ -373,7 +372,7 @@ describe('Injector', () => {
 		});
 
 		hookedInjector.offTask('hooked-host-task');
-		hookedInjector.onTask(taskId, 'inject:success', taskHook);
+		hookedInjector.onTask(taskId, 'artifact:mountSuccess', taskHook);
 
 		hookedInjector.run();
 		hookedInjector.destroy(taskId);

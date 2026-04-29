@@ -2,7 +2,7 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskKind, TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type RunObserveEventName = 'run:start' | 'run:taskScheduled' | 'run:taskSkipped' | 'target:ready';
+type RunObserveEventName = 'run:start' | 'run:taskScheduled' | 'run:taskSkipped' | 'task:targetReady';
 
 type RunObserveTaskBase = {
 	taskId: string;
@@ -27,7 +27,7 @@ type RunObserveInputByName = {
 		status: 'active' | 'pending';
 		skipReason: 'already-active' | 'already-pending';
 	};
-	'target:ready': RunObserveTaskBase;
+	'task:targetReady': RunObserveTaskBase;
 };
 
 type RunObservePayloadByName = {
@@ -54,7 +54,7 @@ type RunObservePayloadByName = {
 			skipReason: 'already-active' | 'already-pending';
 		};
 	};
-	'target:ready': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'task:targetReady': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: TaskKind;
 	};
 };
@@ -87,7 +87,7 @@ const runObservePayloadBuilders = {
 			skipReason: input.skipReason
 		}
 	}),
-	'target:ready': (input) => ({
+	'task:targetReady': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,

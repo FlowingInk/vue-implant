@@ -3,10 +3,10 @@ import type { TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
 type AliveObserveEventName =
-	| 'alive:enable'
-	| 'alive:disable'
-	| 'alive:observeStart'
-	| 'alive:observeStop';
+	| 'alive:enabled'
+	| 'alive:disabled'
+	| 'alive:observerStarted'
+	| 'alive:observerStopped';
 
 type AliveObserverMode = 'mounted' | 'await-target';
 
@@ -19,33 +19,33 @@ type AliveObserveBase = {
 };
 
 type AliveObserveInputByName = {
-	'alive:enable': AliveObserveBase;
-	'alive:disable': AliveObserveBase;
-	'alive:observeStart': AliveObserveBase & { observerMode: AliveObserverMode };
-	'alive:observeStop': AliveObserveBase & { observerMode: AliveObserverMode };
+	'alive:enabled': AliveObserveBase;
+	'alive:disabled': AliveObserveBase;
+	'alive:observerStarted': AliveObserveBase & { observerMode: AliveObserverMode };
+	'alive:observerStopped': AliveObserveBase & { observerMode: AliveObserverMode };
 };
 
 type AliveObservePayloadByName = {
-	'alive:enable': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'alive:enabled': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			scope: 'local' | 'global';
 		};
 	};
-	'alive:disable': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'alive:disabled': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			scope: 'local' | 'global';
 		};
 	};
-	'alive:observeStart': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'alive:observerStarted': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			scope: 'local' | 'global';
 			observerMode: AliveObserverMode;
 		};
 	};
-	'alive:observeStop': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'alive:observerStopped': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			scope: 'local' | 'global';
@@ -55,7 +55,7 @@ type AliveObservePayloadByName = {
 };
 
 const aliveObservePayloadBuilders = {
-	'alive:enable': (input) => ({
+	'alive:enabled': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -64,7 +64,7 @@ const aliveObservePayloadBuilders = {
 			scope: input.scope
 		}
 	}),
-	'alive:disable': (input) => ({
+	'alive:disabled': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -73,7 +73,7 @@ const aliveObservePayloadBuilders = {
 			scope: input.scope
 		}
 	}),
-	'alive:observeStart': (input) => ({
+	'alive:observerStarted': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -83,7 +83,7 @@ const aliveObservePayloadBuilders = {
 			observerMode: input.observerMode
 		}
 	}),
-	'alive:observeStop': (input) => ({
+	'alive:observerStopped': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,

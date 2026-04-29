@@ -19,10 +19,10 @@ export function createDomObserveEmitFactory(
 	const root = input.root instanceof Document ? 'document' : 'element';
 
 	return (name) => {
-		if (name === 'dom:readyFound') {
+		if (name === 'dom:targetFound') {
 			input.emit(
-				'dom:readyFound',
-				buildDomObservePayload('dom:readyFound', {
+				'dom:targetFound',
+				buildDomObservePayload('dom:targetFound', {
 					injectAt: input.injectAt,
 					taskId: input.taskId,
 					kind: input.kind,
@@ -33,10 +33,10 @@ export function createDomObserveEmitFactory(
 			return;
 		}
 
-		if (name === 'dom:readyTimeout') {
+		if (name === 'dom:targetTimeout') {
 			input.emit(
-				'dom:readyTimeout',
-				buildDomObservePayload('dom:readyTimeout', {
+				'dom:targetTimeout',
+				buildDomObservePayload('dom:targetTimeout', {
 					injectAt: input.injectAt,
 					taskId: input.taskId,
 					kind: input.kind,
@@ -47,11 +47,11 @@ export function createDomObserveEmitFactory(
 			return;
 		}
 
-		if (name === 'dom:removed') {
+		if (name === 'dom:targetRemoved') {
 			removedAt = Date.now();
 			input.emit(
-				'dom:removed',
-				buildDomObservePayload('dom:removed', {
+				'dom:targetRemoved',
+				buildDomObservePayload('dom:targetRemoved', {
 					injectAt: input.injectAt,
 					taskId: input.taskId,
 					kind: input.kind
@@ -61,8 +61,8 @@ export function createDomObserveEmitFactory(
 		}
 
 		input.emit(
-			'dom:restored',
-			buildDomObservePayload('dom:restored', {
+			'dom:targetRestored',
+			buildDomObservePayload('dom:targetRestored', {
 				injectAt: input.injectAt,
 				taskId: input.taskId,
 				kind: input.kind,

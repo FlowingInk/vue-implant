@@ -3,9 +3,9 @@ import type { TaskKind, TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
 type ResourceObserveEventName =
-	| 'resource:watcherReleased'
+	| 'signal:watcherReleased'
 	| 'resource:listenerReleased'
-	| 'resource:componentUnmounted';
+	| 'artifact:unmounted';
 
 type ResourceObserveBase = {
 	taskId: string;
@@ -15,19 +15,19 @@ type ResourceObserveBase = {
 };
 
 type ResourceObserveInputByName = {
-	'resource:watcherReleased': ResourceObserveBase;
+	'signal:watcherReleased': ResourceObserveBase;
 	'resource:listenerReleased': ResourceObserveBase & {
 		listenerEvent?: string;
 		listenAt?: string;
 	};
-	'resource:componentUnmounted': Omit<ResourceObserveBase, 'kind'> & {
+	'artifact:unmounted': Omit<ResourceObserveBase, 'kind'> & {
 		kind: 'component';
 		artifactName: string;
 	};
 };
 
 type ResourceObservePayloadByName = {
-	'resource:watcherReleased': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'signal:watcherReleased': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: TaskKind;
 		meta: {
 			resource: 'watcher';
@@ -41,7 +41,7 @@ type ResourceObservePayloadByName = {
 			listenAt?: string;
 		};
 	};
-	'resource:componentUnmounted': Omit<ObserveEvent, 'name' | 'ts'> & {
+	'artifact:unmounted': Omit<ObserveEvent, 'name' | 'ts'> & {
 		kind: 'component';
 		meta: {
 			resource: 'component';
@@ -51,7 +51,7 @@ type ResourceObservePayloadByName = {
 };
 
 const resourceObservePayloadBuilders = {
-	'resource:watcherReleased': (input) => ({
+	'signal:watcherReleased': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,
@@ -71,7 +71,7 @@ const resourceObservePayloadBuilders = {
 			listenAt: input.listenAt
 		}
 	}),
-	'resource:componentUnmounted': (input) => ({
+	'artifact:unmounted': (input) => ({
 		taskId: input.taskId,
 		kind: input.kind,
 		injectAt: input.injectAt,

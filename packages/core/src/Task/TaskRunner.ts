@@ -119,8 +119,8 @@ export class TaskRunner {
 		}
 
 		this.emit(
-			'target:ready',
-			buildRunObservePayload('target:ready', {
+			'task:targetReady',
+			buildRunObservePayload('task:targetReady', {
 				taskId,
 				kind: context.kind,
 				injectAt: getTaskInjectAt(context),
@@ -136,8 +136,8 @@ export class TaskRunner {
 		// Mount component
 		if (isArtifactTask(context)) {
 			this.emit(
-				'inject:start',
-				buildInjectObservePayload('inject:start', {
+				'artifact:mountStart',
+				buildInjectObservePayload('artifact:mountStart', {
 					taskId,
 					kind: 'component',
 					injectAt: context.injectAt,
@@ -153,8 +153,8 @@ export class TaskRunner {
 				// inject fails, not need call setTaskStatus because this one will emit the other event
 				this.taskContext.setTaskStatus(taskId, 'idle');
 				this.emit(
-					'inject:fail',
-					buildInjectObservePayload('inject:fail', {
+					'artifact:mountFail',
+					buildInjectObservePayload('artifact:mountFail', {
 						taskId,
 						kind: 'component',
 						injectAt: context.injectAt,
@@ -168,8 +168,8 @@ export class TaskRunner {
 				return;
 			}
 			this.emit(
-				'inject:success',
-				buildInjectObservePayload('inject:success', {
+				'artifact:mountSuccess',
+				buildInjectObservePayload('artifact:mountSuccess', {
 					taskId,
 					kind: 'component',
 					injectAt: context.injectAt,
@@ -276,8 +276,8 @@ export class TaskRunner {
 				if (newController) {
 					listener.controller = newController;
 					this.emit(
-						'listener:open',
-						buildListenerObservePayload('listener:open', {
+						'listener:attached',
+						buildListenerObservePayload('listener:attached', {
 							taskId,
 							kind: context.kind,
 							injectAt: listener.listenAt,
@@ -316,8 +316,8 @@ export class TaskRunner {
 				listener.controller = undefined;
 				this.logger.info(`Event "${listener.event}" detached from task "${taskId}"`);
 				this.emit(
-					'listener:close',
-					buildListenerObservePayload('listener:close', {
+					'listener:detached',
+					buildListenerObservePayload('listener:detached', {
 						taskId,
 						kind: context.kind,
 						injectAt: listener.listenAt,

@@ -53,8 +53,8 @@ export class TaskLifeCycle {
 		context.alive = true;
 		context.isObserver = false;
 		this.emit(
-			'alive:enable',
-			buildAliveObservePayload('alive:enable', {
+			'alive:enabled',
+			buildAliveObservePayload('alive:enabled', {
 				taskId,
 				kind: 'component',
 				injectAt: context.injectAt,
@@ -109,8 +109,8 @@ export class TaskLifeCycle {
 			context.disableAlive = stopHandler;
 			context.isObserver = true;
 			this.emit(
-				'alive:observeStart',
-				buildAliveObservePayload('alive:observeStart', {
+				'alive:observerStarted',
+				buildAliveObservePayload('alive:observerStarted', {
 					taskId,
 					kind: 'component',
 					injectAt,
@@ -162,8 +162,8 @@ export class TaskLifeCycle {
 				if (cancelled) return;
 				cancelled = true;
 				this.emit(
-					'alive:observeStop',
-					buildAliveObservePayload('alive:observeStop', {
+					'alive:observerStopped',
+					buildAliveObservePayload('alive:observerStopped', {
 						taskId,
 						kind: 'component',
 						injectAt: context.injectAt,
@@ -176,8 +176,8 @@ export class TaskLifeCycle {
 			};
 			context.isObserver = true;
 			this.emit(
-				'alive:observeStart',
-				buildAliveObservePayload('alive:observeStart', {
+				'alive:observerStarted',
+				buildAliveObservePayload('alive:observerStarted', {
 					taskId,
 					kind: 'component',
 					injectAt: context.injectAt,
@@ -215,8 +215,8 @@ export class TaskLifeCycle {
 		context.disableAlive = undefined;
 		stopHandler?.();
 		this.emit(
-			'alive:disable',
-			buildAliveObservePayload('alive:disable', {
+			'alive:disabled',
+			buildAliveObservePayload('alive:disabled', {
 				taskId,
 				kind: 'component',
 				injectAt: context.injectAt,
@@ -225,8 +225,8 @@ export class TaskLifeCycle {
 			})
 		);
 		this.emit(
-			'alive:observeStop',
-			buildAliveObservePayload('alive:observeStop', {
+			'alive:observerStopped',
+			buildAliveObservePayload('alive:observerStopped', {
 				taskId,
 				kind: 'component',
 				injectAt: context.injectAt,
@@ -249,15 +249,6 @@ export class TaskLifeCycle {
 		this.emit(
 			'task:beforeDestroy',
 			buildTaskObservePayload('task:beforeDestroy', {
-				taskId,
-				kind: context.kind,
-				injectAt,
-				status: preStatus
-			})
-		);
-		this.emit(
-			'task:destroy',
-			buildTaskObservePayload('task:destroy', {
 				taskId,
 				kind: context.kind,
 				injectAt,
@@ -300,15 +291,6 @@ export class TaskLifeCycle {
 		this.emit(
 			'task:beforeReset',
 			buildTaskObservePayload('task:beforeReset', {
-				taskId,
-				kind: context.kind,
-				injectAt,
-				status: preStatus
-			})
-		);
-		this.emit(
-			'task:reset',
-			buildTaskObservePayload('task:reset', {
 				taskId,
 				kind: context.kind,
 				injectAt,
