@@ -1,9 +1,12 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 defineOptions({ name: 'DemoPage' })
 
 import React from 'react'
-import { onMounted, onUnmounted, provide, ref } from 'vue'
-import { Injector } from '../src'
+import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
+import { createActivityStore, Injector } from '@vue-implant/core'
+import { createReactAdapter } from '@vue-implant/react'
+import { createVueAdapter } from '@vue-implant/vue'
+
 import { InjectedBadge, InjectedCounter, InjectedTooltip } from './injectedWidgets'
 import { InjectedReactBadge } from './injectedWidgets/InjectedReactBadge'
 import HeroBlock from './components/layout/HeroBlock.vue'
@@ -17,16 +20,17 @@ import EventBindingCase from './scenarios/EventBindingCase.vue'
 import PureListenerCase from './scenarios/PureListenerCase.vue'
 import ReactInjectionCase from './scenarios/ReactInjectionCase.vue'
 import SignalListenerCase from './scenarios/SignalListenerCase.vue'
-import type { RegisterResult } from '../src/core/Task/types'
-import { createReactAdapter } from '../src/adapters/react/ReactAdapter'
+import type { RegisterResult } from '../packages/core/src/Task/types'
 
 const activitySignal = ref(true)
+const listenerActivitySignal = createActivityStore(activitySignal.value)
 const reinjectActive = ref(false)
 const { logs, addLog, patchConsoleForInjector } = useDemoLogger()
 
 const injector = new Injector({ alive: false, scope: 'local' })
 let restoreConsole: (() => void) | null = null
 
+injector.applyAdapter(createVueAdapter(injector.getLogger()))
 injector.applyAdapter(createReactAdapter())
 
 injector.register('#case-basic-target', InjectedBadge, {
@@ -50,7 +54,7 @@ injector.register('#case-signal-target', InjectedTooltip, {
         listenAt: '#case-signal-button',
         type: 'click',
         callback: () => addLog('Case 4: callback fired with activitySignal.'),
-        activitySignal: () => activitySignal,
+        activitySignal: () => listenerActivitySignal,
     },
 })
 
@@ -94,8 +98,13 @@ function reset() {
     injector.resetAll()
     reinjectActive.value = false
     activitySignal.value = true
+    listenerActivitySignal.set(true)
     addLog('Reset complete: all task states reset.')
 }
+
+watch(activitySignal, (value) => {
+    listenerActivitySignal.set(value)
+})
 
 onMounted(() => {
     restoreConsole = patchConsoleForInjector()
@@ -115,27 +124,27 @@ onUnmounted(() => {
 
         <section class="content-row">
             <section class="demo-container">
-                <DemoCard title="🔩Basic">
+                <DemoCard title="📦 Basic">
                     <BasicInjectionCase />
                 </DemoCard>
 
-                <DemoCard title="⏱️Delay node">
+                <DemoCard title="⏳ Delay node">
                     <DelayedInjectionCase />
                 </DemoCard>
 
-                <DemoCard title="🧩component && outside Listener">
+                <DemoCard title="🔗 Component && outside Listener">
                     <EventBindingCase />
                 </DemoCard>
 
-                <DemoCard title="📡Signal listener">
+                <DemoCard title="📡 Signal listener">
                     <SignalListenerCase />
                 </DemoCard>
 
-                <DemoCard title="📜Pure listener">
+                <DemoCard title="🔊 Pure listener">
                     <PureListenerCase />
                 </DemoCard>
 
-                <DemoCard title="⚛️React component">
+                <DemoCard title="⚛️ React component">
                     <ReactInjectionCase />
                 </DemoCard>
 
@@ -212,3 +221,4 @@ onUnmounted(() => {
     }
 }
 </style>
+

@@ -1,0 +1,20 @@
+import type { App, Component, ComponentPublicInstance } from 'vue';
+import type { ResolvableMountAdapter } from '@vue-implant/core';
+
+export type VueMountHandle = App<Element>;
+export type VueMountArtifact = Component;
+export type VueMountInstance = ComponentPublicInstance;
+
+export type VueMountAdapter = ResolvableMountAdapter<
+	VueMountArtifact,
+	VueMountHandle,
+	VueMountInstance
+>;
+
+export type VueComponent = {
+	setup?: () => void;
+	render?: () => void;
+	template?: string;
+	__vccOpts?: unknown;
+	__asyncLoader?: unknown;
+};

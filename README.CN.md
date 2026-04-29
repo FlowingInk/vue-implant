@@ -150,7 +150,7 @@ type InjectionConfig = {
 | `on.listenAt` | yes | `string` | 监听目标元素选择器。 |
 | `on.type` | yes | `string` | 事件类型。 |
 | `on.callback` | yes | `EventListener` | 事件回调。 |
-| `on.activitySignal` | no | `() => ActivitySignalSource<boolean>` | 外部控制监听开关的信号。`1.x` 仍兼容 Vue `ref` 类对象，但已标记废弃。 |
+| `on.activitySignal` | no | `() => ActivitySignalSource<boolean>` | 外部控制监听开关的信号。请使用 `createActivityStore()` 或其他 `ActivitySignalStore`。 |
 | `hooks` | no | `LifecycleHookMap` | 组件级生命周期钩子（仅 `register` 组件任务支持）。 |
 
 返回值：
@@ -228,12 +228,15 @@ injector.run();
 **最小示例：**
 
 ```ts
-import { createPinia } from 'pinia';
 import { Injector } from 'vue-implant';
 
 const injector = new Injector();
 
-injector.use(createPinia());
+injector.use({
+	install() {
+		// custom plugin setup
+	}
+});
 ```
 
 ### `Injector.usePlugins(...plugins: Plugin[]): this`
@@ -243,40 +246,27 @@ injector.use(createPinia());
 **最小示例：**
 
 ```ts
-import { createPinia } from 'pinia';
 import { Injector } from 'vue-implant';
 
 const injector = new Injector();
-const pinia = createPinia();
 const analyticsPlugin = {
 	install() {
 		// custom plugin setup
 	}
 };
 
-injector.usePlugins(pinia, analyticsPlugin);
+injector.usePlugins(analyticsPlugin);
 ```
 
 ### `Injector.getPlugins(): Plugin[]`
 
 返回当前单例 Vue 插件注册表中的共享插件列表。
 
-### `Injector.setPinia(pinia: Plugin): void`
-
-面向 Pinia 场景保留的兼容别名。它仍然可用，内部会把 Pinia 作为共享插件注册。
-
-> [!NOTE]
-> 新版本建议优先使用 `use()` / `usePlugins()`。`setPinia()` 与 `getPinia()` 在 `1.x` 中仍保留兼容。
-
-### `Injector.getPinia(): Plugin | undefined`
-
-返回此前通过 `setPinia()` 设置的 Pinia 实例。
-
 ### `VuePlugin`
 
-单例共享插件注册表，提供高级编排能力。`Injector.use()`、`Injector.usePlugins()`、`Injector.setPinia()` 及相关 getter 都基于它实现。
+单例共享插件注册表，提供高级编排能力。`Injector.use()`、`Injector.usePlugins()` 及相关 getter 都基于它实现。
 
-可用方法：`use`、`usePlugins`、`getPlugins`、`setPinia`、`getPinia`、`clear`。
+可用方法：`use`、`usePlugins`、`getPlugins`、`clear`。
 
 > [!NOTE]
 > `VuePlugin` 在当前运行时内是全局共享的。一个 `Injector` 注册的插件，对同页上的其他 `Injector` 也可见。
@@ -613,9 +603,6 @@ injector.registerListener('#btn', 'click', () => console.log('clicked'), () => a
 activity.set(false);
 ```
 
-> [!NOTE]
-> `1.x` 仍兼容传入 Vue `ref` 类对象，但该路径已废弃并计划在 `2.0` 移除。新代码建议优先使用 `createActivityStore()`。
-
 ### `Injector.bindListenerSignal(taskId: string, source: ActivitySignalSource<boolean>): boolean`
 
 将外部响应式信号绑定到任务事件开关：`true` 时开启监听，`false` 时关闭监听。
@@ -710,15 +697,11 @@ injector.controlListener(taskId, Action.CLOSE);
 
 不能。纯监听任务调用这两个 API 会直接返回并给出警告。
 
-### 5) Pinia 应该用 `use()` 还是 `setPinia()`？
-
-新代码优先使用 `use(createPinia())`。`setPinia()` 在 `1.x` 里仍然保留，作为兼容别名，现有接入不需要立刻迁移。
-
-### 6) `activitySignal` 或 `bindListenerSignal` 还能传 Vue `ref<boolean>` 吗？
+### 5) `activitySignal` 或 `bindListenerSignal` 还能传 Vue `ref<boolean>` 吗？
 
 可以，`1.x` 里仍兼容，但这条兼容路径已经废弃，并计划在 `2.0` 移除。新代码建议优先使用 `createActivityStore(true)`。
 
-### 7) `use()` 注册的插件是每个 `Injector` 独立的吗？
+### 6) `use()` 注册的插件是每个 `Injector` 独立的吗？
 
 不是。它们存放在单例 `VuePlugin` 注册表中，因此同一运行时里的多个 `Injector` 会共享这些插件。
 

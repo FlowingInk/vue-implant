@@ -1,0 +1,24 @@
+﻿{
+  "name": "@vue-implant/cli",
+  "version": "1.3.1",
+  "description": "CLI and build integration for vue-implant",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "dependencies": {
+    "@vue-implant/core": "workspace:*",
+    "jiti": "^2.6.1"
+  }
+}

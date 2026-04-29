@@ -12,25 +12,38 @@
     "types": [
       "vite/client"
     ],
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@vue-implant/core": [
+        "packages/core/src/index.ts"
+      ],
+      "@vue-implant/vue": [
+        "packages/vue/src/index.ts"
+      ],
+      "@vue-implant/react": [
+        "packages/react/src/index.ts"
+      ],
+      "@vue-implant/cli": [
+        "packages/cli/src/index.ts"
+      ]
+    }
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/src/**/*.vue",
     "demo/**/*.ts",
     "demo/**/*.tsx",
     "demo/**/*.vue"

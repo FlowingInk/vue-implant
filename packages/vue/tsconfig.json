@@ -1,0 +1,23 @@
+{
+    "extends": "../../tsconfig.app.json",
+    "compilerOptions": {
+        "noEmit": false,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "rootDir": "src",
+        "tsBuildInfoFile": "../../node_modules/.tmp/tsconfig.package-vue.tsbuildinfo",
+        "baseUrl": ".",
+        "paths": {
+            "@vue-implant/core": [
+                "../core"
+            ]
+        }
+    },
+    "include": [
+        "src/**/*.ts"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules"
+    ]
+}

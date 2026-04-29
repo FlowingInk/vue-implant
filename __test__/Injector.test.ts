@@ -1,19 +1,20 @@
-import { createPinia } from 'pinia';
-import { createElement } from 'react';
+﻿import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createReactAdapter } from '../src/adapters/react/ReactAdapter';
-import type { ReactMountArtifact } from '../src/adapters/react/type';
-import { Injector } from '../src/compat/Injector';
-import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import { Action } from '../src/core/Injector/types';
-import { Logger } from '../src/core/logger/Logger';
-import { createActivityStore } from '../src/core/signal/observeActivitySignal';
-import { TaskContext } from '../src/core/Task/TaskContext';
-import type { TaskLifeCycle } from '../src/core/Task/TaskLifeCycle';
-import type { TaskRegister } from '../src/core/Task/TaskRegister';
-import type { TaskRunner } from '../src/core/Task/TaskRunner';
-import type { ArtifactTask } from '../src/core/Task/types';
-import { DOMWatcher } from '../src/core/watcher/DomWatcher';
+import { Injector } from '../packages/core/src/Injector/Injector';
+import { createReactAdapter } from '../packages/react/src/ReactAdapter';
+import type { ReactMountArtifact } from '../packages/react/src/type';
+import { createVueAdapter } from '../packages/vue/src/VueAdapter';
+import { VuePlugin } from '../packages/vue/src/VuePlugin';
+import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
+import { Action } from '../packages/core/src/Injector/types';
+import { Logger } from '../packages/core/src/logger/Logger';
+import { createActivityStore } from '../packages/core/src/signal/observeActivitySignal';
+import { TaskContext } from '../packages/core/src/Task/TaskContext';
+import type { TaskLifeCycle } from '../packages/core/src/Task/TaskLifeCycle';
+import type { TaskRegister } from '../packages/core/src/Task/TaskRegister';
+import type { TaskRunner } from '../packages/core/src/Task/TaskRunner';
+import type { ArtifactTask } from '../packages/core/src/Task/types';
+import { DOMWatcher } from '../packages/core/src/watcher/DomWatcher';
 import { createVueComponent } from './factory/TaskFactor';
 
 const reactDomClientMock = vi.hoisted(() => {
@@ -31,6 +32,11 @@ vi.mock('react-dom/client', () => ({
 	createRoot: reactDomClientMock.createRoot
 }));
 
+function createInjector(config?: ConstructorParameters<typeof Injector>[0]): Injector {
+	const injector = new Injector(config);
+	return injector.applyAdapter(createVueAdapter(injector.getLogger()));
+}
+
 describe('Injector', () => {
 	let injector: Injector;
 	let taskContext: TaskContext;
@@ -39,7 +45,8 @@ describe('Injector', () => {
 	let taskLifeCycle: TaskLifeCycle;
 
 	beforeEach(() => {
-		injector = new Injector();
+		VuePlugin.clear();
+		injector = createInjector();
 		const internals = injector as unknown as {
 			taskContext: TaskContext;
 			taskRegister: TaskRegister;
@@ -143,7 +150,7 @@ describe('Injector', () => {
 
 	it('should set timeout in global config', () => {
 		const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady');
-		const testInjector = new Injector({ timeout: 10000 });
+		const testInjector = createInjector({ timeout: 10000 });
 		testInjector.register('#app', createVueComponent('AppComp'));
 		testInjector.run();
 
@@ -164,7 +171,7 @@ describe('Injector', () => {
 
 	it('should run task with custom timeout', () => {
 		const onDomReadySpy = vi.spyOn(DOMWatcher, 'onDomReady');
-		const testInjector = new Injector();
+		const testInjector = createInjector();
 		testInjector.register('#app', createVueComponent('AppComp'), {
 			timeout: 5000
 		});
@@ -185,21 +192,14 @@ describe('Injector', () => {
 		);
 	});
 
-	it('should register shared plugins in Injector', () => {
+	it('should register shared plugins in VuePlugin', () => {
 		const pluginA = { install: vi.fn() };
 		const pluginB = { install: vi.fn() };
 
-		const result = injector.use(pluginA).usePlugins(pluginB);
+		VuePlugin.use(pluginA);
+		VuePlugin.usePlugins(pluginB);
 
-		expect(result).toBe(injector);
-		expect(injector.getPlugins()).toEqual([pluginA, pluginB]);
-	});
-
-	it('should keep setPinia/getPinia compatible with shared plugin registration', () => {
-		const pinia = createPinia();
-		injector.setPinia(pinia);
-		expect(injector.getPlugins()).toContain(pinia);
-		expect(injector.getPinia()).toBe(pinia);
+		expect(VuePlugin.getPlugins()).toEqual([pluginA, pluginB]);
 	});
 
 	it('should register custom adapters per injector instance', () => {
@@ -324,7 +324,7 @@ describe('Injector', () => {
 
 	it('should expose ObserverHub and receive integration events', () => {
 		const observer = new ObserverHub();
-		const observedInjector = new Injector({ observer });
+		const observedInjector = createInjector({ observer });
 		const events: string[] = [];
 		observer.onAny((event) => {
 			events.push(event.name);
@@ -353,7 +353,7 @@ describe('Injector', () => {
 		const afterDestroyHook = vi.fn();
 		const anyHook = vi.fn();
 		const taskHook = vi.fn();
-		const hookedInjector = new Injector({
+		const hookedInjector = createInjector({
 			hooks: {
 				'inject:success': injectSuccessHook,
 				'task:afterDestroy': [afterDestroyHook]
@@ -387,7 +387,8 @@ describe('Injector', () => {
 	});
 	it('should get the logger', () => {
 		const logger = new Logger();
-		const testInjector = new Injector({ logger });
+		const testInjector = createInjector({ logger });
 		expect(testInjector.getLogger()).toBe(logger);
 	});
 });
+

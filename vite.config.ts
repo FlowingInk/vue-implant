@@ -1,40 +1,19 @@
 /// <reference types="vitest/config" />
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  build: {
-    lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: "VueImplant",
-      fileName: 'vue-implant'
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@vue-implant/core': resolve(__dirname, 'packages/core/src/index.ts'),
+      '@vue-implant/vue': resolve(__dirname, 'packages/vue/src/index.ts'),
+      '@vue-implant/react': resolve(__dirname, 'packages/react/src/index.ts'),
+      '@vue-implant/cli': resolve(__dirname, 'packages/cli/src/index.ts'),
     },
-    rolldownOptions: {
-      external: ['vue', 'react', 'react-dom', 'react-dom/client'],
-      output: {
-        globals: {
-          vue: 'Vue',
-          react: 'React',
-          'react-dom': 'ReactDOM',
-          'react-dom/client': 'ReactDOMClient'
-        }
-      }
-    }
   },
-  optimizeDeps: {
-    exclude: ['vue', 'react', 'react-dom', 'react-dom/client']
-  },
-  plugins: [vue(), dts({
-    rollupTypes: true,
-    tsconfigPath: resolve(__dirname, 'tsconfig.app.json'),
-    outDir: 'dist/types',
-
-    exclude: ['./__test__/**/*.test.ts'],
-    include: ['src/**/*.ts']
-  })],
   test: {
     silent: true,
     environment: 'jsdom',

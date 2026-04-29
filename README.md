@@ -148,7 +148,7 @@ Parameter description:
 | `on.listenAt` | yes | `string` | Selector of the event target element. |
 | `on.type` | yes | `string` | Event type. |
 | `on.callback` | yes | `EventListener` | Event callback. |
-| `on.activitySignal` | no | `() => ActivitySignalSource<boolean>` | External signal controlling listener activation. Passing Vue `ref`-like sources still works in `1.x`, but is deprecated. |
+| `on.activitySignal` | no | `() => ActivitySignalSource<boolean>` | External signal controlling listener activation. Use `createActivityStore()` or another `ActivitySignalStore`. |
 | `hooks` | no | `LifecycleHookMap` | Component-level lifecycle hooks for the current task (only supported in `register`). |
 
 Return value:
@@ -226,12 +226,15 @@ Registers a shared Vue plugin in the singleton plugin registry used by injector-
 **Minimal example:**
 
 ```ts
-import { createPinia } from 'pinia';
 import { Injector } from 'vue-implant';
 
 const injector = new Injector();
 
-injector.use(createPinia());
+injector.use({
+	install() {
+		// custom plugin setup
+	}
+});
 ```
 
 ### `Injector.usePlugins(...plugins: Plugin[]): this`
@@ -241,40 +244,27 @@ Registers multiple shared Vue plugins in install order.
 **Minimal example:**
 
 ```ts
-import { createPinia } from 'pinia';
 import { Injector } from 'vue-implant';
 
 const injector = new Injector();
-const pinia = createPinia();
 const analyticsPlugin = {
 	install() {
 		// custom plugin setup
 	}
 };
 
-injector.usePlugins(pinia, analyticsPlugin);
+injector.usePlugins(analyticsPlugin);
 ```
 
 ### `Injector.getPlugins(): Plugin[]`
 
 Returns the shared plugins currently registered in the singleton Vue plugin registry.
 
-### `Injector.setPinia(pinia: Plugin): void`
-
-Legacy compatibility alias for Pinia-based setups. It still works and internally registers Pinia as a shared plugin.
-
-> [!NOTE]
-> New Version should prefer `use()` / `usePlugins()`. `setPinia()` and `getPinia()` remain available for backward compatibility in `1.x`.
-
-### `Injector.getPinia(): Plugin | undefined`
-
-Returns the Pinia instance previously set through `setPinia()`.
-
 ### `VuePlugin`
 
-Singleton shared plugin registry exposed for advanced orchestration. It powers `Injector.use()`, `Injector.usePlugins()`, `Injector.setPinia()`, and related getters.
+Singleton shared plugin registry exposed for advanced orchestration. It powers `Injector.use()`, `Injector.usePlugins()`, and related getters.
 
-Available methods: `use`, `usePlugins`, `getPlugins`, `setPinia`, `getPinia`, `clear`.
+Available methods: `use`, `usePlugins`, `getPlugins`, `clear`.
 
 > [!NOTE]
 > `VuePlugin` is global within the current runtime. Plugins registered through one `Injector` are visible to other `Injector` instances on the same page.
@@ -611,9 +601,6 @@ injector.registerListener('#btn', 'click', () => console.log('clicked'), () => a
 activity.set(false);
 ```
 
-> [!NOTE]
-> Passing Vue `ref`-like sources is still supported in `1.x`, but deprecated and planned for removal in `2.0`. New code should prefer `createActivityStore()`.
-
 ### `Injector.bindListenerSignal(taskId: string, source: ActivitySignalSource<boolean>): boolean`
 
 Binds an external reactive signal to listener activation: listener opens when `true`, closes when `false`.
@@ -706,15 +693,11 @@ No. Re-registering the same `listenAt + event` emits a warning and returns the s
 
 No. Calling these APIs on pure listener tasks returns immediately with warnings.
 
-### 5) Should I use `use()` or `setPinia()` for Pinia?
+### 5) Can I pass Vue `ref<boolean>` to `activitySignal` or `bindListenerSignal`?
 
-Prefer `use(createPinia())` for new code. `setPinia()` is still supported in `1.x` as a compatibility alias, so existing integrations do not need an immediate migration.
+No. Use `createActivityStore(true)` or another `ActivitySignalStore`.
 
-### 6) Can I pass Vue `ref<boolean>` to `activitySignal` or `bindListenerSignal`?
-
-Yes in `1.x`, but this compatibility path is deprecated and planned for removal in `2.0`. Prefer `createActivityStore(true)` for new code.
-
-### 7) Are plugins registered by `use()` scoped per injector?
+### 6) Are plugins registered by `use()` scoped per injector?
 
 No. They are stored in the singleton `VuePlugin` registry and are therefore shared by injector instances in the same runtime.
 

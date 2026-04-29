@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import type { ObserveEvent } from '../src/core/hooks/type';
+import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
+import type { ObserveEvent } from '../packages/core/src/hooks/type';
 
 const makeEvent = (name: ObserveEvent['name']): ObserveEvent => ({
 	name,

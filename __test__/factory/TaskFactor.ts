@@ -1,7 +1,7 @@
 import type { Component } from 'vue';
-import { createVueAdapter } from '../../src/adapters/vue/VueAdapter';
-import { Logger } from '../../src/core/logger/Logger';
-import type { ActivitySignalSource } from '../../src/core/signal/types';
+import { createVueAdapter } from '../../packages/vue/src/VueAdapter';
+import { Logger } from '../../packages/core/src/logger/Logger';
+import type { ActivitySignalSource } from '../../packages/core/src/signal/types';
 import type {
 	ArtifactTask,
 	ListenerTask,
@@ -9,7 +9,7 @@ import type {
 	TaskListenerFeature,
 	TaskStatus,
 	TaskWatcherFeature
-} from '../../src/core/Task/types';
+} from '../../packages/core/src/Task/types';
 
 type TaskBaseInput = {
 	taskId: string;

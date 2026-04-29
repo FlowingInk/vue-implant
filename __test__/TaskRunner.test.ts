@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WatchHandle } from 'vue';
-import { createVueAdapter } from '../src/adapters/vue/VueAdapter';
-import { VuePlugin } from '../src/adapters/vue/VuePlugin';
-import { ObserverHub } from '../src/core/hooks/ObserverHub';
-import type { ObserveEvent } from '../src/core/hooks/type';
-import { createObserveEmitter } from '../src/core/hooks/util';
-import { Action } from '../src/core/Injector/types';
-import { Logger } from '../src/core/logger/Logger';
-import { createActivityStore } from '../src/core/signal/observeActivitySignal';
-import { TaskContext } from '../src/core/Task/TaskContext';
-import { TaskRunner } from '../src/core/Task/TaskRunner';
-import type { ArtifactTask, ListenerTask } from '../src/core/Task/types';
-import { DOMWatcher } from '../src/core/watcher/DomWatcher';
+import { createVueAdapter } from '../packages/vue/src/VueAdapter';
+import { VuePlugin } from '../packages/vue/src/VuePlugin';
+import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
+import type { ObserveEvent } from '../packages/core/src/hooks/type';
+import { createObserveEmitter } from '../packages/core/src/hooks/util';
+import { Action } from '../packages/core/src/Injector/types';
+import { Logger } from '../packages/core/src/logger/Logger';
+import { createActivityStore } from '../packages/core/src/signal/observeActivitySignal';
+import { TaskContext } from '../packages/core/src/Task/TaskContext';
+import { TaskRunner } from '../packages/core/src/Task/TaskRunner';
+import type { ArtifactTask, ListenerTask } from '../packages/core/src/Task/types';
+import { DOMWatcher } from '../packages/core/src/watcher/DomWatcher';
 import { createArtifactTask, createListenerTask, createVueComponent } from './factory/TaskFactor';
 
 describe('TaskRunner', () => {

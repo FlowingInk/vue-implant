@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { nextTick, ref } from 'vue';
 import {
 	createActivityStore,
 	observeActivitySignal,
 	stopActivitySignal
-} from '../src/core/signal/observeActivitySignal';
+} from '../packages/core/src/signal/observeActivitySignal';
 
 describe('observeActivitySignal', () => {
 	it('should observe protocol stores via get and subscribe', () => {
@@ -29,7 +28,7 @@ describe('observeActivitySignal', () => {
 		const listener = vi.fn();
 		const source = {
 			get: () => true,
-			subscribe: vi.fn(() => () => {})
+			subscribe: vi.fn(() => () => { })
 		};
 
 		const unsubscribe = observeActivitySignal(source, listener);
@@ -40,21 +39,10 @@ describe('observeActivitySignal', () => {
 		expect(typeof unsubscribe).toBe('function');
 	});
 
-	it('should wrap ref-like sources into the built-in signal protocol', async () => {
-		const source = ref(false);
+	it('should reject invalid signal sources', () => {
 		const listener = vi.fn();
 
-		const unsubscribe = observeActivitySignal(source, listener);
-
-		expect(listener).toHaveBeenCalledTimes(1);
-		expect(listener).toHaveBeenNthCalledWith(1, false);
-
-		source.value = true;
-		await nextTick();
-
-		expect(listener).toHaveBeenCalledTimes(2);
-		expect(listener).toHaveBeenNthCalledWith(2, true);
-
-		stopActivitySignal(unsubscribe);
+		expect(() => observeActivitySignal({ value: false }, listener)).toThrow(TypeError);
+		expect(listener).not.toHaveBeenCalled();
 	});
 });

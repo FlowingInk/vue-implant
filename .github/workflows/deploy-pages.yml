@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "demo/**"
+      - "packages/**/src/**"
       - "src/**"
       - "vite.demo.config.ts"
       - "package.json"

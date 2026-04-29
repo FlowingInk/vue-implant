@@ -1,8 +1,8 @@
 /// <reference types="vitest/config" />
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ObserveEventName } from '../src/core/hooks/type';
-import { DOMWatcher } from '../src/core/watcher/DomWatcher';
-import type { InjectCallback } from '../src/core/watcher/types';
+import type { ObserveEventName } from '../packages/core/src/hooks/type';
+import { DOMWatcher } from '../packages/core/src/watcher/DomWatcher';
+import type { InjectCallback } from '../packages/core/src/watcher/types';
 
 describe('DOMWatcher', () => {
 	beforeEach(() => {
@@ -240,7 +240,7 @@ describe('DOMWatcher', () => {
 			DOMWatcher.onDomReady('#target-el', cb, document, { once: true });
 
 			vi.useRealTimers();
-			// Add a text node – should NOT trigger callback
+			// Add a text node — should NOT trigger callback
 			document.body.appendChild(document.createTextNode('hello'));
 			await new Promise((r) => setTimeout(r, 0));
 
@@ -260,7 +260,7 @@ describe('DOMWatcher', () => {
 			const cb = vi.fn<InjectCallback>();
 			vi.spyOn(console, 'info').mockImplementation(() => {});
 
-			// Element already exists → once triggers disconnect immediately
+			// Element already exists — once triggers disconnect immediately
 			const el = document.createElement('div');
 			el.id = 'race';
 			document.body.appendChild(el);
