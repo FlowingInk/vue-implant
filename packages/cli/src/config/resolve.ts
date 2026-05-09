@@ -339,9 +339,9 @@ export const resolveInjections = (
 		source: ResolvedSourceConfig;
 		injector: ResolvedInjectorConfig;
 	} = {
-			source: resolveSourceConfig(undefined, resolveProjectRoot()),
-			injector: resolveInjectorConfig(undefined)
-		}
+		source: resolveSourceConfig(undefined, resolveProjectRoot()),
+		injector: resolveInjectorConfig(undefined)
+	}
 ): ResolvedInjectionModule[] => {
 	const root = resolveProjectRoot(options.root);
 	const normalizedInjections = normalizeInjectionManifest(injections);

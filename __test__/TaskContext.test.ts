@@ -153,7 +153,9 @@ describe('TaskContext', () => {
 			expect(
 				taskEvents.find(
 					(event) =>
-						event.name === 'task:statusChange' && event.status === 'active' && event.taskId === 'status-observe-task'
+						event.name === 'task:statusChange' &&
+						event.status === 'active' &&
+						event.taskId === 'status-observe-task'
 				)
 			).toMatchObject({
 				name: 'task:statusChange',
@@ -847,7 +849,11 @@ describe('TaskContext', () => {
 
 			const released: Record<string, unknown> = {};
 			observer.onAny((event) => {
-				if (event.name.startsWith('signal:') || event.name.startsWith('resource:') || event.name.startsWith('artifact:')) {
+				if (
+					event.name.startsWith('signal:') ||
+					event.name.startsWith('resource:') ||
+					event.name.startsWith('artifact:')
+				) {
 					released[event.name] = event;
 				}
 			});

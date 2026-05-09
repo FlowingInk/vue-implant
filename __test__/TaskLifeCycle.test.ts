@@ -895,7 +895,6 @@ describe('TaskLifeCycle', () => {
 			status: 'active'
 		});
 
-
 		expect(
 			taskEvents.find(
 				(event) =>

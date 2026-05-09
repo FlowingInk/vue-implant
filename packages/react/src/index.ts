@@ -1,7 +1,7 @@
 export { createReactAdapter } from './ReactAdapter';
 
 export type {
-ReactMountAdapter,
-ReactMountArtifact,
-ReactMountRoot
+	ReactMountAdapter,
+	ReactMountArtifact,
+	ReactMountRoot
 } from './type';

@@ -23,8 +23,6 @@ export type ArtifactOptions = {
 	hooks?: LifecycleHookMap;
 };
 
-export type ComponentOptions = ArtifactOptions;
-
 export type InjectionConfig = {
 	alive: boolean;
 	scope: 'local' | 'global';

@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WatchHandle } from 'vue';
-import { createVueAdapter } from '../packages/vue/src/VueAdapter';
-import { VuePlugin } from '../packages/vue/src/VuePlugin';
 import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
 import type { ObserveEvent } from '../packages/core/src/hooks/type';
 import { createObserveEmitter } from '../packages/core/src/hooks/util';
@@ -12,6 +10,8 @@ import { TaskContext } from '../packages/core/src/Task/TaskContext';
 import { TaskRunner } from '../packages/core/src/Task/TaskRunner';
 import type { ArtifactTask, ListenerTask } from '../packages/core/src/Task/types';
 import { DOMWatcher } from '../packages/core/src/watcher/DomWatcher';
+import { createVueAdapter } from '../packages/vue/src/VueAdapter';
+import { VuePlugin } from '../packages/vue/src/VuePlugin';
 import { createArtifactTask, createListenerTask, createVueComponent } from './factory/TaskFactor';
 
 describe('TaskRunner', () => {
@@ -21,9 +21,8 @@ describe('TaskRunner', () => {
 
 	beforeEach(() => {
 		const observer = new ObserverHub();
-		const logger = new Logger();
 		taskContext = new TaskContext();
-		vueAdapter = createVueAdapter(logger);
+		vueAdapter = createVueAdapter();
 		taskRunner = new TaskRunner(
 			taskContext,
 			{
@@ -459,7 +458,7 @@ describe('TaskRunner', () => {
 
 		taskRunner.onTargetReady(host, 'active-event-task');
 
-		expect(statusEvents.find(e => e.status === 'active')).toMatchObject({
+		expect(statusEvents.find((e) => e.status === 'active')).toMatchObject({
 			name: 'task:statusChange',
 			taskId: 'active-event-task',
 			kind: 'component',

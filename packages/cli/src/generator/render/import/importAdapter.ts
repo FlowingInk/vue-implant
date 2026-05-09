@@ -8,11 +8,14 @@ export function renderImportAdapter(injections: ResolvedInjectionModule[]): Rend
 	});
 
 	const adapterImports = Array.from(frameworkSet).map((adapter) => {
-		if (adapter === 'react') {
-			return "import { createReactAdapter } from '@vue-implant/react';";
+		switch (adapter) {
+			case 'react':
+				return 'import { createReactAdapter } from "@rite/react";';
+			case 'vue':
+				return 'import { createVueAdapter } from "@rite/vue";';
+			default:
+				return null;
 		}
-
-		return '';
 	});
 
 	return {
@@ -20,4 +23,3 @@ export function renderImportAdapter(injections: ResolvedInjectionModule[]): Rend
 		importsName: [...Array.from(frameworkSet)]
 	};
 }
-

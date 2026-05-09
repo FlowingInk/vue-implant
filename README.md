@@ -1,16 +1,16 @@
 <p align="center">
-	<img width="150" src="./demo/assets/vue-implant-icon.png">
+	<img width="150" src="./demo/assets/rite-icon.png">
 </p>
 
-<h1 align="center">Vue-implant</h1>
+<h1 align="center">Rite</h1>
 <p align="center">A lightweight component injection framework for dynamic pages</p>
 
 <div align="center">
-  <a href="https://github.com/FlowingInk/vue-implant/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/vue-implant?style=flat-square">
+  <a href="https://github.com/FlowingInk/rite/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/rite?style=flat-square">
 </a>
-  <a href="https://www.npmjs.com/package/vue-implant"><img alt="NPM Version" src="https://img.shields.io/npm/v/vue-implant">
+  <a href="https://www.npmjs.com/package/rite"><img alt="NPM Version" src="https://img.shields.io/npm/v/rite">
 </a>
-  <a href="https://www.npmjs.com/package/vue-implant"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/vue-implant">
+  <a href="https://www.npmjs.com/package/rite"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/rite">
 </a>
 <a href="./LICENSE"><img alt="NPM Downloads" src="https://img.shields.io/badge/License-MIT-yellow.svg">
 </a>
@@ -23,11 +23,11 @@
 
 
 
-`vue-implant` is a component injection framework primarily designed for Greasemonkey script development scenarios. It keeps Vue support as the default compatibility layer while exposing a framework-agnostic injection core and pluggable mount adapters for advanced integrations.
+`rite` is a component injection framework primarily designed for Greasemonkey script development scenarios. It keeps Vue support as the default compatibility layer while exposing a framework-agnostic injection core and pluggable mount adapters for advanced integrations.
 
 It streamlines component injection in Userscript development, eliminating tedious low-level DOM manipulations. By providing a declarative injection mechanism, it empowers developers to build high-performance, maintainable script applications with ease.
 
-We highly recommend using  [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey) in tandem. By bridging `vue-implant`'s component injection with Vite's modern build pipeline, you can enjoy a seamless, high-performance Userscript development workflow.
+We highly recommend using  [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey) in tandem. By bridging `rite`'s component injection with Vite's modern build pipeline, you can enjoy a seamless, high-performance Userscript development workflow.
 ## Table of Contents 📚
 
 - [Demo](#demo)
@@ -45,37 +45,37 @@ We highly recommend using  [vite-plugin-monkey](https://github.com/lisonge/vite-
 
 ## Demo 🎬
 
-Public demo site: https://vue-implant.github.io/vue-implant/
+Public demo site: https://rite.github.io/rite/
 
 ## Installation 📦
 
 Supports `npm`, `pnpm`, and `yarn`:
 
 ```bash
-npm install vue-implant
+npm install rite
 ```
 
 ```bash
-pnpm add vue-implant
+pnpm add rite
 ```
 
 ```bash
-yarn add vue-implant
+yarn add rite
 ```
 
 ## Best Practice ✅
 
-For Greasemonkey/TemperMonkey projects, the recommended stack is: `vite-plugin-monkey + vue-implant`.
+For Greasemonkey/TemperMonkey projects, the recommended stack is: `vite-plugin-monkey + rite`.
 
 - `vite-plugin-monkey`: handles userscript build pipeline, metadata, local development, and release flow.
-- `vue-implant`: handles artifact mounting, DOM target waiting, re-injection, and task lifecycle on dynamic pages.
+- `rite`: handles artifact mounting, DOM target waiting, re-injection, and task lifecycle on dynamic pages.
 
 This pairing keeps responsibilities clear: one tool focuses on userscript engineering, the other focuses on reliable page enhancement.
 
 ## Quick Start ⚡
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -130,7 +130,7 @@ Starts the injection process and handles registered tasks.
 
 ### `Injector.register<TArtifact>(injectAt: string, artifact: TArtifact, option?: ArtifactOptions): RegisterResult`
 
-Registers an artifact injection task. Internally, `vue-implant` resolves the matching mount adapter for the registered artifact. The default `Injector` includes Vue component support, and additional adapters can be applied explicitly.
+Registers an artifact injection task. Internally, `rite` resolves the matching mount adapter for the registered artifact. The default `Injector` includes Vue component support, and additional adapters can be applied explicitly.
 
 Parameter description:
 
@@ -199,7 +199,7 @@ Adapter registration is instance-level. Applying an adapter to one `Injector` do
 **Minimal example:**
 
 ```ts
-import { Injector, type ResolvableMountAdapter } from 'vue-implant';
+import { Injector, type ResolvableMountAdapter } from 'rite';
 
 const elementAdapter: ResolvableMountAdapter<HTMLElement, HTMLElement> = {
 	name: 'element',
@@ -226,7 +226,7 @@ Registers a shared Vue plugin in the singleton plugin registry used by injector-
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 
 const injector = new Injector();
 
@@ -244,7 +244,7 @@ Registers multiple shared Vue plugins in install order.
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 
 const injector = new Injector();
 const analyticsPlugin = {
@@ -303,14 +303,14 @@ Returns the logger instance currently used by the injector and its default obser
 
 ### Logging
 
-`vue-implant` writes internal runtime logs through a unified logger instead of directly use `console` inside each module.
+`rite` writes internal runtime logs through a unified logger instead of directly use `console` inside each module.
 
-- Default log format: `[Vue Implant][LEVEL][ISO_TIMESTAMP] message`
+- Default log format: `[Rite][LEVEL][ISO_TIMESTAMP] message`
 
 **Minimal example:**
 
 ```ts
-import { Injector, type ILogger } from 'vue-implant';
+import { Injector, type ILogger } from 'rite';
 
 const logger: ILogger = {
 	info: (message, ...args) => console.info(`[My App] ${message}`, ...args),
@@ -324,12 +324,12 @@ const injector = new Injector({ logger });
 
 ### Lifecycle Hooks (`ObserverHub`)
 
-`vue-implant` supports subscribing to lifecycle hooks through `ObserverHub`, which is useful for monitoring, analytics, and debug logging.
+`rite` supports subscribing to lifecycle hooks through `ObserverHub`, which is useful for monitoring, analytics, and debug logging.
 
 **Minimal example:**
 
 ```ts
-import { Injector, ObserverHub } from 'vue-implant';
+import { Injector, ObserverHub } from 'rite';
 
 const observer = new ObserverHub();
 const injector = new Injector({ observer });
@@ -470,7 +470,7 @@ Parameter description:
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -494,7 +494,7 @@ Parameter description:
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -519,7 +519,7 @@ Parameter description:
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -536,7 +536,7 @@ Destroys all tasks registered in the current `Injector`.
 **Minimal example:**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -588,7 +588,7 @@ Returned store contract:
 **Minimal example:**
 
 ```ts
-import { createActivityStore, Injector } from 'vue-implant';
+import { createActivityStore, Injector } from 'rite';
 
 const injector = new Injector();
 const activity = createActivityStore(true);
@@ -610,7 +610,7 @@ Parameter description:
 **Minimal example:**
 
 ```ts
-import { createActivityStore, Injector } from 'vue-implant';
+import { createActivityStore, Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -640,7 +640,7 @@ Parameter description:
 **Minimal example:**
 
 ```ts
-import { Action, Injector } from 'vue-implant';
+import { Action, Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -711,8 +711,8 @@ No. They are stored in the singleton `VuePlugin` registry and are therefore shar
 **Build:**
 
 ```bash
-git clone https://github.com/FlowingInk/vue-implant.git
-cd vue-implant
+git clone https://github.com/FlowingInk/rite.git
+cd rite
 git switch -c feat/your-feature-name
 npm install 
 npm run build
@@ -738,7 +738,7 @@ npm run lint:fix
 
 ## Contributing 🤝
 
-Issues and PRs are welcome. Let’s improve `vue-implant` together.
+Issues and PRs are welcome. Let’s improve `rite` together.
 
 ## License 📄
 

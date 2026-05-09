@@ -2,7 +2,10 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type InjectObserveEventName = 'artifact:mountStart' | 'artifact:mountSuccess' | 'artifact:mountFail';
+type InjectObserveEventName =
+	| 'artifact:mountStart'
+	| 'artifact:mountSuccess'
+	| 'artifact:mountFail';
 
 type InjectObserveBase = {
 	taskId: string;

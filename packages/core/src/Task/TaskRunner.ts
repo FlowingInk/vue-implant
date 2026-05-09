@@ -1,4 +1,3 @@
-import { UUID } from '../util/uuid';
 import type { ObserveEmitter } from '../hooks/type';
 import { Action, type ActionEvent, type InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
@@ -9,6 +8,7 @@ import { buildRunObservePayload } from '../payload/buildRunObservePayload';
 import { createDomObserveEmitFactory } from '../payload/createDomObserveEmitFactory';
 import { observeActivitySignal, stopActivitySignal } from '../signal/observeActivitySignal';
 import type { ActivitySignalSource } from '../signal/types';
+import { UUID } from '../util/uuid';
 import { DOMWatcher } from '../watcher/DomWatcher';
 import type { TaskContext } from './TaskContext';
 import type { _InjectResult, Task, TaskListenerFeature } from './types';

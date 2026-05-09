@@ -1,5 +1,5 @@
+import type { ResolvableMountAdapter } from '@rite/core';
 import type { App, Component, ComponentPublicInstance } from 'vue';
-import type { ResolvableMountAdapter } from '@vue-implant/core';
 
 export type VueMountHandle = App<Element>;
 export type VueMountArtifact = Component;

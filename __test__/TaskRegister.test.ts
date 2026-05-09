@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createVueAdapter } from '../packages/vue/src/VueAdapter';
 import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
 import type { ObserveEvent } from '../packages/core/src/hooks/type';
 import { createObserveEmitter } from '../packages/core/src/hooks/util';
@@ -8,6 +7,7 @@ import { createActivityStore } from '../packages/core/src/signal/observeActivity
 import { TaskContext } from '../packages/core/src/Task/TaskContext';
 import { TaskRegister } from '../packages/core/src/Task/TaskRegister';
 import type { ArtifactTask } from '../packages/core/src/Task/types';
+import { createVueAdapter } from '../packages/vue/src/VueAdapter';
 import { createTask, createVueComponent } from './factory/TaskFactor';
 
 describe('TaskRegister', () => {
@@ -18,8 +18,7 @@ describe('TaskRegister', () => {
 	beforeEach(() => {
 		const observer = new ObserverHub();
 		taskContext = new TaskContext();
-		const logger = new Logger();
-		vueAdapter = createVueAdapter(logger);
+		vueAdapter = createVueAdapter();
 		taskRegister = new TaskRegister(
 			taskContext,
 			{
@@ -161,7 +160,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate component registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const component = createVueComponent('CompDup');
 		const first = taskRegister.register('#dup', component);
@@ -200,7 +199,7 @@ describe('TaskRegister', () => {
 	});
 
 	it('should return existing result for duplicate listener registration', () => {
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		const first = taskRegister.registerListener('#btn', 'click', vi.fn());
 		const second = taskRegister.registerListener('#btn', 'click', vi.fn());

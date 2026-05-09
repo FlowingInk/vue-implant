@@ -2,7 +2,11 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskKind } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type DomObserveEventName = 'dom:targetFound' | 'dom:targetTimeout' | 'dom:targetRemoved' | 'dom:targetRestored';
+type DomObserveEventName =
+	| 'dom:targetFound'
+	| 'dom:targetTimeout'
+	| 'dom:targetRemoved'
+	| 'dom:targetRestored';
 
 type DomObserveBase = {
 	injectAt: string;

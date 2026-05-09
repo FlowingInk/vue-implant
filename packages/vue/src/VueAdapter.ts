@@ -1,12 +1,10 @@
 import type { ComponentPublicInstance } from 'vue';
 import { createApp } from 'vue';
-import type { ILogger } from '@vue-implant/core';
 import type { VueMountAdapter } from './type';
 import { isVueComponent } from './util';
 import { VuePlugin } from './VuePlugin';
 
-export function createVueAdapter(logger: ILogger): VueMountAdapter {
-	VuePlugin.setLogger(logger);
+export function createVueAdapter(): VueMountAdapter {
 	const adapter: VueMountAdapter = {
 		name: 'vue',
 		matches: isVueComponent,
@@ -29,4 +27,3 @@ export function createVueAdapter(logger: ILogger): VueMountAdapter {
 
 	return adapter;
 }
-

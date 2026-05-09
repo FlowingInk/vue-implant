@@ -1,6 +1,16 @@
+import type { ResolvedInjectionModule } from 'src/config/type';
+
 export type RenderImportResult = {
 	code: string;
 	importsName: string[];
+};
+export type Component = {
+	code: string;
+	componentName: string;
+	componentMeta: ResolvedInjectionModule;
+};
+export type RenderImportCompResult = Omit<RenderImportResult, 'importsName'> & {
+	component: Component[];
 };
 export type RenderInitResult = {
 	code: string;

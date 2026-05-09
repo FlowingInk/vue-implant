@@ -66,7 +66,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@vue-implant/core':
+      '@rite/core':
         specifier: workspace:*
         version: link:../core
       jiti:
@@ -77,13 +77,13 @@ importers:
 
   packages/react:
     dependencies:
-      '@vue-implant/core':
+      '@rite/core':
         specifier: workspace:*
         version: link:../core
 
   packages/vue:
     dependencies:
-      '@vue-implant/core':
+      '@rite/core':
         specifier: workspace:*
         version: link:../core
 

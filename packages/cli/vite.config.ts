@@ -13,7 +13,7 @@ export default defineConfig({
 		},
 		rollupOptions: {
 			external: [
-				'@vue-implant/core',
+				'@rite/core',
 				'jiti',
 				'vite-plugin-monkey',
 				'node:fs',

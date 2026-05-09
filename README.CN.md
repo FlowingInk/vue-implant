@@ -1,17 +1,17 @@
 ﻿<p align="center">
-  <img width="150" src="./demo/assets/vue-implant-icon.png">
+  <img width="150" src="./demo/assets/rite-icon.png">
 </p>
 
 
-<h1 align="center">Vue-implant</h1>
+<h1 align="center">Rite</h1>
 <p align="center">面向动态页面的轻量级组件注入框架</p>
 
 <div align="center">
-  <a href="https://github.com/FlowingInk/vue-implant/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/vue-implant?style=flat-square">
+  <a href="https://github.com/FlowingInk/rite/"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/FlowingInk/rite?style=flat-square">
 </a>
-  <a href="https://www.npmjs.com/package/vue-implant"><img alt="NPM Version" src="https://img.shields.io/npm/v/vue-implant">
+  <a href="https://www.npmjs.com/package/rite"><img alt="NPM Version" src="https://img.shields.io/npm/v/rite">
 </a>
-  <a href="https://www.npmjs.com/package/vue-implant"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/vue-implant">
+  <a href="https://www.npmjs.com/package/rite"><img alt="NPM Downloads" src="https://img.shields.io/npm/dw/rite">
 </a>
     <a href="./LICENSE"><img alt="NPM Downloads" src="https://img.shields.io/badge/License-MIT-yellow.svg">
 </a>
@@ -24,11 +24,11 @@
 
 
 
-`vue-implant` 是一个主要面向油猴脚本开发场景的组件注入框架。它保留 Vue 作为默认兼容层，同时提供框架无关的注入核心与可插拔挂载适配器，方便更高级的集成场景。
+`rite` 是一个主要面向油猴脚本开发场景的组件注入框架。它保留 Vue 作为默认兼容层，同时提供框架无关的注入核心与可插拔挂载适配器，方便更高级的集成场景。
 
 它能够在琐碎的油猴开发当中把**注入**这一操作统合起来，告别繁琐的底层**DOM**操作。同时还提供了一套声明式的注入机制，助力开发者构建高性能、易维护的脚本应用。
 
-推荐配合 [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey) 使用。将 `vue-implant` 的组件注入能力与 Vite 的现代构建优势相结合，带给你前所未有的**油猴开发全家桶**体验。
+推荐配合 [vite-plugin-monkey](https://github.com/lisonge/vite-plugin-monkey) 使用。将 `rite` 的组件注入能力与 Vite 的现代构建优势相结合，带给你前所未有的**油猴开发全家桶**体验。
 
 ## 目录 📚
 
@@ -47,37 +47,37 @@
 
 ## 演示 🎬
 
-公开演示站点：https://vue-implant.github.io/vue-implant/
+公开演示站点：https://rite.github.io/rite/
 
 ## 安装 📦
 
 支持 `npm`、`pnpm`、`yarn`：
 
 ```bash
-npm install vue-implant
+npm install rite
 ```
 
 ```bash
-pnpm add vue-implant
+pnpm add rite
 ```
 
 ```bash
-yarn add vue-implant
+yarn add rite
 ```
 
 ## 最佳实践 ✅
 
-在油猴项目中，推荐组合：`vite-plugin-monkey + vue-implant`。
+在油猴项目中，推荐组合：`vite-plugin-monkey + rite`。
 
 - `vite-plugin-monkey`：处理脚本构建、元信息、开发调试与发布流程。
-- `vue-implant`：处理复杂页面中的产物挂载、目标等待、重注入与任务生命周期。
+- `rite`：处理复杂页面中的产物挂载、目标等待、重注入与任务生命周期。
 
 这个组合可以让你把工程化能力和页面注入能力解耦：前者专注“如何构建油猴脚本”，后者专注“如何稳定改造目标网页”。
 
 ## 快速开始 ⚡
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -201,7 +201,7 @@ type InjectionConfig = {
 **最小示例：**
 
 ```ts
-import { Injector, type ResolvableMountAdapter } from 'vue-implant';
+import { Injector, type ResolvableMountAdapter } from 'rite';
 
 const elementAdapter: ResolvableMountAdapter<HTMLElement, HTMLElement> = {
 	name: 'element',
@@ -228,7 +228,7 @@ injector.run();
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 
 const injector = new Injector();
 
@@ -246,7 +246,7 @@ injector.use({
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 
 const injector = new Injector();
 const analyticsPlugin = {
@@ -305,14 +305,14 @@ injector.usePlugins(analyticsPlugin);
 
 ### 日志
 
-`vue-implant` 现在会通过统一的 logger 输出内部运行日志，不再在各个模块里直接调用`console`。
+`rite` 现在会通过统一的 logger 输出内部运行日志，不再在各个模块里直接调用`console`。
 
-- 默认日志格式：`[Vue Implant][LEVEL][ISO_TIMESTAMP] message`
+- 默认日志格式：`[Rite][LEVEL][ISO_TIMESTAMP] message`
 
 **最小示例：**
 
 ```ts
-import { Injector, type ILogger } from 'vue-implant';
+import { Injector, type ILogger } from 'rite';
 
 const logger: ILogger = {
 	info: (message, ...args) => console.info(`[我的项目] ${message}`, ...args),
@@ -326,12 +326,12 @@ const injector = new Injector({ logger });
 
 ### 生命周期钩子（ObserverHub）
 
-`vue-implant` 支持通过 `ObserverHub` 订阅生命周期钩子，便于接入监控、埋点、调试日志。
+`rite` 支持通过 `ObserverHub` 订阅生命周期钩子，便于接入监控、埋点、调试日志。
 
 **最小示例：**
 
 ```ts
-import { Injector, ObserverHub } from 'vue-implant';
+import { Injector, ObserverHub } from 'rite';
 
 const observer = new ObserverHub();
 const injector = new Injector({ observer });
@@ -472,7 +472,7 @@ observer.onAny((event) => {
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -496,7 +496,7 @@ injector.run();
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -521,7 +521,7 @@ injector.run();
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -538,7 +538,7 @@ injector.destroy(taskId);
 **最小示例：**
 
 ```ts
-import { Injector } from 'vue-implant';
+import { Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -590,7 +590,7 @@ injector.destroyAll();
 **最小示例：**
 
 ```ts
-import { createActivityStore, Injector } from 'vue-implant';
+import { createActivityStore, Injector } from 'rite';
 
 const injector = new Injector();
 const activity = createActivityStore(true);
@@ -612,7 +612,7 @@ activity.set(false);
 **最小示例：**
 
 ```ts
-import { createActivityStore, Injector } from 'vue-implant';
+import { createActivityStore, Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -642,7 +642,7 @@ injector.run();
 **最小示例：**
 
 ```ts
-import { Action, Injector } from 'vue-implant';
+import { Action, Injector } from 'rite';
 import TestAppComponent from './TestAppComponent.vue';
 
 const injector = new Injector();
@@ -715,8 +715,8 @@ injector.controlListener(taskId, Action.CLOSE);
 **构建：**
 
 ```bash
-git clone https://github.com/FlowingInk/vue-implant.git
-cd vue-implant
+git clone https://github.com/FlowingInk/rite.git
+cd rite
 git switch -c feat/your-feature-name
 npm install 
 npm run build
@@ -742,7 +742,7 @@ npm run lint:fix
 
 ## 贡献 🤝
 
-欢迎提交 Issue 和 PR，一起完善 `vue-implant`。
+欢迎提交 Issue 和 PR，一起完善 `rite`。
 
 ## License 📄
 

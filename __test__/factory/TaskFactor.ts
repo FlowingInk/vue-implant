@@ -1,6 +1,4 @@
 import type { Component } from 'vue';
-import { createVueAdapter } from '../../packages/vue/src/VueAdapter';
-import { Logger } from '../../packages/core/src/logger/Logger';
 import type { ActivitySignalSource } from '../../packages/core/src/signal/types';
 import type {
 	ArtifactTask,
@@ -10,6 +8,7 @@ import type {
 	TaskStatus,
 	TaskWatcherFeature
 } from '../../packages/core/src/Task/types';
+import { createVueAdapter } from '../../packages/vue/src/VueAdapter';
 
 type TaskBaseInput = {
 	taskId: string;
@@ -53,7 +52,6 @@ export function createTask(input: CreateArtifactTaskInput | CreateListenerTaskIn
 		const artifactName = input.artifactName ?? 'TestComponent';
 		const injectAt = input.injectAt ?? '#app';
 		const artifact = input.artifact ?? createVueComponent(artifactName);
-		const logger = new Logger();
 		return {
 			taskId: input.taskId,
 			kind: 'component',
@@ -65,7 +63,7 @@ export function createTask(input: CreateArtifactTaskInput | CreateListenerTaskIn
 			artifactName,
 			injectAt,
 			artifact,
-			adapter: input.adapter ?? createVueAdapter(logger),
+			adapter: input.adapter ?? createVueAdapter(),
 			alive: input.alive ?? false,
 			scope: input.scope ?? 'local',
 			...(input.listener ? { listener: input.listener } : {}),

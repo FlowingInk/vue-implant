@@ -13,7 +13,7 @@ export default defineConfig({
 			fileName: 'index'
 		},
 		rollupOptions: {
-			external: ['@vue-implant/core', 'vue']
+			external: ['@rite/core', 'vue']
 		}
 	},
 	plugins: [

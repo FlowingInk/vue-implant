@@ -3,9 +3,9 @@ defineOptions({ name: 'DemoPage' })
 
 import React from 'react'
 import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
-import { createActivityStore, Injector } from '@vue-implant/core'
-import { createReactAdapter } from '@vue-implant/react'
-import { createVueAdapter } from '@vue-implant/vue'
+import { createActivityStore, Injector } from '@rite/core'
+import { createReactAdapter } from '@rite/react'
+import { createVueAdapter } from '@rite/vue'
 
 import { InjectedBadge, InjectedCounter, InjectedTooltip } from './injectedWidgets'
 import { InjectedReactBadge } from './injectedWidgets/InjectedReactBadge'
@@ -30,7 +30,7 @@ const { logs, addLog, patchConsoleForInjector } = useDemoLogger()
 const injector = new Injector({ alive: false, scope: 'local' })
 let restoreConsole: (() => void) | null = null
 
-injector.applyAdapter(createVueAdapter(injector.getLogger()))
+injector.applyAdapter(createVueAdapter())
 injector.applyAdapter(createReactAdapter())
 
 injector.register('#case-basic-target', InjectedBadge, {
@@ -119,7 +119,7 @@ onUnmounted(() => {
 
 <template>
     <main class="page">
-        <HeroBlock class="hero-card" title="Vue Implant"
+        <HeroBlock class="hero-card" title="Rite"
             description="A breath of fresh air for legacy DOM — seamless Vue 3 integration for any website." />
 
         <section class="content-row">

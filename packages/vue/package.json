@@ -1,7 +1,7 @@
 ﻿{
-  "name": "@vue-implant/vue",
+  "name": "@rite/vue",
   "version": "1.3.1",
-  "description": "Vue adapter and compatibility injector for vue-implant",
+  "description": "Vue adapter and compatibility injector for rite",
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
@@ -19,6 +19,6 @@
     }
   },
   "dependencies": {
-    "@vue-implant/core": "workspace:*"
+    "@rite/core": "workspace:*"
   }
 }

@@ -1,5 +1,5 @@
 import type { ResolvedInjectionModule } from '../../../config/type';
-import type { RenderImportResult } from '../../type';
+import type { Component, RenderImportCompResult } from '../../type';
 
 const normalizeImportPath = (value: string): string => {
 	return value.replace(/\\/g, '/');
@@ -21,7 +21,7 @@ const createImportName = () => {
 	};
 };
 
-export function renderImportComp(injections: ResolvedInjectionModule[]): RenderImportResult {
+export function renderImportComp(injections: ResolvedInjectionModule[]): RenderImportCompResult {
 	const importName = createImportName();
 
 	const imports = injections.map((injection) => {
@@ -30,15 +30,22 @@ export function renderImportComp(injections: ResolvedInjectionModule[]): RenderI
 		const code = `import ${name} from '${normalizeImportPath(injection.componentPath)}';`;
 
 		return {
-			moduleId: injection.moduleId,
-			componentPath: injection.componentPath,
-			importName: name,
+			componentMeta: injection,
+			componentName: name,
 			code
+		};
+	});
+
+	const components: Component[] = imports.map((item) => {
+		return {
+			code: item.code,
+			componentName: item.componentName,
+			componentMeta: item.componentMeta
 		};
 	});
 
 	return {
 		code: imports.map((item) => item.code).join('\n'),
-		importsName: imports.map((item) => item.importName)
+		component: components
 	};
 }

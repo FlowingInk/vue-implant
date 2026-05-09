@@ -1,4 +1,3 @@
-import { getArtifactName } from '../util/getArtifactName';
 import type { AdapterResolver } from '../adapter/types';
 import type { ObserveEmitter } from '../hooks/type';
 import { registerHooks } from '../hooks/util';
@@ -6,6 +5,7 @@ import type { ArtifactOptions, InjectionConfig } from '../Injector/types';
 import { Logger } from '../logger/Logger';
 import type { ILogger } from '../logger/types';
 import { buildRegisterObservePayload } from '../payload/buildRegisterObservePayload';
+import { getArtifactName } from '../util/getArtifactName';
 import type { TaskContext } from './TaskContext';
 import type {
 	_RegisterResult,

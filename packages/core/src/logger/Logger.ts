@@ -4,7 +4,7 @@ export class Logger implements ILogger {
 	private static readonly LEVELS = ['debug', 'info', 'warn', 'error'];
 	private level: LoggerLevel;
 
-	public static readonly PREFIX = '[Vue Implant]';
+	public static readonly PREFIX = '[Rite]';
 
 	constructor(level: LoggerLevel = 'info') {
 		this.level = level;

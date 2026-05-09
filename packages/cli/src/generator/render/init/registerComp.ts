@@ -1,0 +1,23 @@
+import type { ArtifactOptions } from '@rite/core';
+import type { Component, RenderInitResult } from 'src/generator/type';
+
+export function renderRegisterComponent(
+	instanceName: string,
+	components: Component[]
+): RenderInitResult {
+	const registerCode = components.map((item) => {
+		const config: ArtifactOptions = {
+			alive: item.componentMeta.alive,
+			scope: item.componentMeta.scope,
+			timeout: item.componentMeta.timeout,
+			on: item.componentMeta.on,
+			hooks: item.componentMeta.hooks
+		};
+		return `${instanceName}.register('${item.componentMeta.injectAt}', ${item.componentName}, ${JSON.stringify(config)})`;
+	});
+
+	return {
+		code: registerCode.join('\n'),
+		instanceName
+	};
+}

@@ -1,11 +1,7 @@
 ﻿import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Injector } from '../packages/core/src/Injector/Injector';
-import { createReactAdapter } from '../packages/react/src/ReactAdapter';
-import type { ReactMountArtifact } from '../packages/react/src/type';
-import { createVueAdapter } from '../packages/vue/src/VueAdapter';
-import { VuePlugin } from '../packages/vue/src/VuePlugin';
 import { ObserverHub } from '../packages/core/src/hooks/ObserverHub';
+import { Injector } from '../packages/core/src/Injector/Injector';
 import { Action } from '../packages/core/src/Injector/types';
 import { Logger } from '../packages/core/src/logger/Logger';
 import { createActivityStore } from '../packages/core/src/signal/observeActivitySignal';
@@ -15,6 +11,10 @@ import type { TaskRegister } from '../packages/core/src/Task/TaskRegister';
 import type { TaskRunner } from '../packages/core/src/Task/TaskRunner';
 import type { ArtifactTask } from '../packages/core/src/Task/types';
 import { DOMWatcher } from '../packages/core/src/watcher/DomWatcher';
+import { createReactAdapter } from '../packages/react/src/ReactAdapter';
+import type { ReactMountArtifact } from '../packages/react/src/type';
+import { createVueAdapter } from '../packages/vue/src/VueAdapter';
+import { VuePlugin } from '../packages/vue/src/VuePlugin';
 import { createVueComponent } from './factory/TaskFactor';
 
 const reactDomClientMock = vi.hoisted(() => {
@@ -34,7 +34,7 @@ vi.mock('react-dom/client', () => ({
 
 function createInjector(config?: ConstructorParameters<typeof Injector>[0]): Injector {
 	const injector = new Injector(config);
-	return injector.applyAdapter(createVueAdapter(injector.getLogger()));
+	return injector.applyAdapter(createVueAdapter());
 }
 
 describe('Injector', () => {
@@ -70,8 +70,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
 		const component = createVueComponent('FacadeComp');
 
 		const result = injector.register('#app', component);
@@ -85,8 +85,8 @@ describe('Injector', () => {
 
 	it('should forward register to TaskRegister and wrap lifecycle callbacks', () => {
 		const registerSpy = vi.spyOn(taskRegister, 'register');
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
 		const artifact = createVueComponent('artifact');
 		const adapter = {
 			name: 'plain',
@@ -113,14 +113,14 @@ describe('Injector', () => {
 	});
 
 	it('should forward run to TaskRunner', () => {
-		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => { });
+		const runSpy = vi.spyOn(taskRunner, 'run').mockImplementation(() => {});
 		injector.run();
 		expect(runSpy).toHaveBeenCalledOnce();
 	});
 
 	it('should forward enableAlive and disableAlive to TaskLifeCycle', () => {
-		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => { });
-		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => { });
+		const enableSpy = vi.spyOn(taskLifeCycle, 'enableAlive').mockImplementation(() => {});
+		const disableSpy = vi.spyOn(taskLifeCycle, 'disableAlive').mockImplementation(() => {});
 
 		injector.enableAlive('task-a');
 		injector.disableAlive('task-a');
@@ -390,4 +390,3 @@ describe('Injector', () => {
 		expect(testInjector.getLogger()).toBe(logger);
 	});
 });
-

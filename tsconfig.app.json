@@ -26,16 +26,16 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@vue-implant/core": [
+      "@rite/core": [
         "packages/core/src/index.ts"
       ],
-      "@vue-implant/vue": [
+      "@rite/vue": [
         "packages/vue/src/index.ts"
       ],
-      "@vue-implant/react": [
+      "@rite/react": [
         "packages/react/src/index.ts"
       ],
-      "@vue-implant/cli": [
+      "@rite/cli": [
         "packages/cli/src/index.ts"
       ]
     }

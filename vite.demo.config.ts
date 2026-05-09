@@ -6,9 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@vue-implant/core': resolve(__dirname, 'packages/core/src'),
-      '@vue-implant/vue': resolve(__dirname, 'packages/vue/src'),
-      '@vue-implant/react': resolve(__dirname, 'packages/react/src'),
+      '@rite/core': resolve(__dirname, 'packages/core/src'),
+      '@rite/vue': resolve(__dirname, 'packages/vue/src'),
+      '@rite/react': resolve(__dirname, 'packages/react/src'),
     },
   },
   root: resolve(__dirname, 'demo'),

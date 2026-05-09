@@ -28,7 +28,7 @@ describe('observeActivitySignal', () => {
 		const listener = vi.fn();
 		const source = {
 			get: () => true,
-			subscribe: vi.fn(() => () => { })
+			subscribe: vi.fn(() => () => {})
 		};
 
 		const unsubscribe = observeActivitySignal(source, listener);

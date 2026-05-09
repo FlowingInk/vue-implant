@@ -8,10 +8,10 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@vue-implant/core': resolve(__dirname, 'packages/core/src/index.ts'),
-      '@vue-implant/vue': resolve(__dirname, 'packages/vue/src/index.ts'),
-      '@vue-implant/react': resolve(__dirname, 'packages/react/src/index.ts'),
-      '@vue-implant/cli': resolve(__dirname, 'packages/cli/src/index.ts'),
+      '@rite/core': resolve(__dirname, 'packages/core/src/index.ts'),
+      '@rite/vue': resolve(__dirname, 'packages/vue/src/index.ts'),
+      '@rite/react': resolve(__dirname, 'packages/react/src/index.ts'),
+      '@rite/cli': resolve(__dirname, 'packages/cli/src/index.ts'),
     },
   },
   test: {

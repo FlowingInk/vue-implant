@@ -1,8 +1,5 @@
+import type { ArtifactOptions, InjectionConfig as RuntimeInjectionConfig } from '@rite/core';
 import type { MonkeyUserScript } from 'vite-plugin-monkey';
-import type {
-	ArtifactOptions,
-	InjectionConfig as RuntimeInjectionConfig
-} from '@vue-implant/core';
 
 export type Thenable<T> = T | Promise<T>;
 
@@ -145,13 +142,15 @@ export type ResolvedMonkeyConfig = Omit<
 	build: ResolvedMonkeyBuildConfig;
 };
 
+// config type
 export type CliConfig = {
 	app: AppConfig;
 	monkey?: MonkeyConfig;
 	source?: SourceConfig;
 	injector?: InjectorConfig;
 };
-
+// CliConfig -> ResolvedConfig
+//resolved config type
 export type ResolvedConfig = {
 	root: string;
 	app: AppConfig;
@@ -159,6 +158,3 @@ export type ResolvedConfig = {
 	source: ResolvedSourceConfig;
 	injector: ResolvedInjectorConfig;
 };
-
-export type riteConfig = CliConfig;
-

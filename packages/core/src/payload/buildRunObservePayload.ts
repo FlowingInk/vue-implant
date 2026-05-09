@@ -2,7 +2,11 @@ import type { ObserveEvent } from '../hooks/type';
 import type { TaskKind, TaskStatus } from '../Task/types';
 import { buildObservePayload, type ObservePayloadBuilderMap } from './buildObservePayload';
 
-type RunObserveEventName = 'run:start' | 'run:taskScheduled' | 'run:taskSkipped' | 'task:targetReady';
+type RunObserveEventName =
+	| 'run:start'
+	| 'run:taskScheduled'
+	| 'run:taskSkipped'
+	| 'task:targetReady';
 
 type RunObserveTaskBase = {
 	taskId: string;

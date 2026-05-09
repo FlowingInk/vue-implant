@@ -1,14 +1,7 @@
 import type { Plugin } from 'vue';
-import { Logger, type ILogger } from '@vue-implant/core';
-
 
 class _VuePlugin {
 	private plugins: Plugin[] = [];
-	private logger: ILogger = new Logger();
-
-	public setLogger(logger: ILogger): void {
-		this.logger = logger;
-	}
 
 	public getPlugins(): Plugin[] {
 		return [...this.plugins];
@@ -16,7 +9,6 @@ class _VuePlugin {
 
 	public use<T extends Plugin>(plugin: T): void {
 		if (this.plugins.includes(plugin)) {
-			this.logger.warn('Plugin already registered, skipping duplicate');
 			return;
 		}
 
@@ -35,4 +27,3 @@ class _VuePlugin {
 }
 
 export const VuePlugin = new _VuePlugin();
-
